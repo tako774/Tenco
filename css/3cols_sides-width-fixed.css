@@ -1,0 +1,45 @@
+@charset "utf-8";
+
+body {
+  text-align:center;
+  margin: 0;
+}
+
+#container {
+  width:98%;
+  margin-left:auto;
+  margin-right:auto;
+  text-align:left;
+}
+
+#wrapper {
+  width:100%;
+  float:left;
+  margin-right:-181px;
+}
+
+#main_wrapper {
+  width:100%;
+  float:right;
+  margin-left:-288px;
+}
+
+#main {
+  margin-right:190px;
+  margin-left:300px;
+}
+
+#profile {
+  width:288px;
+  float:right;
+}
+
+#tools {
+  width:180px;
+  float:left;
+}
+
+#footer {
+  width:100%;
+  clear:left;
+}

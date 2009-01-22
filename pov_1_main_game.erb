@@ -1,0 +1,28 @@
+
+	<h2><%= h game_pov.name %></h2>
+	<%- game_pov_classes.each do |gpc| -%>
+	<%- if ratings[gpc.value.to_i] -%>
+	<h3><%= h gpc.name %></h3>
+	<table class="account">
+		<thead>
+			<tr>
+				<th>順位</th>
+				<th>名前</th>
+				<th>キャラクター</th>
+				<th>レート<sub>±RD</sub>（対戦人数/対戦数）</th>
+			</tr>
+		</thead>
+		<tbody>
+			<%- ratings[gpc.value.to_i].each do |r| -%>
+			<tr>
+				<td><%= h r.game_type1_ratings_rank %></td>
+				<td><a href="<%= "#{TOP_URL}game/#{u r.game_id}/account/#{u r.account_name}/" %>"><%= h r.rep_name %></a></td>
+				<td><%= h "#{type1[r.type1_id.to_i]}" %></td>
+				<td><%= "#{h r.rating.to_f.round}<sub>±#{h r.ratings_deviation.to_f.floor}</sub>（#{h r.matched_accounts}人/#{h r.match_counts}戦）" %></td>
+			</tr>
+			<%- end -%>
+		</tbody>
+	</table>
+	<%- else -%>
+	<%- end -%>
+	<%- end -%>

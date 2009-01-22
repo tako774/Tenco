@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns='http://www.w3.org/1999/xhtml' xml:lang='ja' lang='ja'>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta http-equiv="content-style-type" content="text/css" />
+	<meta http-equiv="content-script-type" content="text/javascript" />
+	<link rel="stylesheet" type="text/css" href="./css/main.css" />	
+	<link rel="stylesheet" type="text/css" href="<%= TOP_URL %>css/2cols_side-width-fixed.css" />
+	<title>Tenco! 東方緋想天レーティング</title>
+</head>
+<body>
+<div id="container">
+
+<div id="header">
+	<a href="http://tenco.xrea.jp"><img alt="Tenco!" src='./images/Tenco.gif' width='366' height='126' /></a>
+	<h1>Tenco! 東方緋想天レーティング</h1>
+</div>
+
+<div id="main_wrapper">
+<div id="main">
+
+<div class="section">
+<p>
+<img alt="" src="./client/images/tenco.ico" width="32" height="32" /> <a href="./client/hks_report_v007c.zip" style="font-weight:bold;font-size:110%;">緋行跡報告ツール Ver.0.07c</a>（2008/12/27 <a href="./client/hks_report_history.txt">更新履歴</a> <a href="./client/hks_report_readme.txt">Readme.txt</a>）
+</p>
+<p>
+<a href="http://thtools.s348.xrea.com/?%C8%EC%B9%D4%C0%D7" target="_blank" style="font-weight:bold">緋行跡 (Rev.10** 系列)</a>の対戦結果を、Tenco! サーバーに報告するアプリです。<br />
+対戦結果を報告すると、各プレイヤーの<a href="http://tenco.xrea.jp/game/1/account/nanashi/" style="font-weight:bold">マイページ</a>が見られるようになります。
+</p>
+
+<h2>インストール方法・使い方</h2>
+<ol>
+<li>緋行跡のフォルダに、解凍してできたフォルダをまるごと移動します。<br />
+エクスプローラーで、<a href="./images/hks_report_install_01.png">この画像</a>のように見えていればOK。</li>
+<li>あとは、hks_report.exe を実行するだけです。黒窓が立ち上がります。<br />
+初回起動時のみ、サーバーへのアカウント登録が必要です。</li>
+</ol>
+<p>
+アップデートは、圧縮ファイルの中身をそのまま上書きしてしまえば完了です。<br />
+より詳しい情報は、<a href="./client/hks_report_readme.txt">Readme.txt</a> や東方 Tools Wiki の <a href="http://thtools.s348.xrea.com/?%C8%EC%B9%D4%C0%D7%CA%F3%B9%F0%A5%C4%A1%BC%A5%EB%20Tenco%21" target="_blank">Tenco! のページ</a>に書いてありますので、ご一読願います。
+</p>
+
+<h3>以前のバージョンをお使いの方へ</h3>
+<p class="suppli">
+Ver.0.07 より、デフォルトで緋行跡の全プロファイルの対戦結果を報告できます。<br />
+Ver.0.06 以前からのアップデートは「設定ファイル更新_全緋行跡プロファイル送信（Ver.0.07以上へのアップデート用）.bat」を実行してください。<br />
+設定アップデート後の報告では、一度だけ「全件報告モード」を使用しておくと、より確実に過去の全データを報告できます。
+</p>
+</div>
+
+<div class="section">
+<h2>Tenco! とは</h2>
+
+<p>Tenco! は、ネット対戦ゲームのレーティング情報を提供するプロジェクトです。<br />
+<strong>レーティングとは、「各プレイヤーの相対的な強さを表す数字」のことです。</strong>
+</p>
+
+<p>レーティング情報の提供は、以下の流れで実施します。</p>
+
+<ol>
+<li>対戦結果を各プレイヤーが Tenco! サーバーに報告</li>
+<li>Tenco! サーバーがレーティングを計算</li>
+<li>レーティング情報を各プレイヤー用のWebページに反映</li>
+</ol>
+<p>
+この中で一番重要なのは、一番最初の Tenco! サーバーに各プレイヤーの対戦結果を集める部分です。<br />
+プレイヤーのみんなの報告により、はじめて成立します。<br />
+みなさまの対戦結果の報告をお待ちしております。
+</p>
+</div>
+
+<div class="section">
+<h2>プロジェクトの状況</h2>
+<ul>
+<li>報告：クライアントで報告可能！複数プロファイル対応済み！</li>
+<li>計算：<strong>12/16レーティング計算Rev.3リリース！「グリコレーティング」になり、レート信頼度・適正レートへの収束速度が大幅改善！</strong>毎時0分ちょっと前に更新。</li>
+<li>表示：<a href="http://tenco.xrea.jp/game/1/account/nanashi/">開発版ページ</a>。マイページ作成中！</li>
+<li>ドキュメント作成・QA：<a href="http://thtools.s348.xrea.com/?%C8%EC%B9%D4%C0%D7%CA%F3%B9%F0%A5%C4%A1%BC%A5%EB%20Tenco%21" target="_blank">東方 Tools Wiki</a> や <a href="http://jbbs.livedoor.jp/game/44334/">萃磨選堆の東方緋想天掲示板</a> のツールスレに多少の説明書きがあります</li>
+</ul>
+<p>
+2009/01/15 02:20<br />
+IE6 だと、大量の報告のあるページでも、重いけど固まりはしていないことを<br />
+確認しました（Win2000Pro with VirtualPC で確認）。<br />
+これなら、ページネーション開発は最優先じゃなくてもまだよさそうと判断。
+</p>
+<p>
+ついでに、IE6 でもマイページの検索・復号スクリプトを動くようにしました。<br />
+</p>
+<p>
+2009/01/14 01:20<br />
+大量の対戦結果を報告してくださっている方のマイページを IE8 で開くと、<br />
+軽くブラクラなことに気づいた。<span style="text-decoration:line-through;">なにこの見込みないブラウザ</span> いや、β版だから普通なんだけどさ。<br />
+開くのも重いんだけど、タブ遷移しようとしたら、CPU使い切って10秒以上固まっちゃう。<br />
+IE7以下でもそうなのであれば、さすがに対策が必要そうです……
+</p>
+<p>
+2009/01/09 01:05<br />
+マイページの未マッチの対戦相手について、プロファイル名を暗号化しました。<br />
+セキュリティが理由です。だって、他の人のマイページ見て偽の戦績データ送ったら、マッチさせ放題なんだもん。<br />
+<br />
+そろそろブログとか日記とかを立てようかなぁと思いつつ、でも作ってしまうと更新しなきゃ……と重荷になってしまいそうなので迷っている今日この頃。
+</p>
+<p>
+2008/12/26 23:45<br />
+サーバー側のマッチング処理が異様に遅くなっていたので、DBに適当にインデックス張ってみました。<br />
+250件報告した場合、従来は平均45秒かかってたのが、なんと３秒くらいになりました。びっくり。
+</p>
+<p>
+2008/12/24 1:00<br />
+緋行跡報告ツール Ver.0.07b をリリースしました。バグ修正リリースです。<br />
+バグ報告して下さったユーザーさん、ありがとうございます！
+</p>
+<p>
+2008/12/21 1:50<br />
+緋行跡報告ツールですが、緋行跡 Rev.1* 系列への対応の見送りを決定しました。<br />
+理由は、調べた結果、プロファイル名・タイムスタンプの取得を、Rev.1* 系列はしていないようなので。<br />
+というか先に調べとけ＜自分
+</p>
+<p>
+グリコレーティングが比較的、安定して動いているようで何よりです。<br />
+レートが示す期待勝率と、実際の勝率差は、双方RD&lt;200だと、±2%以下にどのキャラの組み合わせも収まります。<br />
+イロ・レーティングのころだと、±7%程度まで誤差がある組み合わせもあったので、かなりの改善です。
+</p>
+<p>
+そろそろWebサイト側の拡張をと考えているのですが、熱があってろくにブレストできませんですた。<br />
+頭痛いし、ましになったと思って起きたら夜8時だしー。<br />
+年内には、いろいろ形にしてお見せしたいので、なんとか段取りをつけようと思います。
+</p>
+<p>
+2008/12/14 2:40<br />
+<strong>緋行跡報告ツール Ver.0.07a をリリース</strong>しました。バグフィックスリリースです。<br />
+<br />
+思ったよりだいぶ時間を使ってしまいました……。<br />
+文字コード・ファイル名周りは複雑で嫌な感じです。
+</p>
+<p>
+2008/12/13 1:10<br />
+<strong>緋行跡報告ツール Ver.0.07 をリリース</strong>しました。<br />
+全プロファイルをデフォルトで報告するようになったので、Defaultプロファイル以外を使っている人も設定変更不要になりました。<br />
+緋行跡DBのフォルダそのものを変えてる方は、設定変更が必要ですけどね。<br />
+<br />
+今週は多忙で、平日にTenco!に割く時間をあまりもてませんでした。これからいろいろ妄想タイムです。
+</p>
+<p>
+2008/12/08 0:05<br />
+<a href="http://tenco.xrea.jp/game/1/account/nanashi/" style="font-weight:bold">マイページ</a> を更新しました。
+</p>
+<ul>
+	<li>右カラムのリンクをつけました。</li>
+	<li>真ん中の装飾を少し変えました。</li>
+</ul>
+<p>
+2008/12/07 0:45<br />
+<strong>負荷対策もある程度終わったので、マイページの開発を再開しますー。</strong>
+</p>
+<p>
+2008/12/07 0:30<br />
+やっと、全CGIの高速化が終わりました！<br />
+<strong>レーティングの計算を、１時間に１回に戻します</strong>（毎時57分に計算開始）。<br />
+レーティング処理が６倍速程度、報告CGIが２～３倍速程度、アカウント取得CGIが５倍速程度で動くようにしました<br />
+<br />
+報告時のマッチング処理にまだ手を入れていないので、高速化の余地は残っています。<br />
+ただ、CGI側の変更がかなり大きくなるので、また負荷が問題になったら実施します。<br />
+<br />
+以下、変更による効果の大きかった順
+</p>
+<ul>
+<li>REXMLのXPATHでの取得を減らした（<a href="http://libxml.rubyforge.org/" target="_blank">やたら遅い……</a>）</li>
+<li>全CGIを素の postgres モジュールで接続するようにした</li>
+<li>報告CGIでマルチプルインサートに変更</li>
+</ul>
+<p>
+2008/12/05 0:50<br />
+最終登録対戦時間取得CGI（last_track_record.cgi）を実行時間5分の1～10分の1に高速化しました。<br />
+ActiveRecord や rubygems を使わないで素の postgres モジュールで DB につなぐようしました。
+</p>
+<p>
+2008/12/04 7:20<br />
+マイページをキャッシュ化しました。毎時0分以降にアクセスすると再生成されます。<br />
+キャッシュを使ったときの処理時間は、使わないときの30分の1以下になりました。<br />
+あと require CGI しなくしました。重いらしいので。たしかに多少効果あり。<br />
+</p>
+<p>
+2008/12/03 21:50<br />
+<img src="./images/20081202_workload.gif" alt="各CGIの総実行時間EXCEL表" /><br />
+負荷調査の結果、一番トータルで実行時間をとっているのはマイページ表示のようです。<br />
+次に報告を受けるCGIの順でした。そーなのかー。
+</p>
+<p>
+2008/12/01 5:30<br />
+サーバーCPU負荷が超高くなっているので、対策急務です。<br />
+まずは、Process.times による負荷計測をします。<br />
+負荷しだいで、ActiveRecord の使用をやめたり（っていうか大半コレのせい？）、<br />
+DBアクセス頻度を下げるため、マイページのキャッシュ化・報告頻度の抑制等行います。<br />
+マイページの対戦結果表示件数を下げるかもしれません。
+</p>
+</div>
+
+</div>
+</div>
+
+<div id="tools">
+	<%= index_game_stats_html %>
+</div>
+
+
+<hr />
+
+<div id="footer">
+<%= footer_html %>
+</div>
+
+</div>
+
+</body>
+</html>
+

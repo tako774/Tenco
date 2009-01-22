@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns='http://www.w3.org/1999/xhtml' xml:lang='ja' lang='ja'>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta http-equiv="content-style-type" content="text/css" />
+	<meta http-equiv="content-script-type" content="text/javascript" />
+	<link rel="stylesheet" type="text/css" href="<%= TOP_URL %>css/main.css" />
+	<link rel="stylesheet" type="text/css" href="<%= TOP_URL %>css/3cols_sides-width-fixed.css" />
+	<!-- <link rel="meta" type="text/xml" title="Game Pov : <%= h game_pov.name %>" href="<%= "#{TOP_URL}game/#{u game_id}/pov/#{u pov_id}/output=xml" %>" /> -->
+	<title><%= h game_pov.name %> / <%= h game.name %> - Tenco!</title>
+</head>
+<body>
+
+<div id="container">
+
+<div id="header">
+<h1><a href="<%= TOP_URL %>"><img alt="Tenco!" src='<%= TOP_URL %>images/Tenco.gif' width='<%= 366/3 %>' height='<%= 126/3 %>' /></a></h1> プライズ達成を褒め称えるページ（仮）α2.1（2009/01/07）
+
+<p id="meta_info">
+<%= now.strftime('%m/%d %H:%M') %> に作成（毎時0分以降に再生成）<br />
+</p>
+</div>
+<%#
+<div class="menu">
+<ul>
+	<li><a href=""></a></li>
+</ul>
+</div>
+-%>

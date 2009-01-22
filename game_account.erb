@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns='http://www.w3.org/1999/xhtml' xml:lang='ja' lang='ja'>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta http-equiv="content-style-type" content="text/css" />
+	<meta http-equiv="content-script-type" content="text/javascript" />
+	<link rel="stylesheet" type="text/css" href="<%= TOP_URL %>css/main.css" />
+	<link rel="stylesheet" type="text/css" href="<%= TOP_URL %>css/3cols_sides-width-fixed.css" />
+	<link rel="meta" type="text/xml" title="Game Account Profile" href="<%= "#{TOP_URL}game/#{u game_id}/account/#{u account_name}/output=xml" %>" />
+	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/gibberish-aes.js"></script>
+	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/webtoolkit.url.js"></script>
+	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/webtoolkit.sha1.js"></script>
+	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/jquery.js"></script>
+	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/jsdeferred.jquery.js"></script>
+	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/show_user_data.js"></script>
+	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/search.js"></script>
+	<title><%= h game_account.rep_name %> / <%= h game.name %> - Tenco!</title>
+	<script type="text/javascript">
+//<![CDATA[ 
+	
+// ロード時実行
+$(document).ready(
+	function(){
+		// javascript 利用部表示
+		var track_records_tool_html = "";
+		track_records_tool_html += "\t\t\t\t\t<span id='search_tool_msg' class='suppli msg'>search:</span>\n";
+		track_records_tool_html += "\t\t\t\t\t<input id='search_str' name='search_str' tabindex='1' type='text' size='16' />\n";
+		track_records_tool_html += "\t\t\t\t\t<span id='decrypt_tool_msg' class='suppli msg'>password:</span>\n";
+		track_records_tool_html += "\t\t\t\t\t<span id='decrypt_tool'>\n";
+		track_records_tool_html += "\t\t\t\t\t\t<input id='account_password' name='account_password' tabindex='1' type='password' size='16' />&nbsp;<button id='show_user_data'>復号</button>\n";
+		track_records_tool_html += "\t\t\t\t\t</span>\n";
+
+		$("#track_records_tool").html(track_records_tool_html);
+		
+		// アカウントデータ表示ボタンに実行関数を紐付け
+		$("#show_user_data").click(
+			function() {
+				var account_password = $("#account_password").val();
+				if (account_password != "") {
+					show_user_data('<%= h account.name %>', SHA1(account_password));
+				}
+			}
+		);
+		// パスワード入力欄でエンターでも実行
+		$("#account_password").keyup(
+			function(evt) {
+				if (evt.which == 13) {
+					$("#show_user_data").click();
+				}			
+			}
+		);		
+		// パスワード欄選択時に全テキスト選択
+		$("#account_password").focus(
+			function() {
+				$(this).select();
+			}
+		);
+		// パスワード欄にフォーカス
+		// $("#account_password").focus();
+		
+		// 非同期実行準備
+		$.deferred.define();
+		
+		// 検索テキストボックスでインクリメンタルサーチ
+		simple_inc_search("#track_records > tbody > tr", "table-row", "#search_str", 1000);
+		
+	}
+);
+
+// ]]>
+	</script>
+</head>
+<body>
+
+<div id="container">
+
+<div id="header">
+<h1><a href="<%= TOP_URL %>"><img alt="Tenco!" src='<%= TOP_URL %>images/Tenco.gif' width='<%= 366/3 %>' height='<%= 126/3 %>' /></a></h1> マイページ 開発中バージョンα5.2（2009/01/21）
+<p id="meta_info">
+<%= now.strftime('%m/%d %H:%M') %> に作成（毎時0分以降に再生成）<br />
+おしらせ：対戦結果検索つけました。IE以外超超推奨。（01/14）<br />
+おしらせ：未マッチの相手名を復号できるようにしました。（01/12）<br />
+おしらせ：<img alt="" src="<%= TOP_URL %>client/images/tenco.ico" width="16" height="16" /> <a href="<%= TOP_URL %>">報告ツール Ver.0.07c</a> リリース（12/27）
+</p>
+</div>
+
+<%#
+<div class="menu">
+<ul>
+	<li><a href=""></a></li>
+</ul>
+</div>
+-%>
+
+<hr />
+
+<div id="wrapper">
+	<div id="main_wrapper">
+	<div id="main">
+	
+	<div class="section">
+		<h2>レーティング Rev.3</h2>
+		<table id="ratings">
+			<thead>
+				<tr>
+					<th>キャラクター</th>
+					<th>レート<sub>±RD</sub>（対戦人数/対戦数）</th>
+				</tr>
+			</thead>
+			<tbody>
+				<%- ratings.each do |r| -%>
+				<tr>
+					<td><%= h "#{type1[r.type1_id.to_i]}" %></td>
+					<td><%= "#{h r.rating.to_f.round}<sub>±#{h r.ratings_deviation.to_f.floor}</sub>（#{h r.matched_accounts}人/#{h r.match_counts}戦）" %></td>
+				</tr>
+				<%- end -%>
+			</tbody>
+		</table>
+		<p class="suppli">
+			<abbr title="Ratings Deviation">RD</abbr> はレートのばらつきの大きさ示すものです。<br />
+			数字が小さいほど、レートとしての信頼性が高くなります。<br />
+			対戦すると <abbr title="Ratings Deviation">RD</abbr> は下がり、時間経過でわずかずつ上昇します。最小50、初期値350 です。<br />
+			対戦数は、レート計算対象になっているマッチ済みのアカウント数と対戦数です。<br />
+			なお、ラウンド取得数は、レート変動に直接影響しません。<br />
+			レート計算は毎時0分ちょっと前に行います。
+		</p>
+	</div>	
+	
+	<div class="section">
+		<h2>対戦記録</h2>
+		<noscript class="suppli msg">
+			javascript を ON にすると、検索・復号ができます 
+		</noscript>
+		<table id="track_records">
+			<caption id="track_records_tool" style="text-align:left; white-space:nowrap">
+				<span id='search_tool_msg' class='suppli msg'>search:</span>
+				<input id='search_str' name='search_str' tabindex='1' type='text' size='16' />
+				<span id='decrypt_tool_msg' class='suppli msg'>password:</span>
+				<span id='decrypt_tool'>
+					<input id='account_password' name='account_password' tabindex='1' type='password' size='16' />&nbsp;<button id='show_user_data'>復号</button>
+				</span>
+			</caption>
+			<thead>
+				<tr>
+					<th>対戦日時</th>
+					<th>勝ち</th>
+					<th>成績</th>
+					<th>負け</th>
+				</tr>
+			</thead>
+			<tbody>
+				<%- track_records.each do |t| -%>
+					<%- if t.player1_points > t.player2_points -%>
+				<tr>
+					<td><%= h Time.parse(t.play_timestamp).strftime('%y/%m/%d %H:%M') %></td>
+					<td><%= h "#{t.player1_name} (#{type1[t.player1_type1_id.to_i]})" %></td>
+					<td class="vs"><%= h "#{t.player1_points} - #{t.player2_points}" %></td>
+						<%- unless t.player2_account_name.nil? -%>
+					<td><a href="<%= "#{TOP_URL}game/#{u game_id}/account/#{u t.player2_account_name}/" %>"><%= h t.player2_name %></a><%= h " (#{type1[t.player2_type1_id.to_i]})" %></td>
+						<%- else -%>
+					<td><span class="enc_alt"><%= h "◇#{t.player2_name[-8..-5].gsub("\n", "_")}" %></span><span class="enc"><%= u t.player2_name %></span> <%= h "(#{type1[t.player2_type1_id.to_i]})" %></td>
+						<%- end -%>
+				</tr>
+					<%- else -%>
+				<tr>
+					<td><%= h Time.parse(t.play_timestamp).strftime('%y/%m/%d %H:%M')  %></td>
+						<%- unless t.player2_account_name.nil? -%>
+					<td><a href="<%= "#{TOP_URL}game/#{u game_id}/account/#{u t.player2_account_name}/" %>"><%= h t.player2_name %></a><%= h " (#{type1[t.player2_type1_id.to_i]})" %></td>
+						<%- else -%>
+					<td><span class="enc_alt"><%= h "◇#{t.player2_name[-8..-5].gsub("\n", "_")}" %></span><span class="enc"><%= u t.player2_name %></span> <%= h "(#{type1[t.player2_type1_id.to_i]})" %></td>
+						<%- end -%>
+					<td class="vs"><%= h "#{t.player2_points} - #{t.player1_points}" %></td>
+					<td><%= h "#{t.player1_name} (#{type1[t.player1_type1_id.to_i]})" %></td>
+				</tr>
+					<%- end -%>
+				<%- end -%>
+			</tbody>
+		</table>
+	</div>
+	
+	</div>
+	</div>
+	
+	<div id="profile">
+	<%= h game_account.rep_name %> さん<br />
+	<br />
+キャラクター使用率
+<pre class="AA">##ビジュアル表現を予定##
+
+　　　　 ,.ｨrｰr 、
+　　　y' "´￣｀'ヽ
+.　　 ﾉ　　 くノﾉ))ゝ
+　　　ﾙi,,,,ﾘ§ﾟ-ﾉ
+　　　　'k'_,i{X l}〈つ[|三＞
+　　　 ／'/_ハ.ゝ、
+　　　　 ｀'ﾄ_ﾉ'ﾄ,ﾉ"
+
+##ビジュアル表現を予定##
+</pre>
+<br />
+そのほかプロフィールあれこれ<br />
+	</div>
+</div>
+
+<div id="tools">
+	<h2>プライズページ</h2>
+	<ul>
+		<li><a href="<%= "#{TOP_URL}game/#{u game_id}/pov/1/" %>">レートランキング</a></li>
+		<li><a href="<%= "#{TOP_URL}game/#{u game_id}/pov/1/type1/" %>">レートランキング（キャラ別）</a></li>
+	</ul>
+	<h2>過去の対戦相手</h2>
+	<ul>
+		<%- matched_game_accounts.each do |a| -%>
+		<li><a href="<%= "#{TOP_URL}game/#{u game_id}/account/#{u a.account_name}/" %>"><%= h a.rep_name %></a></li>
+		<%- end -%>
+	</ul>
+	<hr />
+	<h2>リンク</h2>
+	<%= link_html %>
+</div>
+
+
+<hr />
+<div id="footer">
+<%= footer_html %>
+</div>
+
+</div>
+
+</body>
+</html>
+

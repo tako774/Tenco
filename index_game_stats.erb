@@ -1,0 +1,52 @@
+<h2>Tenco! 統計情報</h2>
+<table id="game_stat_summary" class="column-wise">
+	<tr>
+		<th>ゲーム名</th>
+		<td>東方緋想天</td>
+	</tr>
+	<tr>
+		<th>ゲーム略称</th>
+		<td>緋想天, SWR</td>
+	</tr>
+	<tr>
+		<th>アカウント人数<sup>※</sup></th>
+		<td class="num"><%= h game_stat.matched_accounts_count %> 名</td>
+	</tr>
+	<tr>
+		<th>キャラ別総数<sup>※</sup></th>
+		<td class="num"><%= h game_stat.matched_accounts_type1s_count %></td>
+	</tr>
+	<tr>
+		<th>対戦結果数<sup>※</sup></th>
+		<td class="num"><%= h game_stat.matched_track_records_count %></td>
+	</tr>
+	<tr>
+		<th>報告対戦数（参考）</th>
+		<td class="num"><%= h game_stat.track_records_count %></td>
+	</tr>
+</table>
+<p class="suppli">
+※ 報告マッチ済分のみ集計<br />
+<!-- <%= h Time.parse(game_stat.date_time).strftime('%Y/%m/%d %H:%M 現在') %> -->
+</p>
+
+<table id="game_type1_stat_summary">
+	<tr>
+		<th>キャラクター</th>
+		<th>人数</th>
+		<th>対戦数</th>
+		<th>勝率</th>
+	</tr>
+	<%- game_type1_stats.each do |gts| -%>
+	<tr>
+		<td><%= h type1[gts.type1_id.to_i] %></td>
+		<td class="num"><%= h gts.accounts_count %></td>
+		<td class="num"><%= h gts.track_records_count %></td>
+		<td class="num"><%= h "#{((gts.wins.to_f / gts.track_records_count.to_f) * 1000.0).round / 10.0} %" %></td>
+	</tr>
+	<%- end -%>
+</table>
+<p class="suppli">
+<%= h Time.parse(game_stat.date_time).strftime('%Y/%m/%d %H:%M 現在') %><br />
+毎時59分頃更新
+</p>

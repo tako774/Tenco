@@ -1,0 +1,43 @@
+
+	<h2><%= h game_pov.name %></h2>
+	<div class="section">
+		<div class="menu">
+			<ul id="type1_list">
+			<%- type1.keys.sort.each do |type1_id| -%>
+				<%- if ratings_each_type1[type1_id] -%>
+<li><a href="#<%= h "type1_#{type1_id.to_i}" %>"><img src="<%= "#{TOP_URL}images/game/#{game_id.to_i}/game_#{game_id.to_i}_type1_#{type1_id.to_i}_list01.png" %>" alt="<%= h type1[type1_id.to_i] %>" width="45" height="135" /></a></li><%- end -%>
+			<%- end -%>
+		
+			</ul>
+		</div>
+	
+		<%- type1.keys.sort.each do |type1_id| -%>
+			<%- if ratings_each_type1[type1_id] -%>
+		<h3 id="<%= h "type1_#{type1_id.to_i}" %>"><%= h type1[type1_id.to_i] %></h3>
+		<table class="account <%= h "type1_#{type1_id.to_i}"%>">
+			<thead>
+				<tr>
+					<th>順位</th>
+					<th>名前</th>
+					<th>レート<sub>±RD</sub>（対戦人数/対戦数）</th>
+					<th class="suppli">全体順位</th>
+				</tr>
+			</thead>
+			<tbody>
+				<%- game_pov_classes.each do |gpc| -%>
+					<%- if ratings_each_type1[type1_id.to_i][gpc.value.to_i] -%>
+						<%- ratings_each_type1[type1_id.to_i][gpc.value.to_i].each do |r| -%>
+				<tr>
+					<td><%= h r.game_each_type1_ratings_rank %></td>
+					<td><a href="<%= "#{TOP_URL}game/#{u r.game_id}/account/#{u r.account_name}/" %>"><%= h r.rep_name %></a></td>
+					<td><%= "#{h r.rating.to_f.round}<sub>±#{h r.ratings_deviation.to_f.floor}</sub>（#{h r.matched_accounts}人/#{h r.match_counts}戦）" %></td>
+					<td class="suppli">#<%= h r.game_type1_ratings_rank %></td>
+				</tr>
+						<%- end -%>
+					<%- end -%>
+				<%- end -%>
+			</tbody>
+		</table>
+			<%- end -%>
+		<%- end -%>
+	</div>

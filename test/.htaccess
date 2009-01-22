@@ -1,0 +1,3 @@
+order deny,allow
+deny from all
+allow from 125.53.25.34  # バッチスクリプトのあるサーバーのIPアドレス
