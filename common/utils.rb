@@ -2,10 +2,7 @@
 module Utils
 	# SQL エスケープ
 	def sql_escape(p)
-		if p.class.to_s == 'String' then
-			p = "E'" + p.gsub(/\'/, "''").gsub("\\", "\\\\\\\\") + "'"
-		end
-		return p
+		"E'" + p.to_s.gsub(/\\/, '\&\&').gsub(/'/, "''") + "'"
 	end
 	
 	alias s sql_escape
@@ -14,8 +11,6 @@ module Utils
 	def lf2html(str)
 		return	str.gsub(/\n/, "<br />\n")
 	end
-	
-	alias s sql_escape
 	
 	# Time.parse が重過ぎるので代用のメソッド
 	# YYYY-MM-DDTHH:MM:SS[.fragments][[+-]MM:SS] を想定
