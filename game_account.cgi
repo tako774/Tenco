@@ -41,6 +41,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		
 		track_records = []  # 対戦結果
 		type1 = {}          # プレイヤー属性１区分値
+		type1_h = {}        # プレイヤー属性１区分値（HTML エスケープ済み）
 		ratings = []         # プレイヤーのレーティング 
 		matched_game_accounts = [] # 対戦相手情報
 		account = nil # 対象アカウントの情報
@@ -88,6 +89,8 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							require 'utils'
 							include Utils
 							require 'time'
+							require 'erb'
+							include ERB::Util
 							
 							# キャッシュの有効期限
 							cache_expires = (now + 60 * 60) - now.min * 60 - now.sec
@@ -199,6 +202,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							res.clear
 							
 							# アカウントの対戦記録を取得			
+							# 未マッチの場合、player2 の名前は暗号化
 							require 'TrackRecord'
 							res = db.exec(<<-"SQL")
 								SELECT
@@ -256,14 +260,6 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							end
 							res.clear
 							
-							# 未マッチの場合、player2 の名前は暗号化
-							#require 'cryption'
-							#track_records.each do |t|
-							#	if t.player2_account_name.nil? then
-							#		t.player2_name = Cryption.encrypt_base64(t.player2_name, account.data_password)
-							#	end
-							#end
-							
 							# 対戦相手一覧作成
 							require 'GameAccount'
 							matched_game_accounts_names = {}
@@ -303,6 +299,11 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							SEG_V[:virtual_type1].each_value do |seg|
 								type1[seg[:value].to_i] = seg[:name]
 							end
+
+							# 区分値を HTML エスケープしておく（h メソッドの呼び出し削減）
+							type1.each do |k, v|
+								type1_h[k] = h v
+							end
 							
 						rescue => ex
 							res_status = "Status: 500 Server Error\n"
@@ -324,29 +325,28 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 						
 						# account 要素生成
 						account_element = root.add_element('account')
-						account_element.add_element('name').add_text(account_name.to_s)
+						account_element.add_element('name').add_text(account_name)
 						
 						# game 要素生成
 						game_element = account_element.add_element('game')
 						game_element.add_element('id').add_text(game_id.to_s)
-						game_element.add_element('name').add_text(game.name.to_s)
+						game_element.add_element('name').add_text(game.name)
 						
 						# type1 要素生成
 						ratings.each do |r|
 							# ランダムを省く暫定対応
 							unless r.type1_id.to_i == SEG_V[:virtual_type1][:random][:value].to_i
 								type1_element = game_element.add_element('type1')
-								type1_element.add_element('id').add_text(r.type1_id.to_s)
-								type1_element.add_element('name').add_text(type1[r.type1_id.to_i].to_s)
+								type1_element.add_element('id').add_text(r.type1_id)
+								type1_element.add_element('name').add_text(type1[r.type1_id.to_i])
 								type1_element.add_element('elo_rating_value').add_text("#{r.rating.to_f.round.to_s}")
 								type1_element.add_element('rating').add_text("#{r.rating.to_f.round.to_s}±#{r.ratings_deviation.to_f.floor.to_s}")
 								type1_element.add_element('rating_value').add_text(r.rating.to_f.round.to_s)
 								type1_element.add_element('ratings_deviation').add_text(r.ratings_deviation.to_f.floor.to_s)
-								type1_element.add_element('matched_accounts').add_text(r.matched_accounts.to_s)
-								type1_element.add_element('match_counts').add_text(r.match_counts.to_s)
+								type1_element.add_element('matched_accounts').add_text(r.matched_accounts)
+								type1_element.add_element('match_counts').add_text(r.match_counts)
 							end
-						end
-						
+						end		
 						# キャッシュXML/ヘッダ出力
 						File.open(cache_xml_path, 'w') do |w|
 							w.flock(File::LOCK_EX)
@@ -360,8 +360,6 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 						end
 						
 						### キャッシュHTML出力
-						require 'erb'
-						include ERB::Util
 						
 						# リンク 部生成
 						link_html = ERB.new(File.read(LINK_ERB_PATH), nil, '-').result(binding)
@@ -379,7 +377,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 								wh.puts "Expires: #{cache_expires.httpdate}"
 							end
 						end
-						
+
 					else
 						logger.info("Info: #{cache_lock_path} is locked.\n")
 						is_cache_used = true
@@ -451,8 +449,9 @@ print res_body
 			times.cutime,
 			times.cstime,
 			is_cache_used.to_s,
-			ENV['QUERY_STRING'].gsub(/\r\n|\n/, '\n')[0..99]
+			ENV['QUERY_STRING']
 		].join("\t")
 	)
 rescue
 end
+
