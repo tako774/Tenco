@@ -3,7 +3,7 @@
 # 開始時刻
 now = Time.now
 # リビジョン
-REVISION = 'R0.33'
+REVISION = 'R0.34'
 DEBUG = false
 
 $LOAD_PATH.unshift './common'
@@ -138,7 +138,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 								raise "ゲーム情報が登録されていません"
 							else
 								game = Game.new
-								res.fields.length.times do |i|
+								res.num_fields.times do |i|
 									game.instance_variable_set("@#{res.fields[i]}", res[0][i])
 								end
 								res.clear
@@ -191,7 +191,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							
 							res.each do |r|
 								rating = GameAccountRating.new
-								res.fields.length.times do |i|
+								res.num_fields.times do |i|
 									rating.instance_variable_set("@#{res.fields[i]}", r[i])
 								end
 								ratings << rating
@@ -238,9 +238,20 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							
 							res.each do |r|
 								t = TrackRecord.new
-								res.fields.length.times do |i|
-									t.instance_variable_set("@#{res.fields[i]}", r[i])
-								end
+								# 高速化のため変数名直接指定
+								t.play_timestamp = r[0]
+								t.player1_name = r[1]
+								t.player1_type1_id = r[2]
+								t.player1_points = r[3]
+								t.player2_name = r[4]
+								t.player2_type1_id = r[5]
+								t.player2_points = r[6]
+								t.player2_account_name = r[7]
+								t.player2_rep_name = r[8]
+								t.player2_account_del_flag = r[9]								
+								#res.num_fields.times do |i|
+								#	t.instance_variable_set("@#{res.fields[i]}", r[i])
+								#end
 								track_records << t
 							end
 							res.clear

@@ -111,8 +111,8 @@ $(document).ready(
 			<tbody>
 				<%- ratings.each do |r| -%>
 				<tr>
-					<td><%= h "#{type1[r.type1_id.to_i]}" %></td>
-					<td><%= "#{h r.rating.to_f.round}<sub>±#{h r.ratings_deviation.to_f.floor}</sub>（#{h r.matched_accounts}人/#{h r.match_counts}戦）" %></td>
+					<td><%= "#{type1_h[r.type1_id.to_i]}" %></td>
+					<td><%= "#{r.rating.to_f.round}<sub>±#{r.ratings_deviation.to_f.floor}</sub>（#{r.matched_accounts.to_i}人/#{r.match_counts.to_i}戦）" %></td>
 				</tr>
 				<%- end -%>
 			</tbody>
@@ -153,25 +153,25 @@ $(document).ready(
 				<%- track_records.each do |t| -%>
 					<%- if t.player1_points > t.player2_points -%>
 				<tr>
-					<td><%= h Time.parse(t.play_timestamp).strftime('%y/%m/%d %H:%M') %></td>
-					<td><%= h "#{t.player1_name} (#{type1[t.player1_type1_id.to_i]})" %></td>
-					<td class="vs"><%= h "#{t.player1_points} - #{t.player2_points}" %></td>
+					<td><%= pgsql_timestamp_str_to_time(t.play_timestamp).strftime('%y/%m/%d %H:%M') %></td>
+					<td><%= "#{h t.player1_name} (#{type1_h[t.player1_type1_id.to_i]})" %></td>
+					<td class="vs"><%= "#{t.player1_points.to_i} - #{t.player2_points.to_i}" %></td>
 						<%- unless t.player2_account_name.nil? -%>
-					<td><a href="<%= "#{TOP_URL}game/#{u game_id}/account/#{u t.player2_account_name}/" %>"><%= h t.player2_name %></a><%= h " (#{type1[t.player2_type1_id.to_i]})" %></td>
+					<td><a href="<%= "#{TOP_URL}game/#{game_id.to_i}/account/#{u t.player2_account_name}/" %>"><%= h t.player2_name %></a><%= " (#{type1_h[t.player2_type1_id.to_i]})" %></td>
 						<%- else -%>
-					<td><span class="enc_alt"><%= h "◇#{t.player2_name[-8..-5].gsub("\n", "_")}" %></span><span class="enc"><%= u t.player2_name %></span> <%= h "(#{type1[t.player2_type1_id.to_i]})" %></td>
+					<td><span class="enc_alt"><%= "◇#{t.player2_name[11..14]}" %></span><span class="enc"><%= u t.player2_name %></span> <%= "(#{type1_h[t.player2_type1_id.to_i]})" %></td>
 						<%- end -%>
 				</tr>
 					<%- else -%>
 				<tr>
-					<td><%= h Time.parse(t.play_timestamp).strftime('%y/%m/%d %H:%M')  %></td>
+					<td><%= pgsql_timestamp_str_to_time(t.play_timestamp).strftime('%y/%m/%d %H:%M')  %></td>
 						<%- unless t.player2_account_name.nil? -%>
-					<td><a href="<%= "#{TOP_URL}game/#{u game_id}/account/#{u t.player2_account_name}/" %>"><%= h t.player2_name %></a><%= h " (#{type1[t.player2_type1_id.to_i]})" %></td>
+					<td><a href="<%= "#{TOP_URL}game/#{u game_id}/account/#{u t.player2_account_name}/" %>"><%= h t.player2_name %></a><%= " (#{type1_h[t.player2_type1_id.to_i]})" %></td>
 						<%- else -%>
-					<td><span class="enc_alt"><%= h "◇#{t.player2_name[-8..-5].gsub("\n", "_")}" %></span><span class="enc"><%= u t.player2_name %></span> <%= h "(#{type1[t.player2_type1_id.to_i]})" %></td>
+					<td><span class="enc_alt"><%= "◇#{t.player2_name[11..14]}" %></span><span class="enc"><%= u t.player2_name %></span> <%= "(#{type1_h[t.player2_type1_id.to_i]})" %></td>
 						<%- end -%>
-					<td class="vs"><%= h "#{t.player2_points} - #{t.player1_points}" %></td>
-					<td><%= h "#{t.player1_name} (#{type1[t.player1_type1_id.to_i]})" %></td>
+					<td class="vs"><%= "#{t.player2_points.to_i} - #{t.player1_points.to_i}" %></td>
+					<td><%= "#{h t.player1_name} (#{type1_h[t.player1_type1_id.to_i]})" %></td>
 				</tr>
 					<%- end -%>
 				<%- end -%>
