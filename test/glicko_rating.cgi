@@ -4,7 +4,7 @@
 now = Time.now
 
 ### Glicko Ratings 計算 ###
-REVISION = '0.03'
+REVISION = '0.04'
 DEBUG = 1
 
 $LOAD_PATH.unshift '../common'
@@ -39,7 +39,8 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		RD_SATURATION_TIME = 365.2422 * 24 * 60 * 60  # RD が時間経過で最小から最大まで飽和するまでの秒数
 		RD_DEC = (MAX_RD ** 2.0 - MIN_RD ** 2.0) / RD_SATURATION_TIME.to_f  # RD の時間経過に伴う逓減係数
 		Q = Math::log(10) / 400.0 # 定数
-
+		QIP = 3.0 * ((Q / Math::PI) ** 2) # 定数 
+		
 		track_records = [] # マッチ済み対戦結果
 		account_type1_rate = {} # アカウント・キャラごとのレート情報
 		
@@ -69,25 +70,34 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 			ORDER BY
 			  rep_timestamp
 			SQL
-		
+			
 		res.each do |r|
 			t = TrackRecord.new
-			res.fields.length.times do |i|
-				t.instance_variable_set("@#{res.fields[i]}", r[i])
-			end
+			# 高速化のためインスタンス名直接指定
+			t.rep_timestamp = r[0]
+			t.player1_account_id = r[1]
+			t.player2_account_id = r[2]
+			t.player1_type1_id = r[3]
+			t.player2_type1_id = r[4]
+			t.player1_points = r[5]
+			t.player2_points = r[6]
+#			res.num_fields.times do |i|
+#				t.instance_variable_set("@#{res.fields[i]}", r[i])
+#			end
 			track_records << t
 		end
-		
+		res.clear
+				
 		res_body << "#{track_records.length} 件の対戦結果をレート計算対象として取得。\n"
 		res_body << "matched trackrecords selected...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
 		
-		# 時間変換
+		# 時刻変換
 		track_records.each do |t|
 			t.rep_timestamp =  pgsql_timestamp_str_to_time(t.rep_timestamp)
 		end
 		
-		res_body << "rep_timestamp prased...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
-		
+		res_body << "rep_timestamp parsed...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
+				
 		# 発生時間順にレート計算
 		track_records.each do |t|
 			
@@ -111,68 +121,79 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 					:counts => 0
 				}
 			
-			# 対戦前レート情報取得
-			rate1         = account_type1_rate[t.player1_account_id][t.player1_type1_id][:rate]
-			rd1           = account_type1_rate[t.player1_account_id][t.player1_type1_id][:rd]
-			elapsed_time1 = t.rep_timestamp - account_type1_rate[t.player1_account_id][t.player1_type1_id][:last_timestamp]
-			rate2         = account_type1_rate[t.player2_account_id][t.player2_type1_id][:rate]
-			rd2           = account_type1_rate[t.player2_account_id][t.player2_type1_id][:rd]
-			elapsed_time2 = t.rep_timestamp - account_type1_rate[t.player2_account_id][t.player2_type1_id][:last_timestamp]
+			# ハッシュオブジェクトキャッシュ
+			player1_type1_rate = account_type1_rate[t.player1_account_id][t.player1_type1_id]
+			player2_type1_rate = account_type1_rate[t.player2_account_id][t.player2_type1_id]
 			
+			# 対戦前レート情報取得
+			rate1         = player1_type1_rate[:rate]
+			rd1           = player1_type1_rate[:rd]
+			elapsed_time1 = t.rep_timestamp - player1_type1_rate[:last_timestamp]
+			rate2         = player2_type1_rate[:rate]
+			rd2           = player2_type1_rate[:rd]
+			elapsed_time2 = t.rep_timestamp - player2_type1_rate[:last_timestamp]
+
 			# 対戦結果取得
-			point1 = (1.0 + (t.player1_points.to_i <=> t.player2_points.to_i)) / 2.0
-			point2 = (1.0 + (t.player2_points.to_i <=> t.player1_points.to_i)) / 2.0
+			point1 = (1.0 + (t.player1_points.to_i <=> t.player2_points.to_i)) * 0.5
+			point2 = 1.0 - point1
 			
 			### レート計算
 			
 			# RD の時間経過による上昇
-			rd1 = [(rd1 ** 2.0 + RD_DEC * elapsed_time1) ** 0.5, MAX_RD].min
-			rd2 = [(rd2 ** 2.0 + RD_DEC * elapsed_time2) ** 0.5, MAX_RD].min
+			rd1 = (rd1 ** 2.0 + RD_DEC * elapsed_time1) ** 0.5
+			rd1 = MAX_RD if rd1 > MAX_RD
+			rd2 = (rd2 ** 2.0 + RD_DEC * elapsed_time2) ** 0.5
+			rd2 = MAX_RD if rd2 > MAX_RD
 			
 			# 信頼度による影響低下係数
-			g_rd1 = (1.0 + 3.0 * ((Q * rd1 / Math::PI) ** 2.0)) ** (-0.5)
-			g_rd2 = (1.0 + 3.0 * ((Q * rd2 / Math::PI) ** 2.0)) ** (-0.5)
+			g_rd1 = (1.0 + QIP * (rd1 ** 2.0)) ** (-0.5)
+			g_rd2 = (1.0 + QIP * (rd2 ** 2.0)) ** (-0.5)
+			#g_rd1 = (1.0 + 3.0 * ((Q * rd1 / Math::PI) ** 2.0)) ** (-0.5)
+			#g_rd2 = (1.0 + 3.0 * ((Q * rd2 / Math::PI) ** 2.0)) ** (-0.5)
 			
 			# 勝利期待値
-			expected_point1 = 1.0 / (1.0 + 10.0 ** (g_rd2 * (rate2 - rate1) / 400.0))
-			expected_point2 = 1.0 / (1.0 + 10.0 ** (g_rd1 * (rate1 - rate2) / 400.0))
+			expected_point1 = 1.0 / (1.0 + 10.0 ** (g_rd2 * (rate2 - rate1) * 0.0025))
+			expected_point2 = 1.0 / (1.0 + 10.0 ** (g_rd1 * (rate1 - rate2) * 0.0025))
 
 			# レート変化の分散
-			d1 = (((Q * g_rd2) ** 2) * expected_point1 * (1 - expected_point1)) ** (-0.5)
-			d2 = (((Q * g_rd1) ** 2) * expected_point2 * (1 - expected_point2)) ** (-0.5)
+			d1 = (((Q * g_rd2) ** 2) * expected_point1 * (1.0 - expected_point1)) ** (-0.5)
+			d2 = (((Q * g_rd1) ** 2) * expected_point2 * (1.0 - expected_point2)) ** (-0.5)
 
 			# 対戦後RD
-			rd1 = [((1 / rd1 ** 2) + (1 / d1 ** 2)) ** (-0.5), MIN_RD].max
-			rd2 = [((1 / rd2 ** 2) + (1 / d2 ** 2)) ** (-0.5), MIN_RD].max
+			rd1 = ((1.0 / rd1 ** 2) + (1.0 / d1 ** 2)) ** (-0.5)
+			rd1 = MIN_RD if rd1 < MIN_RD
+			rd2 = ((1.0 / rd2 ** 2) + (1.0 / d2 ** 2)) ** (-0.5)
+			rd2 = MIN_RD if rd2 < MIN_RD
 			
 			# 対戦後レート
 			rate1 += (Q * (rd1 ** 2)) * g_rd2 * (point1 - expected_point1)
 			rate2 += (Q * (rd2 ** 2)) * g_rd1 * (point2 - expected_point2)
 			
 			# 計算後レート情報保存
-			account_type1_rate[t.player1_account_id][t.player1_type1_id][:rate] = rate1
-			account_type1_rate[t.player1_account_id][t.player1_type1_id][:rd] = rd1
-			account_type1_rate[t.player1_account_id][t.player1_type1_id][:last_timestamp] = t.rep_timestamp
-			account_type1_rate[t.player2_account_id][t.player2_type1_id][:rate] = rate2
-			account_type1_rate[t.player2_account_id][t.player2_type1_id][:rd] = rd2
-			account_type1_rate[t.player2_account_id][t.player2_type1_id][:last_timestamp] = t.rep_timestamp
+			player1_type1_rate[:rate] = rate1
+			player1_type1_rate[:rd] = rd1
+			player1_type1_rate[:last_timestamp] = t.rep_timestamp
+			player2_type1_rate[:rate] = rate2
+			player2_type1_rate[:rd] = rd2
+			player2_type1_rate[:last_timestamp] = t.rep_timestamp
 			
 			# 対戦アカウント保存
-			account_type1_rate[t.player1_account_id][t.player1_type1_id][:account_ids] << t.player2_account_id
-			account_type1_rate[t.player2_account_id][t.player2_type1_id][:account_ids] << t.player1_account_id
+			player1_type1_rate[:account_ids] << t.player2_account_id
+			player2_type1_rate[:account_ids] << t.player1_account_id
 
 			# 対戦数保存
-			account_type1_rate[t.player1_account_id][t.player1_type1_id][:counts] += 1
-			account_type1_rate[t.player2_account_id][t.player2_type1_id][:counts] += 1
-			
+			player1_type1_rate[:counts] += 1
+			player2_type1_rate[:counts] += 1
+	
 		end
-		
+
 		res_body << "ratings calculated...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
 		
 		# 現在のRDを算出
 		account_type1_rate.each do |account_id, type1_rate|
 			type1_rate.each do |type1_id, rate_info|
-				rate_info[:rd] = [(rate_info[:rd] ** 2.0 + RD_DEC * (now - rate_info[:last_timestamp])) ** 0.5, MAX_RD].min
+				rate_info[:rd] = (rate_info[:rd] ** 2.0 + RD_DEC * (now - rate_info[:last_timestamp])) ** 0.5
+				rate_info[:rd] = MAX_RD if rate_info[:rd] > MAX_RD
 			end
 		end
 		
@@ -181,6 +202,8 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		# レート平均を INIT_RATE に合わせる
 		sum = 0
 		num = 0
+		avg = 0
+		dif_avg = 0 # (目標平均レート - 平均レート)
 		account_type1_rate.each do |account_id, type1_rate|
 			type1_rate.each do |type1_id, rate_info|
 				sum += rate_info[:rate]
@@ -191,14 +214,15 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		res_body << "ratings avarage calculated...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
 		
 		avg = sum.to_f / num.to_f
+		dif_avg = INIT_RATE - avg
 		account_type1_rate.each do |account_id, type1_rate|
 			type1_rate.each do |type1_id, rate_info|
-				rate_info[:rate] += (INIT_RATE - avg)
+				rate_info[:rate] += dif_avg
 			end
 		end
 		
 		res_body << "レート平均を #{avg} から #{INIT_RATE} に調整しました。\n"
-		sum = num = avg = nil
+		sum = num = avg = dif_avg = nil
 		
 		res_body << "ratings avarage adjusted...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
 		
@@ -330,5 +354,5 @@ File.open(LOG_PATH, 'a') do |log|
 	log.puts res_body
 	log.puts "----"
 end
-
+  
 exit
