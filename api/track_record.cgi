@@ -122,7 +122,7 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 				res_body << "受信対戦結果データ件数：#{source_track_records.length.to_s}件\n"
 				source_track_records.delete_if do |t|
 					# タイムスタンプの文字列形式は、postgres モジュール以下レベルの実装依存
-					existing_timestamps.index(Time.iso8601(t.elements['timestamp'].text.to_s).strftime('%Y-%m-%d %H:%M:%S'))
+					existing_timestamps.index(Time.iso8601(t.elements['timestamp'].text.to_s).localtime.strftime('%Y-%m-%d %H:%M:%S'))
 				end
 				res_body << "重複削除後対戦結果データ件数：#{source_track_records.length.to_s}件\n"
 				
@@ -174,7 +174,7 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 					source_track_records_values << <<-"SQL"
 						(
 							#{game_id.to_i},
-							to_timestamp('#{Time.iso8601(t_hash['timestamp'].to_s).strftime("%Y-%m-%d %H-%M-%S")}', 'YYYY-MM-DD HH24-MI-SS'),
+							to_timestamp('#{Time.iso8601(t_hash['timestamp'].to_s).localtime.strftime("%Y-%m-%d %H-%M-%S")}', 'YYYY-MM-DD HH24-MI-SS'),
 							#{account.id.to_i},
 							#{s t_hash['p1name'].to_s},
 							#{t_hash['p1type'].to_i},
