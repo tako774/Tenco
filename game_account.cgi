@@ -3,7 +3,7 @@
 # 開始時刻
 now = Time.now
 # リビジョン
-REVISION = 'R0.34'
+REVISION = 'R0.35'
 DEBUG = false
 
 $LOAD_PATH.unshift './common'
@@ -177,6 +177,11 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 								res.clear
 							end
 							
+							# NGワード伏字化
+							track_records.each do |t|
+								game_account.rep_name = hide_ng_words(game_account.rep_name)
+							end
+							
 							# アカウントのレーティング情報を取得
 							require 'GameAccountRating'
 							res = db.exec(<<-"SQL")
@@ -259,6 +264,12 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 								track_records << t
 							end
 							res.clear
+							
+							# NGワード伏字化
+							track_records.each do |t|
+								t.player1_name = hide_ng_words(t.player1_name)
+								t.player2_name = hide_ng_words(t.player2_name)
+							end
 							
 							# 対戦相手一覧作成
 							require 'GameAccount'

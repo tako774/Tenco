@@ -1,4 +1,6 @@
 ### ユーティリティモジュール
+NG_WORDS = File.read("#{File::dirname(__FILE__)}/../../../config/ng_words.txt").split("\n")
+
 module Utils
 	# SQL エスケープ
 	def sql_escape(p)
@@ -29,5 +31,12 @@ module Utils
 
 		return Time.local(*ta)
 	end
+	
+	# 特定文字列の伏字化
+	def hide_ng_words(str, alt = "**")
+		NG_WORDS.each do |w|
+			str.gsub!(w, alt)
+		end
+		return str
+	end
 end
-

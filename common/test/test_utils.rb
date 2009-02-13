@@ -32,4 +32,8 @@ class Test_Utils < Test::Unit::TestCase
 #{s "x' AND 1=(SELECT COUNT(*) FROM tabname); --"}
 		SQL
 	end
+	
+	def test_hide_ng_words
+		assert_equal("ウルトラ**スモス", hide_ng_words("ウルトラマンコスモス"))
+	end
 end

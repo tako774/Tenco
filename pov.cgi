@@ -325,7 +325,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 								ratings_each_type1[rating.type1_id.to_i][rating.game_pov_class_id.to_i] << rating
 							end
 							res.clear
-														
+							
 							# Type1 区分値取得
 							res = db.exec(<<-"SQL")
 								SELECT
