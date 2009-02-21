@@ -5,7 +5,7 @@ begin
 	# 開始時刻
 	now = Time.now
 	# リビジョン
-	REVISION = 'R0.04'
+	REVISION = 'R0.05'
 	DEBUG = false
 
 	$LOAD_PATH.unshift './common'
@@ -262,10 +262,12 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 									SELECT
 									  pa.*
 									FROM
-									  prize_accounts pa, prizes p
+									  prize_accounts pa, prizes p, accounts a
 									WHERE
 									      p.game_pov_id = #{game_pov.id.to_i}
 									  AND pa.prize_id = p.id
+									  AND a.id = pa.account_id
+									  AND a.del_flag = 0
 								SQL
 								
 								if res.num_tuples < 1 then
@@ -305,6 +307,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 								  AND ga.account_id = r.account_id
 								  AND ga.game_id = #{game_id.to_i}
 								  AND a.id = r.account_id
+								  AND a.del_flag = 0
 								ORDER BY
 								  gpc.show_order,
 								  #{"r.type1_id," if pov_eval_unit_seg == SEG_V[:pov_eval_unit][:game_type1]}
