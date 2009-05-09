@@ -4,7 +4,7 @@
 now = Time.now
 
 ### 対戦結果I/F API ###
-REVISION = 'R0.16'
+REVISION = 'R0.17'
 DEBUG = false
 
 $LOAD_PATH.unshift '../common'
@@ -353,11 +353,11 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		res_body << "transaction finished...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
 						
 		# DB ANALYZE
-		if (insert_records_count + matched_records_count * 4) / 500.0 > rand() then
-			db.exec("VACUUM ANALYZE track_records;")
-			res_body << "DB analyzed...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
-			log_msg << "\t#{Time.now - now}"
-		end
+		#if (insert_records_count + matched_records_count * 4) / 500.0 > rand() then
+		#	db.exec("VACUUM ANALYZE track_records;")
+		#	res_body << "DB analyzed...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
+		#	log_msg << "\t#{Time.now - now}"
+		#end
 		
 	rescue => ex
 		res_status = "Status: 400 Bad Request\n" unless res_status

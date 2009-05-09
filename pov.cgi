@@ -5,7 +5,7 @@ begin
 	# 開始時刻
 	now = Time.now
 	# リビジョン
-	REVISION = 'R0.05'
+	REVISION = 'R0.08'
 	DEBUG = false
 
 	$LOAD_PATH.unshift './common'
@@ -87,8 +87,14 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 				raise "ディレクトリトラバーサルの疑いがあります"
 			end
 		
-			# デバッグ時か、キャッシュが無いか、ロックファイルが無ければ（＝キャッシュの再生成を行う条件）、キャッシュ生成
-			unless (!DEBUG and File.exist?(cache_html_path) and File.exist?(cache_lock_path)) then
+			# デバッグ時か、キャッシュが無いかあってもファイルサイズが０か、
+			# ロックファイルが無ければ（＝キャッシュの再生成を行う条件）、キャッシュ生成
+			unless (
+				!DEBUG and 
+				File.exist?(cache_html_path) and File.size(cache_html_path) != 0 and
+				File.exist?(cache_html_header_path) and File.size(cache_html_header_path) != 0 and
+				File.exist?(cache_lock_path)
+			) then
 						
 				### キャッシュ生成
 				# 生成プロセスをひとつだけにするために、プロセスロックする
@@ -182,22 +188,19 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 								  AND gp.pov_id = pgpr2.pov_id
 								  AND gp.game_id = #{game_id.to_i}
 								  AND gp.id != #{game_pov.id.to_i}
+								ORDER BY
+								  gp.id
 							SQL
 							
-							if res.num_tuples != 1 then
-								res.clear
-								res_status = "Status: 400 Bad Request\n"
-								res_body = "ゲームPOV情報が登録されていません\n"
-								raise "ゲームPOV情報が登録されていません"
-							else
+							res.each do |r|
 								gp = GamePov.new
 								res.fields.length.times do |i|
-									gp.instance_variable_set("@#{res.fields[i]}", res[0][i])
+									gp.instance_variable_set("@#{res.fields[i]}", r[i])
 								end
 								related_game_povs << gp
-								res.clear
 							end
-
+							res.clear
+							
 							## 該当ゲームＰＯＶのクラス区分取得
 							require 'GamePovClass'
 							res = db.exec(<<-"SQL")
@@ -206,7 +209,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 								FROM
 								  game_pov_classes
 								WHERE
-								      game_pov_id = #{game_pov.id.to_i}
+								  game_pov_id = #{game_pov.id.to_i}
 								ORDER BY
 								  show_order
 							SQL
@@ -288,7 +291,11 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							require 'GameAccountRating'
 							res = db.exec(<<-"SQL")
 								SELECT
-								  r.*, ga.rep_name, pa.game_pov_class_id, a.name AS account_name
+								  r.*,
+								  ga.rep_name,
+								  pa.game_pov_class_id,
+								  a.name AS account_name,
+								  a.show_ratings_flag AS show_ratings_flag
 								FROM
 								  accounts a,
 								  game_accounts ga,
@@ -311,6 +318,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 								ORDER BY
 								  gpc.show_order,
 								  #{"r.type1_id," if pov_eval_unit_seg == SEG_V[:pov_eval_unit][:game_type1]}
+								  #{"r.matched_accounts DESC," if pov_id == 2}
 								  r.game_type1_ratings_rank,
 								  r.rating DESC,
 								  r.ratings_deviation

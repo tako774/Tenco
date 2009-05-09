@@ -7,6 +7,20 @@ require 'kconv'
 
 class Test_Utils < Test::Unit::TestCase
 	
+	def test_z2h
+		z1 = 'アイウエオ'		
+		assert_equal('ｱｲｳｴｵ', z2h(z1))
+	end
+	
+	def test_z2h_long_str	
+		z1 = 'アイウエオ'		
+		assert_equal('アイウエオ', z2h_long_str(z1))
+		z1 = 'アイウエオガギグゲゴ'		
+		assert_equal('ｱｲｳｴｵｶﾞｷﾞｸﾞｹﾞｺﾞ', z2h_long_str(z1))
+		z1 = '漢字とカナまじりで'		
+		assert_equal('漢字とｶﾅまじりで', z2h_long_str(z1))
+	end
+	
 	def test_sql_escape
 		assert_equal("E''''\n", <<-"SQL")
 #{s "'"}

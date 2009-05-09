@@ -18,7 +18,7 @@ class Authentication
 		# DB検索
 		res = db.exec(<<-"SQL")
 		  SELECT
-		    id, name, data_password, del_flag
+		    id, name, data_password, del_flag, encrypted_mail_address, show_ratings_flag, lock_version
 		  FROM
 		    accounts
 		  WHERE
@@ -78,6 +78,49 @@ class Authentication
 		else
 			res.clear
 			return nil
+		end
+	end
+	
+	# アカウント情報更新
+	# なければエラー
+	def self.update (name, password, new_mail_address, new_password, show_ratings_flag, lock_version)
+		require 'cryption'
+		
+		# DB接続取得
+		db = DB.getInstance
+		
+		# DBに登録
+		sql = <<-"SQL"
+		  UPDATE 
+			accounts
+		  SET
+			#{"password = " + s(Cryption.hash(new_password)) + "," if new_password}
+			#{"encrypted_password = " + s(Cryption.encrypt(new_password)) + "," if new_password}
+			#{"encrypted_mail_address = " + s(Cryption.encrypt(new_mail_address)) + ","  if new_mail_address}
+			#{"show_ratings_flag = " + show_ratings_flag.to_i.to_s + ","  if show_ratings_flag}
+			lock_version = lock_version + 1,
+			updated_at = CURRENT_TIMESTAMP
+		  WHERE
+			name = #{s name}
+			AND password = #{s password}
+			AND del_flag = 0
+			AND lock_version = #{lock_version.to_i}
+		  RETURNING *;
+		SQL
+
+		res = db.exec(sql)
+		
+		# 登録結果があればOK
+		unless res.num_tuples == 1 then
+			res.clear
+			raise "エラー：アカウントの更新に失敗しました。\n#{sql}"
+		else
+			account = Account.new
+			res.num_fields.times do |i|
+				account.instance_variable_set("@#{res.fields[i]}", res[0][i])
+			end
+			res.clear
+			return account
 		end
 	end
 end

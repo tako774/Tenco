@@ -1,18 +1,23 @@
 #!/usr/bin/ruby
 
-# インデックスページ作成CGI
+# ゲームキャラ対キャラ統計ページCGI
 begin
 	# 開始時刻
 	now = Time.now
 	# リビジョン
-	REVISION = 'R0.04'
+	REVISION = 'R0.01'
 	DEBUG = false
 
 	$LOAD_PATH.unshift './common'
 	$LOAD_PATH.unshift './entity'
 
+	require 'db'
 	require 'time'
 	require 'logger'
+	require 'utils'
+	include Utils
+	require 'erb'
+	include ERB::Util
 
 	# TOP ページ URL
 	TOP_URL = 'http://tenco.xrea.jp/'
@@ -27,6 +32,8 @@ begin
 	CACHE_LOCK_DIR = "#{TOP_DIR}/cache/lock/#{File::basename(__FILE__)}"
 	# キャッシュをつかったかどうか
 	is_cache_used = false
+	# 最大受付POSTデータサイズ（byte）
+	MAX_POST_DATA_BYTES = 10000;
 
 	# HTTP/HTTPSレスポンス文字列
 	res_status = "Status: 500 Server Error\n"
@@ -46,21 +53,30 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 	begin
 		query = {} # クエリストリング
 		db = nil   # DB接続 
-		
-		game_stat = nil # ゲーム統計情報
-		game_type1_stats = [] # キャラ別統計情報
-		type1 = [] # キャラ名区分値
-		
+									
+		game_id = nil # ゲームID
+
+		game = nil # ゲーム情報
+		game_type1_vs_type1_stats = {} # ゲームアカウント情報、キー1：使用キャラ、キー2：対戦相手キャラ
+		type1 = {} # キャラ区分値=>キャラ名のハッシュ
+		cache_expires = nil # 生成するキャッシュの期限
 		FOOTER_ERB_PATH = "./footer.erb" # フッターERBパス
+		LINK_ERB_PATH = "./link.erb" # リンクERBパス
 		
 		# クエリストリング分解・取得
-		ENV['QUERY_STRING'].to_s.split(/[;&]/).each do |q|
-		  key, val = q.split(/=/, 2)
-		  query[key] = val.gsub(/\+/," ").gsub(/%[a-fA-F\d]{2}/){ $&[1,2].hex.chr } if val
+		query = parse_query_str(ENV['QUERY_STRING'])
+				
+		# 入力バリデーション
+		unless (
+			query['game_id'] and
+			query['game_id'] != ''
+		) then
+			res_status = "Status: 400 Bad Request\n"
+			res_body = "入力データが正しくありません\ninput data validation error.\n"
+			raise "input data validation error."
+		else
+			game_id = query['game_id']
 		end
-		
-		game_id = 1
-		output = query['output'] ||= 'html'    # 出力形式
 		
 		# キャッシュフォルダがなければ生成
 		Dir.mkdir(CACHE_DIR, 0700) unless File.exist?(CACHE_DIR)
@@ -90,61 +106,59 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 			File.open(cache_lock_path, 'w') do |f|
 				if f.flock(File::LOCK_EX | File::LOCK_NB) then	
 					begin
-						require 'db'
-						require 'utils'
-						include Utils
-						
+					
 						# キャッシュの有効期限
 						cache_expires = (now + 60 * 60) - now.min * 60 - now.sec
-							
-						# DB接続
-						db = DB.getInstance
-
-						# ゲーム統計情報を取得
-						require 'GameStat'
+					
+						# DB接続取得
+						db = DB.getInstance							
+						
+						# ゲーム情報取得
+						require 'Game'
 						res = db.exec(<<-"SQL")
 							SELECT
 								*
 							FROM
-								game_stats
+								games
 							WHERE
-								game_id = #{game_id.to_i}
-								AND date_time = (SELECT MAX(date_time) FROM game_stats)
+								id = #{game_id.to_i}
 						SQL
 						
 						if res.num_tuples != 1 then
+							res.clear
+							res_status = "Status: 400 Bad Request\n"
+							res_body = "該当ゲーム情報は登録されていません\n"
+							raise "該当ゲーム情報は登録されていません"
 						else
-							game_stat = GameStat.new
-							res.fields.length.times do |i|
-								game_stat.instance_variable_set("@#{res.fields[i]}", res[0][i])
+							game = Game.new
+							res.num_fields.times do |i|
+								game.instance_variable_set("@#{res.fields[i]}", res[0][i])
 							end
+							res.clear	
 						end
 						
-						res.clear
-						
-						# キャラ別統計情報を取得
-						require 'GameType1Stat'
+						# ゲームキャラ対キャラ統計情報取得
+						require 'GameType1VsType1Stat'
 						res = db.exec(<<-"SQL")
 							SELECT
 								*
 							FROM
-								game_type1_stats
+								game_type1_vs_type1_stats
 							WHERE
-								game_id = #{game_id.to_i}
-								AND date_time = (SELECT MAX(date_time) FROM game_type1_stats)
-							ORDER BY
-								type1_id
-							SQL
-							
+								date_time = ( SELECT MAX(date_time) FROM game_type1_vs_type1_stats )
+								AND game_id = #{game_id.to_i}
+						SQL
+						
 						res.each do |r|
-							gts = GameType1Stat.new
-							res.fields.length.times do |i|
-								gts.instance_variable_set("@#{res.fields[i]}", r[i])
+							gtbts = GameType1VsType1Stat.new
+							res.num_fields.times do |i|
+								gtbts.instance_variable_set("@#{res.fields[i]}", r[i])
 							end
-							game_type1_stats << gts
+							game_type1_vs_type1_stats[gtbts.type1_id.to_i] ||= {}
+							game_type1_vs_type1_stats[gtbts.type1_id.to_i][gtbts.matched_type1_id.to_i] = gtbts
 						end
 						res.clear
-						
+					
 						# Type1 区分値取得
 						res = db.exec(<<-"SQL")
 							SELECT
@@ -154,13 +168,13 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							WHERE
 								games.id = #{game_id.to_i}
 							AND segment_values.segment_id = games.type1_segment_id
-						SQL
+							SQL
 						
 						res.each do |r|
 							type1[r[0].to_i] = r[1]
 						end
 						res.clear
-						
+							
 					rescue => ex
 						res_status = "Status: 500 Server Error\n"
 						res_body << "サーバーエラーです。ごめんなさい。\n"
@@ -168,13 +182,12 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 					ensure
 						db.close if db
 					end
-					
 					### キャッシュHTML出力
 					require 'erb'
 					include ERB::Util
 					
-					# game_stats 部生成
-					index_game_stats_html = ERB.new(File.read("#{File::basename(__FILE__, '.*')}_game_stats.erb"), nil, '-').result(binding)
+					# link 部生成
+					link_html = ERB.new(File.read(LINK_ERB_PATH), nil, '-').result(binding)
 					# footer 部生成
 					footer_html = ERB.new(File.read(FOOTER_ERB_PATH), nil, '-').result(binding)
 					

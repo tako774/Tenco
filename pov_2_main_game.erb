@@ -6,7 +6,7 @@
 	<table class="account">
 		<thead>
 			<tr>
-				<th>順位</th>
+				<th>マッチ人数</th>
 				<th>名前</th>
 				<th>キャラクター</th>
 				<th>レート<sub>±RD</sub>（対戦人数/対戦数）</th>
@@ -14,14 +14,16 @@
 		</thead>
 		<tbody>
 			<%- ratings[gpc.value.to_i].each do |r| -%>
-				<%- if r.show_ratings_flag.to_i != 0 -%>
 			<tr>
-				<td><%= h r.game_type1_ratings_rank %></td>
+				<td class="num"><%= h r.matched_accounts %>名</td>
 				<td><a href="<%= "#{TOP_URL}game/#{u r.game_id}/account/#{u r.account_name}/" %>"><%= xhtml_sp2nbsp(h(hide_ng_words(r.rep_name))) %></a></td>
 				<td><%= h "#{type1[r.type1_id.to_i]}" %></td>
+				<%- if r.show_ratings_flag.to_i != 0 -%>
 				<td><%= "#{h r.rating.to_f.round}<sub>±#{h r.ratings_deviation.to_f.floor}</sub>（#{h r.matched_accounts}人/#{h r.match_counts}戦）" %></td>
-			</tr>
+				<%- else -%>
+				<td><%= "#{(r.rating.to_f.round / 100.0).floor}XX<sub>±#{r.ratings_deviation.to_f.floor}</sub>（#{r.matched_accounts.to_i}人/#{r.match_counts.to_i}戦）" %></td>
 				<%- end -%>
+			</tr>
 			<%- end -%>
 		</tbody>
 	</table>

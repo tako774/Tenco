@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns='http://www.w3.org/1999/xhtml' xml:lang='ja' lang='ja'>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta http-equiv="content-style-type" content="text/css" />
+	<meta http-equiv="content-script-type" content="text/javascript" />
+	<link rel="stylesheet" type="text/css" href="<%= TOP_URL %>css/main.css" />
+	<link rel="stylesheet" type="text/css" href="<%= TOP_URL %>css/2cols_side-width-fixed.css" />
+	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/webtoolkit.sha1.js"></script>
+	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/jquery.js"></script>
+	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/jsdeferred.jquery.js"></script>
+	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/utils.js"></script>
+	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/account.js"></script>
+	<title><%= h account_name %> さんのアカウント設定 - Tenco!</title>
+	<script type="text/javascript">
+//<![CDATA[ 
+	
+// ロード時実行
+$(document).ready(
+	function(){
+		var account_password = "";
+		
+		// 現在の設定取得ボタンに実行関数を紐付け
+		$("#get_settings").click(
+			function() {
+				var account_password = $("#account_password").val();
+				if (account_password != "") {
+					get_account_settings('<%= h account.name %>', SHA1(account_password));
+				}
+			}
+		);
+		// パスワード入力欄でエンターでも実行
+		$("#account_password").keyup(
+			function(evt) {
+				if (evt.which == 13) {
+					$("#get_settings").click();
+				}
+			}
+		);
+		
+		// 設定更新ボタンに実行関数を紐付け
+		$("#update_settings").click(
+			function() {
+				var account_password      = $("#account_password").val();
+				var new_mail_address      = $("#new_mail_address").val();
+				var new_account_password  = $("#new_account_password").val();
+				var new_show_ratings_flag = $("input[@name='new_show_ratings_flag']:checked").val();
+				var lock_version          = $("#lock_version").val();
+				update_account_settings('<%= h account.name %>', SHA1(account_password), new_mail_address, new_account_password, new_show_ratings_flag, lock_version);
+			}
+		);
+		
+		// テキスト入力欄に全テキスト選択
+		$("input[type='text']").focus(function() { $(this).select();} );
+		$("input[type='password']").focus(function() { $(this).select();} );
+		
+		// テキスト入力欄に全テキスト選択
+		$("#account_password").removeAttr("disabled");
+
+	}
+);
+
+// ]]>
+	</script>
+</head>
+<body>
+<div id="container">
+
+<div id="header">
+	<h1><a href="<%= TOP_URL %>"><img alt="Tenco!" src='<%= TOP_URL %>images/Tenco.gif' width='<%= 366/3 %>' height='<%= 126/3 %>' /></a></h1>
+	<p>アカウント設定ページα3.1 (2009/04/18)</p>
+</div>
+
+<hr />
+
+<div id="main_wrapper">
+<div id="main">
+
+<div class="section">
+<h2><%= h account_name %> さんのアカウント設定</h2>
+<p>
+	パスワード：<input id='account_password' name='account_password' tabindex='1' type='password' size='24' value="" />&nbsp;<button id='get_settings' tabindex='2'>現在の設定取得</button></p>
+	<pre id="message" class="suppli"></pre>
+</p>
+
+<div id="account_settings" style="display:none">
+	<h3>現在の設定</h3>
+	<table id="current_account_settings" class="column-wise">
+		<tr><th>メールアドレス</th><td><span id="mail_address"></span></td></tr>
+		<tr><th>自レート表示</th><td><span id="show_ratings"></span></td></tr>
+	</table>
+
+	<h3>新しい設定</h3>
+	<p>メールアドレスは空欄にすると、登録を削除できます。<br />
+	また、パスワードは空欄のままにすると変更されません。<br />
+	注意：パスワード変更後は、緋行跡報告ツールの設定（config.yaml）の変更も忘れずに。</p>
+	<p><button id='update_settings' tabindex='8' style="display:none">設定更新</button></p>
+	<table id="new_account_settings" class="column-wise">
+		<tr><th>メールアドレス</th><td><input id='new_mail_address' tabindex='3' type='text' size='80' value="" /></td></tr>
+		<tr>
+			<th>自レート表示</th>
+			<td>
+				<label><input name='new_show_ratings_flag' tabindex='5' type='radio' value="1" />表示する</label>
+				<label><input name='new_show_ratings_flag' tabindex='6' type='radio' value="0" />あいまい表示</label>
+			</td>
+		</tr>
+		<tr><th>パスワード</th><td><input id='new_account_password' tabindex='7' type='password' size='24' value="" /></td></tr>
+	</table>
+	<input id="lock_version" type="hidden" value="" />
+	<p class="suppli">
+	自レート表示については、毎時0分の更新後に有効となります。<br />
+	自レート表示をあいまい表示にした場合の表示方法は、下記の通りとなります。
+	</p>
+	<ul class="suppli">
+		<li>マイページ／マッチ数ランキングのレートの下2桁が表示されなくなる</li>
+		<li>レートランキングの順位付けの対象外となる</li>
+		<li>マッチングおよびマッチ相手のレート計算は通常通り行われる</li>
+	</ul>
+</div>
+
+</div>
+
+
+</div>
+</div>
+
+<div id="tools">
+	<h2>マイページ</h2>
+	<ul>
+	<%- game_accounts.each do |ga| -%>
+		<li><a href="<%= "#{TOP_URL}game/#{ga.game_id.to_i}/account/#{u account_name}/" %>"><%= h ga.game_name %>のマイページ</a></li>
+	<%- end -%>
+	</ul>
+	<h2>リンク</h2>
+	<%= link_html %>
+</div>
+
+
+<hr />
+
+<div id="footer">
+<%= footer_html %>
+</div>
+
+</div>
+
+</body>
+</html>
+

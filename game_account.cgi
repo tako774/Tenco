@@ -3,7 +3,7 @@
 # 開始時刻
 now = Time.now
 # リビジョン
-REVISION = 'R0.35'
+REVISION = 'R0.37'
 DEBUG = false
 
 $LOAD_PATH.unshift './common'
@@ -77,9 +77,15 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 				raise "ディレクトリトラバーサルの疑いがあります"
 			end
 			
-			# デバッグ時か、キャッシュが無いか、ロックファイルが無ければ（＝キャッシュの再生成を行う条件）、キャッシュ生成
-			unless (!DEBUG and File.exist?(cache_html_path) and File.exist?(cache_xml_path) and File.exist?(cache_lock_path)) then
-						
+			# デバッグ時か、キャッシュが無いかあってもサイズ0か、
+			# ロックファイルが無いか、（＝キャッシュの再生成を行う条件）、キャッシュ生成
+			unless (!DEBUG and
+				File.exist?(cache_html_path) and (File.size(cache_html_path) != 0) and
+				File.exist?(cache_html_header_path) and (File.size(cache_html_header_path) != 0) and
+				File.exist?(cache_xml_path) and (File.size(cache_xml_path) != 0) and
+				File.exist?(cache_xml_header_path) and (File.size(cache_xml_header_path) != 0) and
+				File.exist?(cache_lock_path)
+			) then			
 				### キャッシュ生成
 				# 生成プロセスをひとつだけにするために、プロセスロックする
 				File.open(cache_lock_path, 'w') do |f|
@@ -102,7 +108,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							require 'Account'
 							res = db.exec(<<-"SQL")
 								SELECT
-									id, name, data_password
+									id, name, data_password, show_ratings_flag
 								FROM
 									accounts
 								WHERE
@@ -343,21 +349,24 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 						game_element.add_element('id').add_text(game_id.to_s)
 						game_element.add_element('name').add_text(game.name)
 						
-						# type1 要素生成
-						ratings.each do |r|
-							# ランダムを省く暫定対応
-							unless r.type1_id.to_i == SEG_V[:virtual_type1][:random][:value].to_i
-								type1_element = game_element.add_element('type1')
-								type1_element.add_element('id').add_text(r.type1_id)
-								type1_element.add_element('name').add_text(type1[r.type1_id.to_i])
-								type1_element.add_element('elo_rating_value').add_text("#{r.rating.to_f.round.to_s}")
-								type1_element.add_element('rating').add_text("#{r.rating.to_f.round.to_s}±#{r.ratings_deviation.to_f.floor.to_s}")
-								type1_element.add_element('rating_value').add_text(r.rating.to_f.round.to_s)
-								type1_element.add_element('ratings_deviation').add_text(r.ratings_deviation.to_f.floor.to_s)
-								type1_element.add_element('matched_accounts').add_text(r.matched_accounts)
-								type1_element.add_element('match_counts').add_text(r.match_counts)
-							end
-						end		
+						if account.show_ratings_flag.to_i != 0 then
+							# type1 要素生成
+							ratings.each do |r|
+								# ランダムを省く暫定対応
+								unless r.type1_id.to_i == SEG_V[:virtual_type1][:random][:value].to_i
+									type1_element = game_element.add_element('type1')
+									type1_element.add_element('id').add_text(r.type1_id)
+									type1_element.add_element('name').add_text(type1[r.type1_id.to_i])
+									type1_element.add_element('elo_rating_value').add_text("#{r.rating.to_f.round.to_s}")
+									type1_element.add_element('rating').add_text("#{r.rating.to_f.round.to_s}±#{r.ratings_deviation.to_f.floor.to_s}")
+									type1_element.add_element('rating_value').add_text(r.rating.to_f.round.to_s)
+									type1_element.add_element('ratings_deviation').add_text(r.ratings_deviation.to_f.floor.to_s)
+									type1_element.add_element('matched_accounts').add_text(r.matched_accounts)
+									type1_element.add_element('match_counts').add_text(r.match_counts)
+								end
+							end	
+						end
+						
 						# キャッシュXML/ヘッダ出力
 						File.open(cache_xml_path, 'w') do |w|
 							w.flock(File::LOCK_EX)

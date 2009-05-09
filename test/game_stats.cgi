@@ -5,7 +5,7 @@
 # 開始時刻
 now = Time.now
 # リビジョン
-REVISION = 'R0.02'
+REVISION = 'R0.03'
 
 DEBUG = 1
 
@@ -66,7 +66,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 			  SELECT
 			    game_id,
 			    LOCALTIMESTAMP AS date_time,
-				COUNT(*) AS track_records_count,
+				COUNT(id) AS track_records_count,
 				SUM(
 				  CASE
 				    WHEN matched_track_record_id IS NOT NULL THEN 1
@@ -99,7 +99,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 					  matched_track_record_id IS NOT NULL 
 				    GROUP BY
 				      player1_account_id
-				  ) AS TEMP1
+				  ) AS TEMP2
 				) AS matched_accounts_count,
 				(
 				  SELECT
@@ -112,7 +112,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 				      track_records 
 				    GROUP BY
 				      player1_account_id, player1_type1_id
-				  ) AS TEMP1
+				  ) AS TEMP3
 				) AS accounts_type1s_count,							
 				(
 				  SELECT
@@ -127,7 +127,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 				      matched_track_record_id IS NOT NULL  
 				    GROUP BY
 				      player1_account_id, player1_type1_id
-				  ) AS TEMP1
+				  ) AS TEMP4
 				) AS matched_accounts_type1s_count
 			  FROM
 				track_records
@@ -152,31 +152,43 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		res = db.exec(<<-"SQL")
 		  INSERT INTO
 		    game_type1_stats (game_id, type1_id, date_time, track_records_count, accounts_count, wins, loses)
+		  SELECT
+			game_id AS game_id,
+			player1_type1_id AS type1_id,
+			LOCALTIMESTAMP AS date_time,
+			SUM(track_records_count) AS track_records_count,
+			COUNT(player1_account_id) AS accounts_count,
+			SUM(wins) AS wins,
+			SUM(loses) AS loses
+		  FROM
+			(
 			  SELECT
-			    game_id,
-			    player1_type1_id AS type1_id,
-			    LOCALTIMESTAMP AS date_time,
-				COUNT(*) AS track_records_count,
-				COUNT(DISTINCT(player1_account_id)) AS accounts_count,
+				game_id,
+				player1_type1_id,
+				player1_account_id,
+				COUNT(id) AS track_records_count,
 				SUM(
 				  CASE
-				    WHEN player1_points > player2_points THEN 1
+					WHEN player1_points > player2_points THEN 1
 					ELSE 0
 				  END
-				) AS wins,
+				  ) AS wins,
 				SUM(
 				  CASE
-				    WHEN player1_points < player2_points THEN 1
+					WHEN player1_points < player2_points THEN 1
 					ELSE 0
 				  END
 				) AS loses
 			  FROM
 				track_records
 			  WHERE
-				game_id = #{game_id.to_i}
+				game_id = 1
 				AND matched_track_record_id IS NOT NULL
 			  GROUP BY
-			    game_id, player1_type1_id
+				game_id, player1_type1_id, player1_account_id
+		   ) AS temp1
+		 GROUP BY
+		   game_id, player1_type1_id
 		  RETURNING *
 		SQL
 		
@@ -196,13 +208,13 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		# キャラ別・対戦キャラ別対戦結果情報取得・保存
 		res = db.exec(<<-"SQL")
 		  INSERT INTO
-		    game_type1_vs_type1_stats (game_id, type1_id, matched_type1_id, date_time, track_records_count, wins, loses)
+			game_type1_vs_type1_stats (game_id, type1_id, matched_type1_id, date_time, track_records_count, wins, loses)
 			  SELECT
 			    game_id,
 				player1_type1_id AS type1_id,
 				player2_type1_id AS matched_type1_id,
 			    LOCALTIMESTAMP AS date_time,
-				count(*) AS track_records_count,
+				count(id) AS track_records_count,
 				sum(
 				  case
 				    when player1_points > player2_points then 1
@@ -243,8 +255,8 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		res_body << "transaction finished...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
 		
 		# アナライズ
-		db.exec("VACUUM ANALYZE")
-		res_body << "DB analyzed...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
+		#db.exec("VACUUM ANALYZE")
+		#res_body << "DB analyzed...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
 		
 	rescue => ex
 		res_status = "Status: 500 Server Error\n" unless res_status

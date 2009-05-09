@@ -22,6 +22,9 @@
 // ロード時実行
 $(document).ready(
 	function(){
+		// 対戦結果テーブル表示
+		// $("#track_records").show();
+		
 		// javascript 利用部表示
 		var track_records_tool_html = "";
 		track_records_tool_html += "\t\t\t\t\t<span id='search_tool_msg' class='suppli msg'>search:</span>\n";
@@ -76,12 +79,12 @@ $(document).ready(
 <div id="container">
 
 <div id="header">
-<h1><a href="<%= TOP_URL %>"><img alt="Tenco!" src='<%= TOP_URL %>images/Tenco.gif' width='<%= 366/3 %>' height='<%= 126/3 %>' /></a></h1> マイページ 開発中バージョンα5.3（2009/02/13）
+<h1><a href="<%= TOP_URL %>"><img alt="Tenco!" src='<%= TOP_URL %>images/Tenco.gif' width='<%= 366/3 %>' height='<%= 126/3 %>' /></a></h1> マイページ 開発中バージョンα5.6（2009/05/02）
 <p id="meta_info">
+λ＜レートなんて飾りなんです。偉い人にはそれがわからんのです<br />
 <%= now.strftime('%m/%d %H:%M') %> に作成（毎時0分以降に再生成）<br />
-おしらせ：対戦結果検索つけました。IE以外超超推奨。（01/14）<br />
-おしらせ：未マッチの相手名を復号できるようにしました。（01/12）<br />
-おしらせ：<img alt="" src="<%= TOP_URL %>client/images/tenco.ico" width="16" height="16" /> <a href="<%= TOP_URL %>">報告ツール Ver.0.07c</a> リリース（12/27）
+おしらせ：<img alt="" src="<%= TOP_URL %>client/images/tenco.ico" width="16" height="16" /> <a href="<%= TOP_URL %>">報告ツール Ver.0.07c</a> リリース（08/12/27）<br />
+おしらせ：<a href="<%= "#{TOP_URL}game/1/type1_vs_type1_stats/" %>">キャラ対キャラ統計ページ</a>を作成しました（09/04/24)
 </p>
 </div>
 
@@ -101,6 +104,11 @@ $(document).ready(
 	
 	<div class="section">
 		<h2>レーティング Rev.3</h2>
+		<%- if account.show_ratings_flag.to_i == 0 then -%>
+		<p class="suppli">
+		レートはあいまい表示設定です。百の位以上のみ表示します。
+		</p>
+		<%- end -%>
 		<table id="ratings">
 			<thead>
 				<tr>
@@ -112,7 +120,11 @@ $(document).ready(
 				<%- ratings.each do |r| -%>
 				<tr>
 					<td><%= "#{type1_h[r.type1_id.to_i]}" %></td>
+					<%- if account.show_ratings_flag.to_i != 0 then -%>
 					<td><%= "#{r.rating.to_f.round}<sub>±#{r.ratings_deviation.to_f.floor}</sub>（#{r.matched_accounts.to_i}人/#{r.match_counts.to_i}戦）" %></td>
+					<%- else -%>
+					<td><%= "#{(r.rating.to_f.round / 100.0).floor}XX<sub>±#{r.ratings_deviation.to_f.floor}</sub>（#{r.matched_accounts.to_i}人/#{r.match_counts.to_i}戦）" %></td>
+					<%- end -%>
 				</tr>
 				<%- end -%>
 			</tbody>
@@ -154,24 +166,24 @@ $(document).ready(
 					<%- if t.player1_points > t.player2_points -%>
 				<tr>
 					<td><%= pgsql_timestamp_str_to_time(t.play_timestamp).strftime('%y/%m/%d %H:%M') %></td>
-					<td><%= "#{h t.player1_name} (#{type1_h[t.player1_type1_id.to_i]})" %></td>
+					<td><%= "#{z2h_long_str(xhtml_sp2nbsp(h t.player1_name))} (#{type1_h[t.player1_type1_id.to_i]})" %></td>
 					<td class="vs"><%= "#{t.player1_points.to_i} - #{t.player2_points.to_i}" %></td>
 						<%- unless t.player2_account_name.nil? -%>
-					<td><a href="<%= "#{TOP_URL}game/#{game_id.to_i}/account/#{u t.player2_account_name}/" %>"><%= h t.player2_name %></a><%= " (#{type1_h[t.player2_type1_id.to_i]})" %></td>
+					<td><a href="<%= "#{TOP_URL}game/#{game_id.to_i}/account/#{u t.player2_account_name}/" %>"><%= z2h_long_str(xhtml_sp2nbsp(h t.player2_name)) %></a><%= " (#{type1_h[t.player2_type1_id.to_i]})" %></td>
 						<%- else -%>
-					<td><span class="enc_alt"><%= "◇#{t.player2_name[11..14]}" %></span><span class="enc"><%= u t.player2_name %></span> <%= "(#{type1_h[t.player2_type1_id.to_i]})" %></td>
+					<td><span class="enc_alt"><%= "◇#{t.player2_name[11..14]}" %></span><span class="enc"><%= u(h t.player2_name) %></span> <%= "(#{type1_h[t.player2_type1_id.to_i]})" %></td>
 						<%- end -%>
 				</tr>
 					<%- else -%>
 				<tr>
 					<td><%= pgsql_timestamp_str_to_time(t.play_timestamp).strftime('%y/%m/%d %H:%M')  %></td>
 						<%- unless t.player2_account_name.nil? -%>
-					<td><a href="<%= "#{TOP_URL}game/#{u game_id}/account/#{u t.player2_account_name}/" %>"><%= h t.player2_name %></a><%= " (#{type1_h[t.player2_type1_id.to_i]})" %></td>
+					<td><a href="<%= "#{TOP_URL}game/#{u game_id}/account/#{u t.player2_account_name}/" %>"><%= z2h_long_str(xhtml_sp2nbsp(h t.player2_name)) %></a><%= " (#{type1_h[t.player2_type1_id.to_i]})" %></td>
 						<%- else -%>
-					<td><span class="enc_alt"><%= "◇#{t.player2_name[11..14]}" %></span><span class="enc"><%= u t.player2_name %></span> <%= "(#{type1_h[t.player2_type1_id.to_i]})" %></td>
+					<td><span class="enc_alt"><%= "◇#{t.player2_name[11..14]}" %></span><span class="enc"><%= u(h t.player2_name) %></span> <%= "(#{type1_h[t.player2_type1_id.to_i]})" %></td>
 						<%- end -%>
 					<td class="vs"><%= "#{t.player2_points.to_i} - #{t.player1_points.to_i}" %></td>
-					<td><%= "#{h t.player1_name} (#{type1_h[t.player1_type1_id.to_i]})" %></td>
+					<td><%= "#{z2h_long_str(xhtml_sp2nbsp(h t.player1_name))} (#{type1_h[t.player1_type1_id.to_i]})" %></td>
 				</tr>
 					<%- end -%>
 				<%- end -%>
@@ -183,7 +195,7 @@ $(document).ready(
 	</div>
 	
 	<div id="profile">
-	<%= h game_account.rep_name %> さん<br />
+	<%= xhtml_sp2nbsp(h game_account.rep_name) %> さん<br />
 	<br />
 キャラクター使用率
 <pre class="AA">##ビジュアル表現を予定##
@@ -200,6 +212,12 @@ $(document).ready(
 </pre>
 <br />
 そのほかプロフィールあれこれ<br />
+<p>
+<a href="<%= "#{TOP_URL}account/#{u account_name}/manage/" %>">アカウント設定</a>
+</p>
+<p>
+<a href="<%= "#{TOP_URL}game/#{u game_id}/account/#{u account_name}/output=xml" %>"><img width="40" height="18" src="<%= "#{TOP_URL}images/xml.png" %>" alt="アカウント情報（XML形式）" /></a>
+</p>
 	</div>
 </div>
 
@@ -208,11 +226,16 @@ $(document).ready(
 	<ul>
 		<li><a href="<%= "#{TOP_URL}game/#{u game_id}/pov/1/" %>">レートランキング</a></li>
 		<li><a href="<%= "#{TOP_URL}game/#{u game_id}/pov/1/type1/" %>">レートランキング（キャラ別）</a></li>
+		<li><a href="<%= "#{TOP_URL}game/#{u game_id}/pov/2/" %>">マッチ数ランキング</a></li>
+	</ul>
+	<h2>統計</h2>
+	<ul>
+		<li><a href="<%= "#{TOP_URL}game/#{u game_id}/type1_vs_type1_stats/" %>">キャラ対キャラ統計</a></li>
 	</ul>
 	<h2>過去の対戦相手</h2>
 	<ul>
 		<%- matched_game_accounts.each do |a| -%>
-		<li><a href="<%= "#{TOP_URL}game/#{u game_id}/account/#{u a.account_name}/" %>"><%= h a.rep_name %></a></li>
+		<li><a href="<%= "#{TOP_URL}game/#{u game_id}/account/#{u a.account_name}/" %>"><%= xhtml_sp2nbsp(h a.rep_name) %></a></li>
 		<%- end -%>
 	</ul>
 	<hr />

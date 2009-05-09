@@ -27,12 +27,14 @@
 				<%- game_pov_classes.each do |gpc| -%>
 					<%- if ratings_each_type1[type1_id.to_i][gpc.value.to_i] -%>
 						<%- ratings_each_type1[type1_id.to_i][gpc.value.to_i].each do |r| -%>
+							<%- if r.show_ratings_flag.to_i != 0 -%>
 				<tr>
 					<td><%= h r.game_each_type1_ratings_rank %></td>
-					<td><a href="<%= "#{TOP_URL}game/#{u r.game_id}/account/#{u r.account_name}/" %>"><%= h(hide_ng_words(r.rep_name)) %></a></td>
+					<td><a href="<%= "#{TOP_URL}game/#{u r.game_id}/account/#{u r.account_name}/" %>"><%= xhtml_sp2nbsp(h(hide_ng_words(r.rep_name))) %></a></td>
 					<td><%= "#{h r.rating.to_f.round}<sub>±#{h r.ratings_deviation.to_f.floor}</sub>（#{h r.matched_accounts}人/#{h r.match_counts}戦）" %></td>
 					<td class="suppli">#<%= h r.game_type1_ratings_rank %></td>
 				</tr>
+							<%- end -%>
 						<%- end -%>
 					<%- end -%>
 				<%- end -%>

@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns='http://www.w3.org/1999/xhtml' xml:lang='ja' lang='ja'>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta http-equiv="content-style-type" content="text/css" />
+	<meta http-equiv="content-script-type" content="text/javascript" />
+	<link rel="stylesheet" type="text/css" href="<%= TOP_URL %>css/main.css" />
+	<link rel="stylesheet" type="text/css" href="<%= TOP_URL %>css/2cols_side-width-fixed.css" />
+	<link rel="stylesheet" type="text/css" href="<%= TOP_URL %>css/stats.css" />
+	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/jquery.js"></script>
+	<title><%= h game.name %> のキャラ対キャラ統計 - Tenco!</title>
+	<script type="text/javascript">
+//<![CDATA[ 
+	
+// ロード時実行
+var i = 1
+
+$(document).ready(
+	function(){
+	
+		// セルの値によってCSS用クラス付与
+		$("#game_type1_vs_type1_win_rate td").each(function() {
+			// セルの値取得
+			var value = $(this).text();
+			
+			if (value >= 62.5) {
+				$(this).addClass("legend_1");
+			}
+			else if (value >= 57.5) {
+				$(this).addClass("legend_2");
+			}
+			else if (value >= 52.5) {
+				$(this).addClass("legend_3");
+			}
+			else if (value > 47.5) {
+				$(this).addClass("legend_4");
+			}
+			else if (value > 42.5) {
+				$(this).addClass("legend_5");
+			}
+			else if (value > 37.5) {
+				$(this).addClass("legend_6");
+			}
+			else {
+				$(this).addClass("legend_7");
+			}
+		});
+		
+	}
+);
+
+// ]]>
+	</script>
+</head>
+<body>
+<div id="container">
+
+<div id="header">
+	<h1><a href="<%= TOP_URL %>"><img alt="Tenco!" src='<%= TOP_URL %>images/Tenco.gif' width='<%= 366/3 %>' height='<%= 126/3 %>' /></a></h1>
+	<p>キャラ対キャラ統計ページ Rev.1 (2009/04/24)</p>
+	<p id="meta_info">
+		<%= now.strftime('%m/%d %H:%M') %> に作成（毎時0分以降に再生成）<br />
+	</p>
+</div>
+
+<hr />
+
+<div id="main_wrapper">
+<div id="main">
+
+<div class="section">
+<h2><%= h game.name %> のキャラ対キャラ統計</h2>
+
+<h3>勝率（マッチ済）</h3>
+<p class="suppli">
+左側のキャラの、右上側のキャラに対する勝率（％）です。
+</p>
+<table id="game_type1_vs_type1_win_rate" class="column-wise stats" summary="マッチ済み対戦結果のキャラ対キャラ別勝率表">
+<tr>
+	<th></th>
+<%- type1.keys.sort.each do |type1_id| -%>
+	<th><%= "#{h type1[type1_id].split(//u)[0]}" %></th>
+<%- end -%>
+</tr>
+<%- type1.keys.sort.each do |type1_id| -%>
+<tr>
+	<th><%= "#{h type1[type1_id].split(//u)[0]}" %></th>
+	<%- type1.keys.sort.each do |matched_type1_id| -%>
+	<%- gtvts = game_type1_vs_type1_stats[type1_id][matched_type1_id] -%>
+	<td class="num"><%= "#{((gtvts.wins.to_f / gtvts.track_records_count.to_f) * 1000).round / 10.0}" %></td>
+	<%- end -%>
+</tr>
+<%- end -%>
+</table>
+
+<h3>対戦数（マッチ済）</h3>
+<table class="column-wise stats" summary="マッチ済み対戦結果のキャラ対キャラ別対戦数表">
+<tr>
+	<th></th>
+<%- type1.keys.sort.each do |type1_id| -%>
+	<th><%= "#{h type1[type1_id].split(//u)[0]}" %></th>
+<%- end -%>
+</tr>
+<%- type1.keys.sort.each do |type1_id| -%>
+<tr>
+	<th><%= "#{h type1[type1_id].split(//u)[0]}" %></th>
+	<%- type1.keys.sort.each do |matched_type1_id| -%>
+	<td class="num"><%= "#{game_type1_vs_type1_stats[type1_id][matched_type1_id].track_records_count.to_i}" %></td>
+	<%- end -%>
+</tr>
+<%- end -%>
+</table>
+
+</div>
+
+
+</div>
+</div>
+
+<div id="tools">
+	<h2>プライズページ</h2>
+	<ul>
+		<li><a href="<%= "#{TOP_URL}game/#{u game_id}/pov/1/" %>">レートランキング</a></li>
+		<li><a href="<%= "#{TOP_URL}game/#{u game_id}/pov/1/type1/" %>">レートランキング（キャラ別）</a></li>
+		<li><a href="<%= "#{TOP_URL}game/#{u game_id}/pov/2/" %>">マッチ数ランキング</a></li>
+	</ul>
+	<h2>リンク</h2>
+	<%= link_html %>
+</div>
+
+
+<hr />
+
+<div id="footer">
+<%= footer_html %>
+</div>
+
+</div>
+
+</body>
+</html>
+

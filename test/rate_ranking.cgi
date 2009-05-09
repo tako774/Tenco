@@ -5,7 +5,7 @@ begin
 now = Time.now
 
 ### レートランキングデータ作成処理 ###
-REVISION = '0.02'
+REVISION = '0.03'
 DEBUG = 1
 
 $LOAD_PATH.unshift '../common'
@@ -64,6 +64,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 			WHERE
 			      a.id = r.account_id
 			  AND a.del_flag = 0
+			  AND a.show_ratings_flag != 0
 			  AND r.game_id = #{game_id.to_i}
 			  AND r.ratings_deviation < #{LIMIT_MAX_RD.to_i}
 			  AND r.matched_accounts >= #{LIMIT_MIN_MATCHED_ACCOUNTS.to_i}
@@ -138,7 +139,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 				  updated_at = CURRENT_TIMESTAMP,
 				  lock_version = lock_version + 1
 				WHERE
-					  game_id = #{game_id.to_i}
+				  game_id = #{game_id.to_i}
 				  AND (
 					NOT (
 						  ratings_deviation < #{LIMIT_MAX_RD.to_i}
@@ -166,8 +167,8 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		res_body << "transaction finished...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
 		
 		# DB ANALYZE
-		db.exec("VACUUM ANALYZE;")
-		res_body << "DB analyzed...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
+		#db.exec("VACUUM ANALYZE;")
+		#res_body << "DB analyzed...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
 		
 	rescue => ex
 		res_status = "Status: 500 Server Error\n" unless res_status

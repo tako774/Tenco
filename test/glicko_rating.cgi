@@ -4,7 +4,7 @@
 now = Time.now
 
 ### Glicko Ratings 計算 ###
-REVISION = '0.04'
+REVISION = '0.11'
 DEBUG = 1
 
 $LOAD_PATH.unshift '../common'
@@ -36,12 +36,13 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		INIT_RATE = 1500.0 # 初期レート
 		MIN_RD = 50.0      # Ratings Deviation の最小値
 		MAX_RD = 350.0     # Ratings Deviation の最大値
+		MIN_RD_SQ = MIN_RD ** 2.0 # Ratings Deviation の最小値の２乗
+		MAX_RD_SQ = MAX_RD ** 2.0 # Ratings Deviation の最大値の２乗
 		RD_SATURATION_TIME = 365.2422 * 24 * 60 * 60  # RD が時間経過で最小から最大まで飽和するまでの秒数
 		RD_DEC = (MAX_RD ** 2.0 - MIN_RD ** 2.0) / RD_SATURATION_TIME.to_f  # RD の時間経過に伴う逓減係数
 		Q = Math::log(10) / 400.0 # 定数
 		QIP = 3.0 * ((Q / Math::PI) ** 2) # 定数 
 		
-		track_records = [] # マッチ済み対戦結果
 		account_type1_rate = {} # アカウント・キャラごとのレート情報
 		
 		# DB接続
@@ -71,9 +72,14 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 			  rep_timestamp
 			SQL
 			
+		res_body << "#{res.num_tuples} 件の対戦結果をレート計算対象として取得。\n"
+		res_body << "matched trackrecords selected...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
+
+		# 以下ループで使いまわすインスタンス
+		t = TrackRecord.new
+		
 		res.each do |r|
-			t = TrackRecord.new
-			# 高速化のためインスタンス名直接指定
+			# 高速化のためインスタンス変数名直接指定
 			t.rep_timestamp = r[0]
 			t.player1_account_id = r[1]
 			t.player2_account_id = r[2]
@@ -84,22 +90,12 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 #			res.num_fields.times do |i|
 #				t.instance_variable_set("@#{res.fields[i]}", r[i])
 #			end
-			track_records << t
-		end
-		res.clear
-				
-		res_body << "#{track_records.length} 件の対戦結果をレート計算対象として取得。\n"
-		res_body << "matched trackrecords selected...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
-		
-		# 時刻変換
-		track_records.each do |t|
+
+			# 時刻変換
 			t.rep_timestamp =  pgsql_timestamp_str_to_time(t.rep_timestamp)
-		end
-		
-		res_body << "rep_timestamp parsed...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
-				
-		# 発生時間順にレート計算
-		track_records.each do |t|
+						
+						
+			### 発生時間順にレート計算
 			
 			# アカウント・タイプ別レート情報初期化
 			account_type1_rate[t.player1_account_id] ||= {}
@@ -107,7 +103,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 			account_type1_rate[t.player1_account_id][t.player1_type1_id] ||= 
 				{
 					:rate => INIT_RATE,
-					:rd => MAX_RD,
+					:rd_sq => MAX_RD_SQ,
 					:last_timestamp => t.rep_timestamp,
 					:account_ids => [],
 					:counts => 0
@@ -115,7 +111,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 			account_type1_rate[t.player2_account_id][t.player2_type1_id] ||=
 				{
 					:rate => INIT_RATE,
-					:rd => MAX_RD,
+					:rd_sq => MAX_RD_SQ,
 					:last_timestamp => t.rep_timestamp,
 					:account_ids => [],
 					:counts => 0
@@ -127,10 +123,10 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 			
 			# 対戦前レート情報取得
 			rate1         = player1_type1_rate[:rate]
-			rd1           = player1_type1_rate[:rd]
+			rd1_sq        = player1_type1_rate[:rd_sq]
 			elapsed_time1 = t.rep_timestamp - player1_type1_rate[:last_timestamp]
 			rate2         = player2_type1_rate[:rate]
-			rd2           = player2_type1_rate[:rd]
+			rd2_sq        = player2_type1_rate[:rd_sq]
 			elapsed_time2 = t.rep_timestamp - player2_type1_rate[:last_timestamp]
 
 			# 対戦結果取得
@@ -139,15 +135,15 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 			
 			### レート計算
 			
-			# RD の時間経過による上昇
-			rd1 = (rd1 ** 2.0 + RD_DEC * elapsed_time1) ** 0.5
-			rd1 = MAX_RD if rd1 > MAX_RD
-			rd2 = (rd2 ** 2.0 + RD_DEC * elapsed_time2) ** 0.5
-			rd2 = MAX_RD if rd2 > MAX_RD
+			# RD の２乗の時間経過による上昇
+			rd1_sq = rd1_sq + RD_DEC * elapsed_time1
+			rd1_sq = MAX_RD_SQ if rd1_sq > MAX_RD_SQ
+			rd2_sq = rd2_sq + RD_DEC * elapsed_time2
+			rd2_sq = MAX_RD_SQ if rd2_sq > MAX_RD_SQ
 			
 			# 信頼度による影響低下係数
-			g_rd1 = (1.0 + QIP * (rd1 ** 2.0)) ** (-0.5)
-			g_rd2 = (1.0 + QIP * (rd2 ** 2.0)) ** (-0.5)
+			g_rd1 = (1.0 + QIP * rd1_sq) ** (-0.5)
+			g_rd2 = (1.0 + QIP * rd2_sq) ** (-0.5)
 			#g_rd1 = (1.0 + 3.0 * ((Q * rd1 / Math::PI) ** 2.0)) ** (-0.5)
 			#g_rd2 = (1.0 + 3.0 * ((Q * rd2 / Math::PI) ** 2.0)) ** (-0.5)
 			
@@ -155,26 +151,26 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 			expected_point1 = 1.0 / (1.0 + 10.0 ** (g_rd2 * (rate2 - rate1) * 0.0025))
 			expected_point2 = 1.0 / (1.0 + 10.0 ** (g_rd1 * (rate1 - rate2) * 0.0025))
 
-			# レート変化の分散
-			d1 = (((Q * g_rd2) ** 2) * expected_point1 * (1.0 - expected_point1)) ** (-0.5)
-			d2 = (((Q * g_rd1) ** 2) * expected_point2 * (1.0 - expected_point2)) ** (-0.5)
+			# レート変化の分散の逆数
+			d1_inv_sq = ((Q * g_rd2) ** 2) * expected_point1 * (1.0 - expected_point1)
+			d2_inv_sq = ((Q * g_rd1) ** 2) * expected_point2 * (1.0 - expected_point2)
 
-			# 対戦後RD
-			rd1 = ((1.0 / rd1 ** 2) + (1.0 / d1 ** 2)) ** (-0.5)
-			rd1 = MIN_RD if rd1 < MIN_RD
-			rd2 = ((1.0 / rd2 ** 2) + (1.0 / d2 ** 2)) ** (-0.5)
-			rd2 = MIN_RD if rd2 < MIN_RD
+			# 対戦後RD の２乗
+			rd1_sq = 1.0 / (1.0 / rd1_sq + d1_inv_sq)
+			rd1_sq = MIN_RD_SQ if rd1_sq < MIN_RD_SQ
+			rd2_sq = 1.0 / (1.0 / rd2_sq + d2_inv_sq)
+			rd2_sq = MIN_RD_SQ if rd2_sq < MIN_RD_SQ
 			
 			# 対戦後レート
-			rate1 += (Q * (rd1 ** 2)) * g_rd2 * (point1 - expected_point1)
-			rate2 += (Q * (rd2 ** 2)) * g_rd1 * (point2 - expected_point2)
+			rate1 += (Q * rd1_sq) * g_rd2 * (point1 - expected_point1)
+			rate2 += (Q * rd2_sq) * g_rd1 * (point2 - expected_point2)
 			
 			# 計算後レート情報保存
 			player1_type1_rate[:rate] = rate1
-			player1_type1_rate[:rd] = rd1
+			player1_type1_rate[:rd_sq] = rd1_sq
 			player1_type1_rate[:last_timestamp] = t.rep_timestamp
 			player2_type1_rate[:rate] = rate2
-			player2_type1_rate[:rd] = rd2
+			player2_type1_rate[:rd_sq] = rd2_sq
 			player2_type1_rate[:last_timestamp] = t.rep_timestamp
 			
 			# 対戦アカウント保存
@@ -184,16 +180,19 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 			# 対戦数保存
 			player1_type1_rate[:counts] += 1
 			player2_type1_rate[:counts] += 1
-	
+			
 		end
-
+		res.clear
+		t = nil
+		
 		res_body << "ratings calculated...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
 		
 		# 現在のRDを算出
 		account_type1_rate.each do |account_id, type1_rate|
 			type1_rate.each do |type1_id, rate_info|
-				rate_info[:rd] = (rate_info[:rd] ** 2.0 + RD_DEC * (now - rate_info[:last_timestamp])) ** 0.5
-				rate_info[:rd] = MAX_RD if rate_info[:rd] > MAX_RD
+				rate_info[:rd_sq] = rate_info[:rd_sq] + RD_DEC * (now - rate_info[:last_timestamp])
+				rate_info[:rd_sq] = MAX_RD_SQ if rate_info[:rd_sq] > MAX_RD_SQ
+				rate_info[:rd] = rate_info[:rd_sq] ** 0.5
 			end
 		end
 		
@@ -229,72 +228,65 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		# 計算結果をDBに保存
 		begin
 			require 'GameAccountRating'
-			
+			update_sql = ""
+			insert_sql = ""
+
 			account_type1_rate.each do |account_id, type1_rate|
 				type1_rate.each do |type1_id, rate_info|
 				
 					# 更新または作成
-					res_update = db.exec(<<-"SQL")
-						UPDATE
-						  game_account_ratings
-						SET
-						  rating = #{rate_info[:rate].to_f},
-						  ratings_deviation = #{rate_info[:rd].to_f},
-						  matched_accounts = #{rate_info[:account_ids].uniq.length},
-						  match_counts = #{rate_info[:counts].to_i},
-						  updated_at = CURRENT_TIMESTAMP,
-						  lock_version = lock_version + 1
-						WHERE
-						  game_id = #{game_id.to_i}
-						  AND account_id = #{account_id.to_i}
-						  AND type1_id = #{type1_id.to_i}
-						RETURNING id
+					update_sql = <<-"SQL"
+UPDATE
+  game_account_ratings
+SET
+  rating = #{rate_info[:rate].to_f},
+  ratings_deviation = #{rate_info[:rd].to_f},
+  matched_accounts = #{rate_info[:account_ids].uniq.length},
+  match_counts = #{rate_info[:counts].to_i}
+WHERE
+  game_id = #{game_id.to_i}
+  AND account_id = #{account_id.to_i}
+  AND type1_id = #{type1_id.to_i}
 					SQL
+					
+					res_update = db.exec(update_sql)
 									
 					# UPDATE 失敗時は INSERT
-					if res_update.num_tuples != 1 then
-						res_update.clear
-						res_insert = db.exec(<<-"SQL")
-						  INSERT INTO
-						    game_account_ratings
-							(
-							  game_id,
-							  account_id,
-							  type1_id,
-							  rating,
-							  ratings_deviation,
-							  matched_accounts,
-							  match_counts
-							)
+					if res_update.cmdstatus != 'UPDATE 1' then
+						insert_sql = <<-"SQL"
+						INSERT INTO
+						  game_account_ratings
+						  (
+						    game_id,
+						    account_id,
+						    type1_id,
+						    rating,
+						    ratings_deviation,
+						    matched_accounts,
+						    match_counts
+						  )
 						  VALUES
-						    (
-							  #{game_id.to_i},
-							  #{account_id.to_i},
-							  #{type1_id.to_i},
-							  #{rate_info[:rate].to_f},
-							  #{rate_info[:rd].to_f},
-							  #{rate_info[:account_ids].uniq.length},
-							  #{rate_info[:counts].to_i}
-							)
-						  RETURNING id;
+						  (
+						    #{game_id.to_i},
+						    #{account_id.to_i},
+						    #{type1_id.to_i},
+						    #{rate_info[:rate].to_f},
+						    #{rate_info[:rd].to_f},
+						    #{rate_info[:account_ids].uniq.length},
+						    #{rate_info[:counts].to_i}
+						  )
 						SQL
 						
-						if res_insert.num_tuples != 1 then
-							res_insert.clear
-							raise "UPDATE 失敗後の INSERT に失敗しました。"
-						end
-						
-						res_insert.clear
-					
-					else
-						res_update.clear
+						db.exec(insert_sql)
 					end
+					
+					res_update.clear
 				end
 			end
 				
 		rescue => ex
 			res_status = "Status: 500 Server Error\n"
-			res_body << "レーティング計算時にエラーが発生しました。\n"
+			res_body << "レーティング計算時にエラーが発生しました。\n#{update_sql}\n#{insert_sql}"
 			raise ex
 		else
 			res_body << "レーティング計算を正常に実行しました。\n"

@@ -5,7 +5,7 @@
 # 開始時刻
 now = Time.now
 # リビジョン
-REVISION = 'R0.02'
+REVISION = 'R0.03'
 
 DEBUG = 1
 
@@ -152,8 +152,8 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		res_body << "transaction finished...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
 		
 		# アナライズ
-		db.exec("VACUUM ANALYZE")
-		res_body << "DB analyzed...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
+		# db.exec("VACUUM ANALYZE game_accounts")
+		# res_body << "DB analyzed...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
 		
 	rescue => ex
 		res_status = "Status: 500 Server Error\n" unless res_status

@@ -152,6 +152,10 @@ td.num {
   font-size: 80%;
 }
 
+.stats {
+  font-size: 80%;
+}
+
 #header {
   margin-top:0.5em;
 }
@@ -232,7 +236,8 @@ td.num {
 
 #track_records {
   text-align: center;
-  font-size: 90%;
+  line-height: 1.8em;
+  font-size: 85%;
 }
 
 #tools {
