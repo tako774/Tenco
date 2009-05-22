@@ -4,7 +4,7 @@
 now = Time.now
 
 ### 登録済み最終対戦結果時刻出力 API ###
-REVISION = 'R0.06'
+REVISION = 'R0.07'
 
 $LOAD_PATH.unshift '../common'
 $LOAD_PATH.unshift '../model'
@@ -12,6 +12,8 @@ $LOAD_PATH.unshift '../model'
 require 'yaml'
 require 'time'
 require 'logger'
+require 'utils'
+include Utils
 
 # ログファイルパス
 LOG_PATH = "../log/log_#{now.strftime('%Y%m%d')}.log"
@@ -47,20 +49,17 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 				db = DB.getInstance
 				
 				# 登録された対戦記録のうち、play_timestamp が最終のものを取得	
-				db.con.exec(<<-"SQL")
-				PREPARE p (text, int) AS
+				res = db.exec(<<-"SQL")
 					SELECT
 						MAX(t.play_timestamp)
 					FROM
 						accounts a, track_records t
 					WHERE
-					      a.name = $1
-					  AND t.game_id = $2
+					      a.name = #{s account_name}
+					  AND t.game_id = #{game_id.to_i}
 					  AND a.id = t.player1_account_id
 					  AND a.del_flag = 0
 				SQL
-				
-				res = db.con.exec("EXECUTE p (E\'#{account_name}\', #{game_id})")
 				
 				last_track_record_timestamp = res[0][0]
 				
