@@ -36,172 +36,169 @@ rescue
 	#print ex.backtrace.join("\n").to_s
 end
 
-if ENV['REQUEST_METHOD'] == 'GET' then
+begin
+	# 設定
+	game_id = 1
+	LIMIT_MAX_RD = 150             # ランキング対象の最大RD
+	LIMIT_MIN_MATCHED_ACCOUNTS = 5 # ランキング対象の最小マッチ済対戦アカウント人数
+	
+	# ランクデータ
+	game_account_ratings = [] # ランク対象のレート情報レコード
+	
+	# DB 接続
+	require 'db'
+	db = DB.getInstance
+	# トランザクション開始
+	db.exec("BEGIN TRANSACTION")
+	
+	res_body << "DB connected...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
+	
+	# ゲーム全体のレート情報を、レート降順（順位順）で取得
+	require 'GameAccountRating'
+	res = db.exec(<<-"SQL")
+		SELECT 
+		  r.*
+		FROM 
+		  accounts a, game_account_ratings r
+		WHERE
+			  a.id = r.account_id
+		  AND a.del_flag = 0
+		  AND a.show_ratings_flag != 0
+		  AND r.game_id = #{game_id.to_i}
+		  AND r.ratings_deviation < #{LIMIT_MAX_RD.to_i}
+		  AND r.matched_accounts >= #{LIMIT_MIN_MATCHED_ACCOUNTS.to_i}
+		ORDER BY
+		  r.rating DESC
+	SQL
+	
+	res_body << "#{res.num_tuples} 件のレート情報を取得。\n"
+	res_body << "game account rating info selected...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
+	
+	res.each do |r|
+		gar = GameAccountRating.new
+		res.num_fields.times do |i|
+			gar.instance_variable_set("@#{res.fields[i]}", r[i])
+		end
+		game_account_ratings << gar
+	end
+	
+	# レートランキング情報を取得
+	rank_value = 1
+	game_account_ratings.each do |gar|
+		# ゲーム全体レートランキング情報更新
+		gar.game_type1_ratings_rank = rank_value
+		rank_value += 1
+	end
+	rank_value = nil
+	
+	# キャラ別レートランク情報を取得
+	rank_value = {}
+	game_account_ratings.each do |gar|
+		
+		# 該当アカウントのキャラ別レートランキング情報更新
+		rank_value[gar.type1_id.to_i] ||= 1
+		
+		# キャラ別レートランキング情報取得
+		gar.game_each_type1_ratings_rank = rank_value[gar.type1_id.to_i]
+		rank_value[gar.type1_id.to_i] += 1
+		
+	end
+	rank_value = nil
+	
+	res_body << "ratings rank calculated...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
+	
+	# 計算結果をDBに保存
 	begin
-		# 設定
-		game_id = 1
-		LIMIT_MAX_RD = 150             # ランキング対象の最大RD
-		LIMIT_MIN_MATCHED_ACCOUNTS = 5 # ランキング対象の最小マッチ済対戦アカウント人数
-		
-		# ランクデータ
-		game_account_ratings = [] # ランク対象のレート情報レコード
-		
-		# DB 接続
-		require 'db'
-		db = DB.getInstance
-		# トランザクション開始
-		db.exec("BEGIN TRANSACTION")
-		
-		res_body << "DB connected...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
-		
-		# ゲーム全体のレート情報を、レート降順（順位順）で取得
-		require 'GameAccountRating'
-		res = db.exec(<<-"SQL")
-			SELECT 
-			  r.*
-			FROM 
-			  accounts a, game_account_ratings r
-			WHERE
-			      a.id = r.account_id
-			  AND a.del_flag = 0
-			  AND a.show_ratings_flag != 0
-			  AND r.game_id = #{game_id.to_i}
-			  AND r.ratings_deviation < #{LIMIT_MAX_RD.to_i}
-			  AND r.matched_accounts >= #{LIMIT_MIN_MATCHED_ACCOUNTS.to_i}
-			ORDER BY
-			  r.rating DESC
-		SQL
-		
-		res_body << "#{res.num_tuples} 件のレート情報を取得。\n"
-		res_body << "game account rating info selected...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
-		
-		res.each do |r|
-			gar = GameAccountRating.new
-			res.num_fields.times do |i|
-				gar.instance_variable_set("@#{res.fields[i]}", r[i])
-			end
-			game_account_ratings << gar
-		end
-		
-		# レートランキング情報を取得
-		rank_value = 1
+		# 更新
 		game_account_ratings.each do |gar|
-			# ゲーム全体レートランキング情報更新
-			gar.game_type1_ratings_rank = rank_value
-			rank_value += 1
-		end
-		rank_value = nil
-		
-		# キャラ別レートランク情報を取得
-		rank_value = {}
-		game_account_ratings.each do |gar|
-			
-			# 該当アカウントのキャラ別レートランキング情報更新
-			rank_value[gar.type1_id.to_i] ||= 1
-			
-			# キャラ別レートランキング情報取得
-			gar.game_each_type1_ratings_rank = rank_value[gar.type1_id.to_i]
-			rank_value[gar.type1_id.to_i] += 1
-			
-		end
-		rank_value = nil
-		
-		res_body << "ratings rank calculated...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
-		
-		# 計算結果をDBに保存
-		begin
-			# 更新
-			game_account_ratings.each do |gar|
-				db.exec(<<-"SQL")
-					UPDATE
-					  game_account_ratings
-					SET
-					  game_type1_ratings_rank = #{gar.game_type1_ratings_rank},
-					  game_each_type1_ratings_rank = #{gar.game_each_type1_ratings_rank},
-					  updated_at = CURRENT_TIMESTAMP,
-					  lock_version = lock_version + 1
-					WHERE
-					  id = #{gar.id.to_i}
-					  -- AND (
-					  --  game_type1_ratings_rank != #{gar.game_type1_ratings_rank}
-					  --  OR game_each_type1_ratings_rank != #{gar.game_each_type1_ratings_rank}
-					  -- )
-				SQL
-			end
-			
-			# ランク外となったランキングデータをクリア
-			db.exec(<<-SQL)
+			db.exec(<<-"SQL")
 				UPDATE
 				  game_account_ratings
 				SET
-				  game_type1_ratings_rank = 0,
-				  game_each_type1_ratings_rank = 0,
+				  game_type1_ratings_rank = #{gar.game_type1_ratings_rank},
+				  game_each_type1_ratings_rank = #{gar.game_each_type1_ratings_rank},
 				  updated_at = CURRENT_TIMESTAMP,
 				  lock_version = lock_version + 1
 				WHERE
-				  game_id = #{game_id.to_i}
-				  AND (
-					NOT (
-						  ratings_deviation < #{LIMIT_MAX_RD.to_i}
-					  AND matched_accounts >= #{LIMIT_MIN_MATCHED_ACCOUNTS.to_i}
-					)
-				  )
-				  AND (
-					game_type1_ratings_rank > 0
-					OR game_each_type1_ratings_rank > 0
-				  )
+				  id = #{gar.id.to_i}
+				  -- AND (
+				  --  game_type1_ratings_rank != #{gar.game_type1_ratings_rank}
+				  --  OR game_each_type1_ratings_rank != #{gar.game_each_type1_ratings_rank}
+				  -- )
 			SQL
-				
-		rescue => ex
-			res_status = "Status: 500 Server Error\n"
-			res_body << "レートランキング情報保存時にエラーが発生しました。\n"
-			raise ex
-		else
-			res_body << "レートランキング情報保存を正常に実行しました。\n"
 		end
 		
-		res_body << "rating rankings stored...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
-				
-		# コミット
-		db.exec("COMMIT")
-		res_body << "transaction finished...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
-		
-		# DB ANALYZE
-		#db.exec("VACUUM ANALYZE;")
-		#res_body << "DB analyzed...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
-		
+		# ランク外となったランキングデータをクリア
+		db.exec(<<-SQL)
+			UPDATE
+			  game_account_ratings
+			SET
+			  game_type1_ratings_rank = 0,
+			  game_each_type1_ratings_rank = 0,
+			  updated_at = CURRENT_TIMESTAMP,
+			  lock_version = lock_version + 1
+			WHERE
+			  game_id = #{game_id.to_i}
+			  AND (
+				NOT (
+					  ratings_deviation < #{LIMIT_MAX_RD.to_i}
+				  AND matched_accounts >= #{LIMIT_MIN_MATCHED_ACCOUNTS.to_i}
+				)
+			  )
+			  AND (
+				game_type1_ratings_rank > 0
+				OR game_each_type1_ratings_rank > 0
+			  )
+		SQL
+			
 	rescue => ex
-		res_status = "Status: 500 Server Error\n" unless res_status
-		res_body << "レートランキングデータ作成時にエラーが発生しました。ごめんなさい。（#{now.to_s}）\n"
-		File.open(ERROR_LOG_PATH, 'a') do |log|
-			log.puts "#{now.to_s} #{File::basename(__FILE__)} Rev.#{REVISION}"
-			log.puts source
-			log.puts ex.to_s
-			log.puts ex.backtrace.join("/n").to_s
-			log.puts
-		end
+		res_status = "Status: 500 Server Error\n"
+		res_body << "レートランキング情報保存時にエラーが発生しました。\n"
+		raise ex
 	else
-		res_status = "Status: 200 OK\n" unless res_status
-		res_body << "レートランキングデータ作成正常終了。\n"
-	ensure
-		# DB接続を閉じる
-		db.close if db
+		res_body << "レートランキング情報保存を正常に実行しました。\n"
+	end
+	
+	res_body << "rating rankings stored...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
+			
+	# コミット
+	db.exec("COMMIT")
+	res_body << "transaction finished...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
+	
+	# DB ANALYZE
+	#db.exec("VACUUM ANALYZE;")
+	#res_body << "DB analyzed...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
+	
+rescue => ex
+	res_status = "Status: 500 Server Error\n" unless res_status
+	res_body << "レートランキングデータ作成時にエラーが発生しました。ごめんなさい。（#{now.to_s}）\n"
+	File.open(ERROR_LOG_PATH, 'a') do |log|
+		log.puts "#{now.to_s} #{File::basename(__FILE__)} Rev.#{REVISION}"
+		log.puts source
+		log.puts ex.to_s
+		log.puts ex.backtrace.join("/n").to_s
+		log.puts
 	end
 else
-	res_status = "Status: 400 Bad Request\n"
-	res_body = "400 Bad Request\n"
+	res_status = "Status: 200 OK\n" unless res_status
+	res_body << "レートランキングデータ作成正常終了。\n"
+ensure
+	# DB接続を閉じる
+	db.close if db
 end
 
 # 実行時間
 times = Process.times
-res_body << "実行時間 #{Time.now - now}秒, CPU時間 #{times.utime + times.stime}秒"
+res_body << "実行時間 #{Time.now - now}秒, CPU時間 #{times.utime + times.stime}秒\n"
 	
 # HTTP レスポンス送信
-res_status "Status: 500 Internal Server Error\n" unless res_status
+res_status = "Status: 500 Internal Server Error\n" unless res_status
 res_header = "content-type:text/plain; charset=utf-8\n"
-print res_status
-print res_header
-print "\n"
+if ENV['REQUEST_METHOD'] == 'GET' then
+	print res_status
+	print res_header
+	print "\n"
+end
 print res_body
 
 # ログ書き込み
