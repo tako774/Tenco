@@ -5,7 +5,7 @@ require 'Account'
 
 # 認証クラス
 class Authentication
-	VERSION = 'v0.02'
+	VERSION = 'v0.03'
 
 	# アカウント認証
 	# 成功するとDBアカウントレコードを返す
@@ -32,7 +32,14 @@ class Authentication
 		# 検索結果があればOK
 		unless res.num_tuples == 1 then
 			res.clear
-			raise "エラー：アカウント認証に失敗しました。"
+			begin
+				require 'socket'
+				host_name = ""
+				host_name = Socket.gethostbyaddr((ENV['REMOTE_ADDR'].split('.').collect {|x| x.to_i}).pack('C4'))[0]
+			rescue
+				host_name = ENV['REMOTE_ADDR']
+			end
+			raise "エラー：アカウント認証に失敗しました。（#{host_name}）"
 		else
 			account = Account.new
 			res.num_fields.times do |i|
@@ -113,7 +120,14 @@ class Authentication
 		# 登録結果があればOK
 		unless res.num_tuples == 1 then
 			res.clear
-			raise "エラー：アカウントの更新に失敗しました。\n#{sql}"
+			begin
+				require 'socket'
+				host_name = ""
+				host_name = Socket.gethostbyaddr((ENV['REMOTE_ADDR'].split('.').collect {|x| x.to_i}).pack('C4'))[0]
+			rescue
+				host_name = ENV['REMOTE_ADDR']
+			end
+			raise "エラー：アカウントの更新に失敗しました。（#{host_name}）\n#{sql}"
 		else
 			account = Account.new
 			res.num_fields.times do |i|
