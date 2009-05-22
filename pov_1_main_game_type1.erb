@@ -21,6 +21,7 @@
 					<th>名前</th>
 					<th>レート<sub>±RD</sub>（対戦人数/対戦数）</th>
 					<th class="suppli">全体順位</th>
+					<th class="suppli">クラスタ</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -30,9 +31,10 @@
 							<%- if r.show_ratings_flag.to_i != 0 -%>
 				<tr>
 					<td><%= h r.game_each_type1_ratings_rank %></td>
-					<td><a href="<%= "#{TOP_URL}game/#{u r.game_id}/account/#{u r.account_name}/" %>"><%= xhtml_sp2nbsp(h(hide_ng_words(r.rep_name))) %></a></td>
+					<td><a href="<%= "#{TOP_URL}game/#{u r.game_id}/account/#{u r.account_name}/" %>"><%= z2h_long_str(xhtml_sp2nbsp(h(hide_ng_words(r.rep_name)))) %></a></td>
 					<td><%= "#{h r.rating.to_f.round}<sub>±#{h r.ratings_deviation.to_f.floor}</sub>（#{h r.matched_accounts}人/#{h r.match_counts}戦）" %></td>
 					<td class="suppli">#<%= h r.game_type1_ratings_rank %></td>
+					<td class="suppli"><%= h r.cluster_name %></td>
 				</tr>
 							<%- end -%>
 						<%- end -%>

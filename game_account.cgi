@@ -1,9 +1,10 @@
+#!/ruby/bin/ruby
 #!/usr/bin/ruby
 
 # 開始時刻
 now = Time.now
 # リビジョン
-REVISION = 'R0.37'
+REVISION = 'R0.39'
 DEBUG = false
 
 $LOAD_PATH.unshift './common'
@@ -157,12 +158,18 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							require 'GameAccount'
 							res = db.exec(<<-"SQL")
 								SELECT
-									*
+									ga.*,
+									gc.name AS cluster_name
 								FROM
-									game_accounts
+									game_accounts ga
+										LEFT OUTER JOIN 
+											game_clusters gc
+										ON
+											gc.game_id = ga.game_id
+											AND gc.cluster_id = ga.cluster_id
 								WHERE
-									game_id = #{game_id.to_i}
-									AND account_id = #{account.id.to_i}
+									ga.game_id = #{game_id.to_i}
+									AND ga.account_id = #{account.id.to_i}
 								SQL
 							
 							if res.num_tuples != 1 then
@@ -184,9 +191,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							end
 							
 							# NGワード伏字化
-							track_records.each do |t|
-								game_account.rep_name = hide_ng_words(game_account.rep_name)
-							end
+							game_account.rep_name = hide_ng_words(game_account.rep_name)
 							
 							# アカウントのレーティング情報を取得
 							require 'GameAccountRating'

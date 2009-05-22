@@ -5,7 +5,7 @@ begin
 	# 開始時刻
 	now = Time.now
 	# リビジョン
-	REVISION = 'R0.08'
+	REVISION = 'R0.09'
 	DEBUG = false
 
 	$LOAD_PATH.unshift './common'
@@ -295,10 +295,14 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 								  ga.rep_name,
 								  pa.game_pov_class_id,
 								  a.name AS account_name,
-								  a.show_ratings_flag AS show_ratings_flag
+								  a.show_ratings_flag AS show_ratings_flag,
+								  gc.cluster_id,
+								  gc.name2 AS cluster_name
 								FROM
 								  accounts a,
-								  game_accounts ga,
+								  game_accounts ga
+								    LEFT OUTER JOIN game_clusters gc
+									ON ga.game_id = gc.game_id AND ga.cluster_id = gc.cluster_id,
 								  game_account_ratings r,
 								  prize_accounts pa,
 								  prizes p,
@@ -329,6 +333,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 								res.fields.length.times do |i|
 									rating.instance_variable_set("@#{res.fields[i]}", r[i])
 								end
+								rating.cluster_name ||= "（新参加）"
 								ratings[rating.game_pov_class_id.to_i] ||= []
 								ratings[rating.game_pov_class_id.to_i] << rating
 								ratings_each_type1[rating.type1_id.to_i] ||= {}
