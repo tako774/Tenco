@@ -117,6 +117,10 @@ td.num {
   text-align: right;
 }
 
+table.account {
+  font-size:95%;
+}
+
 .AA {
   font-size: 1.0em;
   line-height: 1.125em;

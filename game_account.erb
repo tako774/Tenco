@@ -15,6 +15,8 @@
 	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/jsdeferred.jquery.js"></script>
 	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/show_user_data.js"></script>
 	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/search.js"></script>
+	<%# <script type="text/javascript" charset="utf-8" src="<％TOP_URL％>js/timechart.js"></script>
+	<!--[if IE]><script type="text/javascript" src="<％TOP_URL％>js/excanvas.js"></script><![endif]--> %>
 	<title><%= h game_account.rep_name %> / <%= h game.name %> - Tenco!</title>
 	<script type="text/javascript">
 //<![CDATA[ 
@@ -22,20 +24,42 @@
 // ロード時実行
 $(document).ready(
 	function(){
-		// 対戦結果テーブル表示
-		// $("#track_records").show();
-		
 		// javascript 利用部表示
+		// IEだとEnterキーでなぜかボタンをクリックするので
+		// formタグで抑制する
 		var track_records_tool_html = "";
-		track_records_tool_html += "\t\t\t\t\t<span id='search_tool_msg' class='suppli msg'>search:</span>\n";
-		track_records_tool_html += "\t\t\t\t\t<input id='search_str' name='search_str' tabindex='1' type='text' size='16' />\n";
-		track_records_tool_html += "\t\t\t\t\t<span id='decrypt_tool_msg' class='suppli msg'>password:</span>\n";
-		track_records_tool_html += "\t\t\t\t\t<span id='decrypt_tool'>\n";
-		track_records_tool_html += "\t\t\t\t\t\t<input id='account_password' name='account_password' tabindex='1' type='password' size='16' />&nbsp;<button id='show_user_data'>復号</button>\n";
+		track_records_tool_html += "<span id='search_tool_msg' class='suppli msg'>search:</span>\n";
+		track_records_tool_html += "<form action='' method='post' onSubmit='return false;' style='display:inline'>\n";
+		track_records_tool_html += "<input id='search_str' name='search_str' tabindex='1' type='text' size='16' />&nbsp;<button id='search_track_records' tabindex='2'>検索</button>\n";
+		track_records_tool_html += "</form>&nbsp;\n";
+		
+		track_records_tool_html += "<span id='decrypt_tool_msg' class='suppli msg'>password:</span>\n";
+		track_records_tool_html += "<span id='decrypt_tool'>\n";
+		track_records_tool_html += "<form action='' method='post' onSubmit='return false;' style='display:inline'>\n";
+		track_records_tool_html += "<input id='account_password' name='account_password' tabindex='3' type='password' size='16' />&nbsp;<button id='show_user_data' tabindex='4'>復号</button>\n";
+		track_records_tool_html += "</form>&nbsp;\n";
 		track_records_tool_html += "\t\t\t\t\t</span>\n";
 
 		$("#track_records_tool").html(track_records_tool_html);
 		
+		// 非同期実行準備
+		$.deferred.define();
+		
+		// 検索ボタンに実行関数を紐付け
+		$("#search_track_records").click(
+			function() {
+				(function() {search("#track_records > tbody > tr", "table-row", "#search_str")})();
+			}
+		);
+		// 検索語入力欄でエンターでも実行
+		$("#search_str").keyup(
+			function(evt) {
+				if (evt.which == 13) {
+					$("#search_track_records").click();
+				}			
+			}
+		);
+
 		// アカウントデータ表示ボタンに実行関数を紐付け
 		$("#show_user_data").click(
 			function() {
@@ -52,21 +76,20 @@ $(document).ready(
 					$("#show_user_data").click();
 				}			
 			}
-		);		
+		);
+		
 		// パスワード欄選択時に全テキスト選択
 		$("#account_password").focus(
 			function() {
 				$(this).select();
 			}
 		);
+		
 		// パスワード欄にフォーカス
 		// $("#account_password").focus();
 		
-		// 非同期実行準備
-		$.deferred.define();
-		
 		// 検索テキストボックスでインクリメンタルサーチ
-		simple_inc_search("#track_records > tbody > tr", "table-row", "#search_str", 1000);
+		// simple_inc_search("#track_records > tbody > tr", "table-row", "#search_str", 1000);
 		
 	}
 );
@@ -79,12 +102,11 @@ $(document).ready(
 <div id="container">
 
 <div id="header">
-<h1><a href="<%= TOP_URL %>"><img alt="Tenco!" src='<%= TOP_URL %>images/Tenco.gif' width='<%= 366/3 %>' height='<%= 126/3 %>' /></a></h1> マイページ 開発中バージョンα5.6（2009/05/02）
+<h1><a href="<%= TOP_URL %>"><img alt="Tenco!" src='<%= TOP_URL %>images/Tenco.gif' width='<%= 366/3 %>' height='<%= 126/3 %>' /></a></h1> マイページ 開発中バージョンα6.2（2009/05/16）
 <p id="meta_info">
 λ＜レートなんて飾りなんです。偉い人にはそれがわからんのです<br />
 <%= now.strftime('%m/%d %H:%M') %> に作成（毎時0分以降に再生成）<br />
 おしらせ：<img alt="" src="<%= TOP_URL %>client/images/tenco.ico" width="16" height="16" /> <a href="<%= TOP_URL %>">報告ツール Ver.0.07c</a> リリース（08/12/27）<br />
-おしらせ：<a href="<%= "#{TOP_URL}game/1/type1_vs_type1_stats/" %>">キャラ対キャラ統計ページ</a>を作成しました（09/04/24)
 </p>
 </div>
 
@@ -146,12 +168,6 @@ $(document).ready(
 		</noscript>
 		<table id="track_records">
 			<caption id="track_records_tool" style="text-align:left; white-space:nowrap">
-				<span id='search_tool_msg' class='suppli msg'>search:</span>
-				<input id='search_str' name='search_str' tabindex='1' type='text' size='16' />
-				<span id='decrypt_tool_msg' class='suppli msg'>password:</span>
-				<span id='decrypt_tool'>
-					<input id='account_password' name='account_password' tabindex='1' type='password' size='16' />&nbsp;<button id='show_user_data'>復号</button>
-				</span>
 			</caption>
 			<thead>
 				<tr>
@@ -165,25 +181,25 @@ $(document).ready(
 				<%- track_records.each do |t| -%>
 					<%- if t.player1_points > t.player2_points -%>
 				<tr>
-					<td><%= pgsql_timestamp_str_to_time(t.play_timestamp).strftime('%y/%m/%d %H:%M') %></td>
-					<td><%= "#{z2h_long_str(xhtml_sp2nbsp(h t.player1_name))} (#{type1_h[t.player1_type1_id.to_i]})" %></td>
+					<td class="time"><%= pgsql_timestamp_str_to_time(t.play_timestamp).strftime('%y/%m/%d %H:%M') %></td>
+					<td><%= "#{z2h_long_str(xhtml_sp2nbsp(h(t.player1_name)))} (#{type1_h[t.player1_type1_id.to_i]})" %></td>
 					<td class="vs"><%= "#{t.player1_points.to_i} - #{t.player2_points.to_i}" %></td>
 						<%- unless t.player2_account_name.nil? -%>
-					<td><a href="<%= "#{TOP_URL}game/#{game_id.to_i}/account/#{u t.player2_account_name}/" %>"><%= z2h_long_str(xhtml_sp2nbsp(h t.player2_name)) %></a><%= " (#{type1_h[t.player2_type1_id.to_i]})" %></td>
+					<td><a href="<%= "#{TOP_URL}game/#{game_id.to_i}/account/#{u t.player2_account_name}/" %>"><%= z2h_long_str(xhtml_sp2nbsp(h(t.player2_name))) %></a><%= " (#{type1_h[t.player2_type1_id.to_i]})" %></td>
 						<%- else -%>
-					<td><span class="enc_alt"><%= "◇#{t.player2_name[11..14]}" %></span><span class="enc"><%= u(h t.player2_name) %></span> <%= "(#{type1_h[t.player2_type1_id.to_i]})" %></td>
+					<td><span class="enc_alt"><%= "◇#{t.player2_name[11..14]}" %></span><span class="enc"><%= u(h(t.player2_name)) %></span> <%= "(#{type1_h[t.player2_type1_id.to_i]})" %></td>
 						<%- end -%>
 				</tr>
 					<%- else -%>
 				<tr>
-					<td><%= pgsql_timestamp_str_to_time(t.play_timestamp).strftime('%y/%m/%d %H:%M')  %></td>
+					<td class="time"><%= pgsql_timestamp_str_to_time(t.play_timestamp).strftime('%y/%m/%d %H:%M')  %></td>
 						<%- unless t.player2_account_name.nil? -%>
-					<td><a href="<%= "#{TOP_URL}game/#{u game_id}/account/#{u t.player2_account_name}/" %>"><%= z2h_long_str(xhtml_sp2nbsp(h t.player2_name)) %></a><%= " (#{type1_h[t.player2_type1_id.to_i]})" %></td>
+					<td><a href="<%= "#{TOP_URL}game/#{u game_id}/account/#{u t.player2_account_name}/" %>"><%= z2h_long_str(xhtml_sp2nbsp(h(t.player2_name))) %></a><%= " (#{type1_h[t.player2_type1_id.to_i]})" %></td>
 						<%- else -%>
-					<td><span class="enc_alt"><%= "◇#{t.player2_name[11..14]}" %></span><span class="enc"><%= u(h t.player2_name) %></span> <%= "(#{type1_h[t.player2_type1_id.to_i]})" %></td>
+					<td><span class="enc_alt"><%= "◇#{t.player2_name[11..14]}" %></span><span class="enc"><%= u(h(t.player2_name)) %></span> <%= "(#{type1_h[t.player2_type1_id.to_i]})" %></td>
 						<%- end -%>
 					<td class="vs"><%= "#{t.player2_points.to_i} - #{t.player1_points.to_i}" %></td>
-					<td><%= "#{z2h_long_str(xhtml_sp2nbsp(h t.player1_name))} (#{type1_h[t.player1_type1_id.to_i]})" %></td>
+					<td><%= "#{z2h_long_str(xhtml_sp2nbsp(h(t.player1_name)))} (#{type1_h[t.player1_type1_id.to_i]})" %></td>
 				</tr>
 					<%- end -%>
 				<%- end -%>
@@ -195,7 +211,7 @@ $(document).ready(
 	</div>
 	
 	<div id="profile">
-	<%= xhtml_sp2nbsp(h game_account.rep_name) %> さん<br />
+	<%= xhtml_sp2nbsp(h(game_account.rep_name)) %> さん<br />
 	<br />
 キャラクター使用率
 <pre class="AA">##ビジュアル表現を予定##
@@ -210,11 +226,14 @@ $(document).ready(
 
 ##ビジュアル表現を予定##
 </pre>
-<br />
 そのほかプロフィールあれこれ<br />
+<p>
+<%- if game_account.cluster_name -%><%= "#{h game_account.cluster_name}クラスタ所属" %><%- end -%>
+</p>
 <p>
 <a href="<%= "#{TOP_URL}account/#{u account_name}/manage/" %>">アカウント設定</a>
 </p>
+<%# <canvas id="timechart" width="250" height="225" style="display:block"></canvas> %>
 <p>
 <a href="<%= "#{TOP_URL}game/#{u game_id}/account/#{u account_name}/output=xml" %>"><img width="40" height="18" src="<%= "#{TOP_URL}images/xml.png" %>" alt="アカウント情報（XML形式）" /></a>
 </p>
@@ -235,7 +254,7 @@ $(document).ready(
 	<h2>過去の対戦相手</h2>
 	<ul>
 		<%- matched_game_accounts.each do |a| -%>
-		<li><a href="<%= "#{TOP_URL}game/#{u game_id}/account/#{u a.account_name}/" %>"><%= xhtml_sp2nbsp(h a.rep_name) %></a></li>
+		<li><a href="<%= "#{TOP_URL}game/#{u game_id}/account/#{u a.account_name}/" %>"><%= xhtml_sp2nbsp(h(a.rep_name)) %></a></li>
 		<%- end -%>
 	</ul>
 	<hr />
