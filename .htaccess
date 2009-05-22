@@ -5,3 +5,33 @@ RewriteRule ^game/([0-9]+)/account/([0-9A-Za-z_][0-9A-Za-z_\.]*)/([^/]*)$ game_a
 RewriteRule ^game/([0-9]+)/pov/([0-9]+)/$ pov.cgi?game_id=$1&pov_id=$2&pov_eval_unit=game
 RewriteRule ^game/([0-9]+)/pov/([0-9]+)/type1/$ pov.cgi?game_id=$1&pov_id=$2&pov_eval_unit=game_type1
 RewriteRule ^game/([0-9]+)/type1_vs_type1_stats/$ game_type1_vs_type1_stats.cgi?game_id=$1
+
+<IfModule mod_gzip.c>
+mod_gzip_on yes
+mod_gzip_dechunk yes
+mod_gzip_keep_workfiles No
+
+mod_gzip_temp_dir /tmp
+
+mod_gzip_minimum_file_size  1000
+mod_gzip_maximum_file_size  0
+mod_gzip_maximum_inmem_size 1000000
+
+mod_gzip_item_include file \.htm$
+mod_gzip_item_include file \.html$
+mod_gzip_item_include file \.txt$
+mod_gzip_item_include file \.cgi$
+mod_gzip_item_include file \.js$
+mod_gzip_item_include file \.css$
+
+mod_gzip_item_include mime "^httpd/unix-directory$"
+mod_gzip_item_include mime "^text/.*"
+mod_gzip_item_include mime "^application/x-javascript"
+
+mod_gzip_item_include handler "^perl-script$"
+mod_gzip_item_include handler "^cgi-script$"
+mod_gzip_item_include handler "^server-parsed$"
+
+mod_gzip_item_exclude mime "^image/.*"
+
+</IfModule>
