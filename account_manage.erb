@@ -79,6 +79,9 @@ $(document).ready(
 
 <div class="section">
 <h2><%= h account_name %> さんのアカウント設定</h2>
+<noscript class="suppli msg">
+	現在のところ、ブラウザ経由でのアカウント設定は javascript が必須です。申し訳ありません。
+</noscript>
 <p>
 	パスワード：<input id='account_password' name='account_password' tabindex='1' type='password' size='24' value="" />&nbsp;<button id='get_settings' tabindex='2'>現在の設定取得</button></p>
 	<pre id="message" class="suppli"></pre>
