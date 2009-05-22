@@ -4,7 +4,7 @@
 now = Time.now
 
 ### 対戦結果I/F API ###
-REVISION = 'R0.17'
+REVISION = 'R0.19'
 DEBUG = false
 
 $LOAD_PATH.unshift '../common'
@@ -259,7 +259,8 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 				  FROM
 					track_records
 				  WHERE
-					    player1_name = #{s t.player2_name.to_s}
+						game_id = #{game_id.to_i}
+					AND player1_name = #{s t.player2_name.to_s}
 					AND player1_type1_id = #{t.player2_type1_id.to_i}
 					AND player1_points = #{t.player2_points.to_i}
 					AND player2_name = #{s t.player1_name.to_s}
@@ -267,7 +268,7 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 					AND player2_points = #{t.player1_points.to_i}
 					AND play_timestamp <= to_timestamp(#{s t.play_timestamp.to_s}, \'YYYY-MM-DD HH24:MI:SS\') + interval\'#{MATCHING_TIME_LIMIT_SECONDS}\'
 					AND play_timestamp >= to_timestamp(#{s t.play_timestamp.to_s}, \'YYYY-MM-DD HH24:MI:SS\') - interval\'#{MATCHING_TIME_LIMIT_SECONDS}\'
-					AND player2_account_id IS NULL
+					AND matched_track_record_id IS NULL
 					AND player1_account_id != #{t.player1_account_id.to_i}
 				  ORDER BY
 					play_timestamp
@@ -304,11 +305,10 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 					  WHERE
 					    id = #{t.id.to_i}
 					    AND lock_version = #{t.lock_version.to_i}
-					  RETURNING *
 					SQL
 					
 					# 更新バージョン不一致時はやり直し
-					redo if updated_res.num_tuples != 1
+					redo if updated_res.cmdstatus != 'UPDATE 1'
 					updated_res.clear
 					
 					# マッチした対戦結果の更新
@@ -324,11 +324,10 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 					  WHERE
 					    id = #{matched_record.id.to_i}
 					    AND lock_version = #{matched_record.lock_version.to_i}
-					  RETURNING *
 					SQL
 					
 					# 更新バージョン不一致時はやり直し
-					redo if updated_res.num_tuples != 1
+					redo if updated_res.cmdstatus != 'UPDATE 1'
 					updated_res.clear
 				end
 				res.clear
