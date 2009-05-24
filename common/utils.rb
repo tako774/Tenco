@@ -4,6 +4,7 @@ include Kakasi
 require 'nkf'
 
 NG_WORDS = File.read("#{File::dirname(__FILE__)}/../../../config/ng_words.txt").split("\n")
+NG_WORDS_REGEXP = Regexp.new(NG_WORDS.join("|"))
 
 module Utils
 
@@ -67,9 +68,7 @@ module Utils
 	
 	# 特定文字列の伏字化
 	def hide_ng_words(str, alt = "**")
-		NG_WORDS.each do |w|
-			str.gsub!(w, alt)
-		end
-		return str
+		str.gsub(NG_WORDS_REGEXP, alt)
 	end
+
 end
