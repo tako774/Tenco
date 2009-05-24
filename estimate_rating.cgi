@@ -1,12 +1,11 @@
 #!/usr/bin/ruby
 
-
 begin
 	# 開始時刻
 	now = Time.now
 
 	### レート推定  ###
-	REVISION = '0.07'
+	REVISION = '0.08'
 	DEBUG = false
 
 	$LOAD_PATH.unshift './common'
@@ -21,8 +20,8 @@ begin
 	require 'utils'
 	include Utils
 	require 'segment_const'
-	require 'erb'
-	include ERB::Util
+	require 'erubis'
+	include Erubis::XmlHelper
 
 	source = ""
 

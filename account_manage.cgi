@@ -5,7 +5,7 @@ begin
 	# 開始時刻
 	now = Time.now
 	# リビジョン
-	REVISION = 'R0.01'
+	REVISION = 'R0.02'
 	DEBUG = false
 
 	$LOAD_PATH.unshift './common'
@@ -16,8 +16,8 @@ begin
 	require 'logger'
 	require 'utils'
 	include Utils
-	require 'erb'
-	include ERB::Util
+	require 'erubis'
+	include Erubis::XmlHelper
 
 	# TOP ページ URL
 	TOP_URL = 'http://tenco.xrea.jp/'
@@ -129,12 +129,12 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		res.clear
 		
 		# リンク 部生成
-		link_html = ERB.new(File.read(LINK_ERB_PATH), nil, '-').result(binding)
+		link_html = Erubis::Eruby.new(File.read(LINK_ERB_PATH)).result(binding)
 		# footer 部生成
-		footer_html = ERB.new(File.read(FOOTER_ERB_PATH), nil, '-').result(binding)		
+		footer_html = Erubis::Eruby.new(File.read(FOOTER_ERB_PATH)).result(binding)		
 		
 		# HTMLページ生成
-		html = ERB.new(File.read("#{File::basename(__FILE__, '.*')}.erb"), nil, '-').result(binding)
+		html = Erubis::Eruby.new(File.read("#{File::basename(__FILE__, '.*')}.erb")).result(binding)
 		
 		### 結果をセット
 		res_status = "Status: 200 OK\n" unless res_status

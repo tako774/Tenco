@@ -115,6 +115,8 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 						begin
 							require 'utils'
 							include Utils
+							require 'erubis'
+							include Erubis::XmlHelper
 							
 							# キャッシュの有効期限
 							cache_expires = (now + 60 * 60) - now.min * 60 - now.sec
@@ -372,29 +374,27 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 						end
 						
 						### キャッシュHTML出力
-						require 'erb'
-						include ERB::Util
 						
 						# header 部生成
-						header_html = ERB.new(File.read(header_erb_path), nil, '-').result(binding)
+						header_html = Erubis::Eruby.new(File.read(header_erb_path)).result(binding)
 						# main 部生成
-						main_html = ERB.new(File.read(main_erb_path), nil, '-').result(binding)
+						main_html = Erubis::Eruby.new(File.read(main_erb_path)).result(binding)
 						# 関連ゲームPOV 部生成
-						related_game_pov_html = ERB.new(File.read(related_game_pov_erb_path), nil, '-').result(binding)
+						related_game_pov_html = Erubis::Eruby.new(File.read(related_game_pov_erb_path)).result(binding)
 						# リンク 部生成
-						link_html = ERB.new(File.read(link_erb_path), nil, '-').result(binding)
+						link_html = Erubis::Eruby.new(File.read(link_erb_path)).result(binding)
 						# footer 部生成
-						footer_html = ERB.new(File.read(footer_erb_path), nil, '-').result(binding)
+						footer_html = Erubis::Eruby.new(File.read(footer_erb_path)).result(binding)
 					
 						File.open(cache_html_path, 'w') do |w|
 							w.flock(File::LOCK_EX)
 							if DEBUG then
-								erb_src = ERB.new(File.read("#{File::basename(__FILE__, '.*')}.erb"), nil, '-').src
+								erb_src = Erubis::Eruby.new(File.read("#{File::basename(__FILE__, '.*')}.erb")).src
 								File.open("#{File::basename(__FILE__, '.*')}.erb.rb", 'w') do |s|
 									s.puts erb_src
 								end
 							end
-							w.puts ERB.new(File.read("#{File::basename(__FILE__, '.*')}.erb"), nil, '-').result(binding)
+							w.puts Erubis::Eruby.new(File.read("#{File::basename(__FILE__, '.*')}.erb")).result(binding)
 							# ヘッダ出力
 							File.open(cache_html_header_path, 'w') do |wh|
 								wh.flock(File::LOCK_EX)

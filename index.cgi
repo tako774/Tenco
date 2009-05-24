@@ -5,7 +5,7 @@ begin
 	# 開始時刻
 	now = Time.now
 	# リビジョン
-	REVISION = 'R0.04'
+	REVISION = 'R0.05'
 	DEBUG = false
 
 	$LOAD_PATH.unshift './common'
@@ -93,6 +93,8 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 						require 'db'
 						require 'utils'
 						include Utils
+						require 'erubis'
+						include Erubis::XmlHelper
 						
 						# キャッシュの有効期限
 						cache_expires = (now + 60 * 60) - now.min * 60 - now.sec
@@ -170,17 +172,15 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 					end
 					
 					### キャッシュHTML出力
-					require 'erb'
-					include ERB::Util
 					
 					# game_stats 部生成
-					index_game_stats_html = ERB.new(File.read("#{File::basename(__FILE__, '.*')}_game_stats.erb"), nil, '-').result(binding)
+					index_game_stats_html = Erubis::Eruby.new(File.read("#{File::basename(__FILE__, '.*')}_game_stats.erb")).result(binding)
 					# footer 部生成
-					footer_html = ERB.new(File.read(FOOTER_ERB_PATH), nil, '-').result(binding)
+					footer_html = Erubis::Eruby.new(File.read(FOOTER_ERB_PATH)).result(binding)
 					
 					File.open(cache_html_path, 'w') do |w|
 						w.flock(File::LOCK_EX)
-						w.puts ERB.new(File.read("#{File::basename(__FILE__, '.*')}.erb"), nil, '-').result(binding)
+						w.puts Erubis::Eruby.new(File.read("#{File::basename(__FILE__, '.*')}.erb")).result(binding)
 						# ヘッダ出力
 						File.open(cache_html_header_path, 'w') do |wh|
 							wh.flock(File::LOCK_EX)
