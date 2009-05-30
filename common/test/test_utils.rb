@@ -50,4 +50,16 @@ class Test_Utils < Test::Unit::TestCase
 	def test_hide_ng_words
 		assert_equal("ウルトラ**スモス", hide_ng_words("ウルトラマンコスモス"))
 	end
+	
+	def test_pgsql_timestamp_str_to_time
+		time_strs = [
+			"2008-11-19 00:26:27",
+			"2008-11-19 00:26:27.237314",
+			"2008-11-19 00:26:27.2373"
+		]
+		time_strs.each do |s|
+			time = Time.parse(s)
+			assert_equal(time, pgsql_timestamp_str_to_time(s))
+		end
+	end
 end

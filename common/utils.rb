@@ -50,20 +50,10 @@ module Utils
 	
 	# Time.parse が重過ぎるので代用のメソッド
 	# YYYY-MM-DD HH:MM:SS[.fragments] を想定
-	def pgsql_timestamp_str_to_time(timestamp_str)
-		t, frag = timestamp_str.split(/[\.]/)
-		
-		# 秒以下があれば別途扱う
-		if frag then
-			frag = "0.#{frag}".to_f * 1000000
-		else
-			frag = 0
-		end
-		
-		ta = t.split(/[\- :]/)
-		ta.push frag
-
-		return Time.local(*ta)
+	def pgsql_timestamp_str_to_time(str)
+		frag_str = str[20,6]
+		frag = "0.#{frag_str}".to_f * 1000000 if frag_str
+		return Time.local(str[0,4], str[5,2], str[8,2], str[11,2], str[14,2], str[17,2], frag)
 	end
 	
 	# 特定文字列の伏字化
