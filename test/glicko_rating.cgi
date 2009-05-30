@@ -4,7 +4,7 @@
 now = Time.now
 
 ### Glicko Ratings 計算 ###
-REVISION = '0.13'
+REVISION = '0.17'
 DEBUG = 1
 
 $LOAD_PATH.unshift '../common'
@@ -41,6 +41,8 @@ begin
 	RD_DEC = (MAX_RD ** 2.0 - MIN_RD ** 2.0) / RD_SATURATION_TIME.to_f  # RD の時間経過に伴う逓減係数
 	Q = Math::log(10) / 400.0 # 定数
 	QIP = 3.0 * ((Q / Math::PI) ** 2) # 定数 
+	B = 10.0 ** (1.0/400.0) # 定数 
+	INV_B = 10.0 ** (-1.0/400.0)  # 定数 
 	
 	account_type1_rate = {} # アカウント・キャラごとのレート情報
 	
@@ -53,7 +55,7 @@ begin
 	
 	# 対戦結果データ取得
 	require 'TrackRecord'
-	res = db.async_exec(<<-"SQL")
+	res = db.exec(<<-"SQL")
 		SELECT
 		  rep_timestamp,
 		  player1_account_id,
@@ -78,21 +80,18 @@ begin
 	
 	res.each do |r|
 		# 高速化のためインスタンス変数名直接指定
-		t.rep_timestamp = r[0]
+		# また、型変換をしておく
+		t.rep_timestamp = pgsql_timestamp_str_to_time(r[0])
 		t.player1_account_id = r[1]
 		t.player2_account_id = r[2]
 		t.player1_type1_id = r[3]
 		t.player2_type1_id = r[4]
-		t.player1_points = r[5]
-		t.player2_points = r[6]
-#			res.num_fields.times do |i|
-#				t.instance_variable_set("@#{res.fields[i]}", r[i])
-#			end
-
-		# 時刻変換
-		t.rep_timestamp =  pgsql_timestamp_str_to_time(t.rep_timestamp)
-					
-					
+		t.player1_points = r[5].to_i
+		t.player2_points = r[6].to_i
+#		res.num_fields.times do |i|
+#			t.instance_variable_set("@#{res.fields[i]}", r[i])
+#		end
+		
 		### 発生時間順にレート計算
 		
 		# アカウント・タイプ別レート情報初期化
@@ -128,7 +127,7 @@ begin
 		elapsed_time2 = t.rep_timestamp - player2_type1_rate[:last_timestamp]
 
 		# 対戦結果取得
-		point1 = (1.0 + (t.player1_points.to_i <=> t.player2_points.to_i)) * 0.5
+		point1 = (1.0 + (t.player1_points <=> t.player2_points)) * 0.5
 		point2 = 1.0 - point1
 		
 		### レート計算
@@ -146,8 +145,12 @@ begin
 		#g_rd2 = (1.0 + 3.0 * ((Q * rd2 / Math::PI) ** 2.0)) ** (-0.5)
 		
 		# 勝利期待値
-		expected_point1 = 1.0 / (1.0 + 10.0 ** (g_rd2 * (rate2 - rate1) * 0.0025))
-		expected_point2 = 1.0 / (1.0 + 10.0 ** (g_rd1 * (rate1 - rate2) * 0.0025))
+		b_d_rate = B ** (rate2 - rate1)
+		expected_point1 = 1.0 / (1.0 + b_d_rate ** g_rd2)
+		g_rd1_b_d_rate  = b_d_rate ** g_rd1
+		expected_point2 = g_rd1_b_d_rate / (1.0 + g_rd1_b_d_rate)
+		# expected_point1 = 1.0 / (1.0 + 10.0 ** (g_rd2 * (rate2 - rate1) * 0.0025))
+		# expected_point2 = 1.0 / (1.0 + 10.0 ** (g_rd1 * (rate1 - rate2) * 0.0025))
 
 		# レート変化の分散の逆数
 		d1_inv_sq = ((Q * g_rd2) ** 2) * expected_point1 * (1.0 - expected_point1)
@@ -238,16 +241,18 @@ begin
 				# 更新または作成
 				update_sql = <<-"SQL"
 UPDATE
-game_account_ratings
+  game_account_ratings
 SET
-rating = #{rate_info[:rate].to_f},
-ratings_deviation = #{rate_info[:rd].to_f},
-matched_accounts = #{rate_info[:account_ids].uniq.length},
-match_counts = #{rate_info[:counts].to_i}
+  rating = #{rate_info[:rate].to_f},
+  ratings_deviation = #{rate_info[:rd].to_f},
+  matched_accounts = #{rate_info[:account_ids].uniq.length},
+  match_counts = #{rate_info[:counts].to_i},
+  updated_at = CURRENT_TIMESTAMP,
+  lock_version = lock_version + 1
 WHERE
-game_id = #{game_id.to_i}
-AND account_id = #{account_id.to_i}
-AND type1_id = #{type1_id.to_i}
+  game_id = #{game_id.to_i}
+  AND account_id = #{account_id.to_i}
+  AND type1_id = #{type1_id.to_i}
 				SQL
 				
 				res_update = db.exec(update_sql)
