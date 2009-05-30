@@ -6,7 +6,7 @@ require 'yaml'
 CONFIG = YAML.load_file("#{File::dirname(__FILE__)}/../../../config/db.yaml")
 
 class DB
-	@@revision = 'R0.02'
+	@@revision = 'R0.03'
 	@@db = nil
 	attr_reader :con
 	
@@ -25,7 +25,23 @@ class DB
 		@con.exec(sql) if @con
 	end
 	
+	def async_exec(sql)
+		@con.async_exec(sql) if @con
+	end
+	
+	def query(sql)
+		@con.query(sql) if @con
+	end
+	
+	def async_query(sql)
+		@con.async_query(sql) if @con
+	end
+	
 	def close
 		@con.close if @con
+	end
+	
+	def reset
+		@con.reset if @con
 	end
 end
