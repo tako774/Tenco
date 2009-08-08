@@ -5,7 +5,7 @@ begin
 	# 開始時刻
 	now = Time.now
 	# リビジョン
-	REVISION = 'R0.02'
+	REVISION = 'R0.03'
 	DEBUG = false
 
 	$LOAD_PATH.unshift './common'
@@ -137,7 +137,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		html = Erubis::Eruby.new(File.read("#{File::basename(__FILE__, '.*')}.erb")).result(binding)
 		
 		### 結果をセット
-		res_status = "Status: 200 OK\n" unless res_status
+		res_status = "Status: 200 OK\n"
 		res_header = "Content-Type:text/html; charset=utf-8\n"
 		res_body = html
 			
