@@ -162,13 +162,12 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 						# Type1 区分値取得
 						res = db.exec(<<-"SQL")
 							SELECT
-								segment_values.segment_value AS value, segment_values.name AS name
+								type1_id, name
 							FROM
-								segment_values, games
+								game_type1s
 							WHERE
-								games.id = #{game_id.to_i}
-							AND segment_values.segment_id = games.type1_segment_id
-							SQL
+								game_id = #{game_id.to_i}
+						SQL
 						
 						res.each do |r|
 							type1[r[0].to_i] = r[1]

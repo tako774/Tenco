@@ -6,7 +6,7 @@ begin
 # 開始時刻
 now = Time.now
 
-REVISION = '0.02'
+REVISION = '0.03'
 DEBUG = 1
 
 $LOAD_PATH.unshift '../common'
@@ -62,13 +62,12 @@ begin
 	# Type1 の範囲を取得
 	res = db.exec(<<-"SQL")
 		SELECT
-		  MAX(to_number(sv.segment_value, '99999999')),
-		  MIN(to_number(sv.segment_value, '99999999'))
+		  MAX(type1_id),
+		  MIN(type1_id)
 		FROM
-		  games g, segment_values sv
+		  game_type1s
 		WHERE
-		  g.id = #{game_id.to_i}
-		  AND sv.segment_id = g.type1_segment_id
+		  game_id = #{game_id.to_i}
 	SQL
 
 	max_type1_id = res[0][0].to_i

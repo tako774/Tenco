@@ -3,29 +3,36 @@
 # 開始時刻
 now = Time.now
 
-### 区分値定数ファイル生成 ###
-REVISION = '0.01'
-DEBUG = 1
+begin
 
-$LOAD_PATH.unshift '../common'
-$LOAD_PATH.unshift '../model'
+	### 区分値定数ファイル生成 ###
+	REVISION = '0.02'
+	DEBUG = 1
 
-require 'rubygems'
-require 'active_record'
-require 'kconv'
-require 'yaml'
-require 'time'
+	$LOAD_PATH.unshift '../common'
+	$LOAD_PATH.unshift '../entity'
 
-source = ""
+	require 'kconv'
+	require 'yaml'
+	require 'time'
+	require 'db'
 
-# ログファイルパス
-LOG_PATH = "../log/#{File::basename(__FILE__)}_#{now.strftime('%Y%m%d')}.log"
-ERROR_LOG_PATH = "../log/#{File::basename(__FILE__)}_#{now.strftime('%Y%m%d')}.log"
+	source = ""
 
-# HTTP/HTTPSレスポンス文字列
-res_status = ''
-res_header = ''
-res_body = "#{now.to_s} #{File::basename(__FILE__)} Rev.#{REVISION}\n"
+	# ログファイルパス
+	LOG_PATH = "../log/#{File::basename(__FILE__)}_#{now.strftime('%Y%m%d')}.log"
+	ERROR_LOG_PATH = "../log/error_#{now.strftime('%Y%m%d')}.log"
+
+	# HTTP/HTTPSレスポンス文字列
+	res_status = ''
+	res_header = ''
+	res_body = "#{now.to_s} #{File::basename(__FILE__)} Rev.#{REVISION}\n"
+
+rescue
+	print "Status: 500 Internal Server Error\n"
+	print "content-type: text/plain\n\n"
+	print "サーバーエラーです。ごめんなさい。(Initialize Error #{Time.now.strftime('%Y/%m/%d %H:%m:%S')})"
+end
 
 if ENV['REQUEST_METHOD'] == 'GET' then
 	begin
@@ -35,37 +42,51 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		seg_str = nil       # 区分テキスト
 		seg_v_str = nil     # 区分値テキスト
 		
-		# DB設定ファイル読み込み
-		config_file = '../../../config/database.yaml'
-		config = YAML.load_file(config_file)
-
 		# DB接続
-		ActiveRecord::Base.establish_connection(
-		  :adapter  => config['adapter'],
-		  :host     => config['host'],
-		  :username => config['username'],
-		  :password => config['password'],
-		  :database => config['database']
-		)
+		db = DB.getInstance()
 		
 		res_body << "DB connected...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
 		
 		# 区分データ取得
 		require 'Segment'
-		Segment.find(:all, :order => 'id').each do |record|
-			segments[record.id] = record
+		res = db.exec(<<-"SQL")
+			SELECT
+				*
+			FROM
+				segments
+			ORDER BY
+				id
+		SQL
+		
+		res.each do |r|
+			entity = Segment.new
+			res.num_fields.times do |i|
+				entity.instance_variable_set("@#{res.fields[i]}", r[i])
+			end
+			segments[entity.id.to_i] = entity
 		end
+		res.clear
 		
 		# 区分値データ取得
 		require 'SegmentValue'
-		SegmentValue.find(:all, :order => 'segment_id, segment_value').each do |record|
-			segment_values[record.segment_id] ||= []
-			segment_values[record.segment_id] << record
+		res = db.exec(<<-"SQL")
+			SELECT
+				*
+			FROM
+				segment_values
+			ORDER BY
+				segment_id, segment_value
+		SQL
+		
+		res.each do |r|
+			entity = SegmentValue.new
+			res.num_fields.times do |i|
+				entity.instance_variable_set("@#{res.fields[i]}", r[i])
+			end
+			segment_values[entity.segment_id.to_i] ||= []
+			segment_values[entity.segment_id.to_i] << entity
 		end
-		
-		res_body << "区分・区分値取得。\n"
-		res_body << "segments/segment values selected...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
-		
+		res.clear
 		
 		# 区分ハッシュ文生成
 		seg_array = []
@@ -84,7 +105,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		seg_array = []
 		segments.each_value do |s|
 			seg_v_array = []
-			segment_values[s.id].each do |sv|
+			segment_values[s.id.to_i].each do |sv|
 				seg_v_array << <<-"SEG_V".chomp
 		:#{sv.ascii_name} => {
 			:value => #{sv.segment_value},
@@ -103,7 +124,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		
 		File.open(SEGMENT_CONST_FILE_PATH, 'w') do |w|
 			w.puts "# 区分値ファイル"
-			w.puts "# #{now.strftime('%Y/%m/%d %H:%m:%S')} 生成"
+			w.puts "# #{now.strftime('%Y/%m/%d %H:%M:%S')} 生成"
 			w.puts
 			w.puts seg_str
 			w.puts
@@ -128,7 +149,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		res_body << "区分値ファイル作成正常終了。\n"
 	ensure
 		# DB接続を閉じる
-		ActiveRecord::Base.remove_connection if ActiveRecord::Base.connected?
+		db.close
 	end
 else
 	res_status = "Status: 400 Bad Request\n"
