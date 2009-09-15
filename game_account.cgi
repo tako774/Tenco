@@ -3,7 +3,7 @@
 # 開始時刻
 now = Time.now
 # リビジョン
-REVISION = 'R0.47'
+REVISION = 'R0.48'
 DEBUG = false
 
 $LOAD_PATH.unshift './common'
@@ -434,7 +434,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 									type1_element = game_element.add_element('type1')
 									type1_element.add_element('id').add_text(r.type1_id)
 									type1_element.add_element('name').add_text(type1[r.type1_id.to_i])
-									type1_element.add_element('elo_rating_value').add_text("#{r.rating.to_f.round.to_s}")
+									# type1_element.add_element('elo_rating_value').add_text("#{r.rating.to_f.round.to_s}")
 									type1_element.add_element('rating').add_text("#{r.rating.to_f.round.to_s}±#{r.ratings_deviation.to_f.floor.to_s}")
 									type1_element.add_element('rating_value').add_text(r.rating.to_f.round.to_s)
 									type1_element.add_element('ratings_deviation').add_text(r.ratings_deviation.to_f.floor.to_s)
