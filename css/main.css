@@ -45,9 +45,9 @@ sub {
 }
 
 sup {
-  font-size: 0.7em;
+  font-size: 0.6em;
   font-weight: normal;
-  vertical-align:25%;
+  vertical-align:12.5%;
 }
 
 table {
@@ -124,7 +124,7 @@ table.account {
 .AA {
   font-size: 1.0em;
   line-height: 1.125em;
-  font-family: 'MS PGothic','ÇlÇr ÇoÉSÉVÉbÉN',Mona,IPAMonaPGothic,'IPA ÉÇÉiÅ[ PÉSÉVÉbÉN','MS PGothic AA',sans-serif;
+  font-family: 'MS PGothic','Ôº≠Ôº≥ Ôº∞„Ç¥„Ç∑„ÉÉ„ÇØ',Mona,IPAMonaPGothic,'IPA „É¢„Éä„Éº P„Ç¥„Ç∑„ÉÉ„ÇØ','MS PGothic AA',sans-serif;
 }
 
 .enc {
@@ -238,45 +238,76 @@ table.account {
   font-size: 95%;
 }
 
+#profile h3 {
+  font-size: 100%;
+}
+
 #track_records {
   text-align: center;
   line-height: 1.8em;
   font-size: 85%;
 }
 
-#tools {
+.tools {
   font-size:82%;
   margin-top:0.2em;
   padding-bottom:0.4em;
-  border-left:   solid 1px #746710;
-  border-bottom: solid 1px #746710;
   line-height: 1.5em;
 }
 
-#tools h2 {
+.tools_left {
+  padding-right:2em;
+}
+
+.tools h2 {
   /*border-left: solid 0.2em #999999;*/
   line-height: 1.5em;
-  padding:0.1em 0.5em;
   font-size:120%;
   margin: 0em;
 }
 
-#tools table {
+.tools_right h2 {
+  padding:0.1em 0.5em;
+}
+
+.tools_left h2 {
+  padding:0.1em 0em;
+}
+
+.tools h3 {
+  /*border-left: solid 0.2em #999999;*/
+  line-height: 1em;
+  font-size:100%;
+  margin: 0em;
+}
+
+.tools_right h3 {
+  margin-left: 0.5em;
+  padding:0.1em 0.7em;
+}
+
+.tools_left h3 {
+  margin-left: 0.5em;
+  padding:0.1em 0em;
+}
+
+.tools table {
   width: 290px;
-  margin-bottom: 0px;
+  margin-top: 0.4em;
+  margin-bottom: 0.6em;
   margin-left: 16px;
 }
 
-#tools th, td {
+.tools th, td {
 }
 
-#tools th {
+.tools th {
 }
 
-#tools td {
+.tools td {
 }
 
-#tools .suppli {
+.tools .suppli {
   text-align: right;
 }
 

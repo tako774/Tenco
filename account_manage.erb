@@ -83,9 +83,9 @@ $(document).ready(
 	現在のところ、ブラウザ経由でのアカウント設定は javascript が必須です。申し訳ありません。
 </noscript>
 <p>
-	パスワード：<input id='account_password' name='account_password' tabindex='1' type='password' size='24' value="" />&nbsp;<button id='get_settings' tabindex='2'>現在の設定取得</button></p>
-	<pre id="message" class="suppli"></pre>
+	パスワード：<input id='account_password' name='account_password' tabindex='1' type='password' size='24' value="" />&nbsp;<button id='get_settings' tabindex='2'>現在の設定取得</button>
 </p>
+<pre id="message" class="suppli"></pre>
 
 <div id="account_settings" style="display:none">
 	<h3>現在の設定</h3>
@@ -97,7 +97,7 @@ $(document).ready(
 	<h3>新しい設定</h3>
 	<p>メールアドレスは空欄にすると、登録を削除できます。<br />
 	また、パスワードは空欄のままにすると変更されません。<br />
-	注意：パスワード変更後は、緋行跡報告ツールの設定（config.yaml）の変更も忘れずに。</p>
+	注意：パスワード変更後は、すべての報告ツールの設定（config.yaml）の変更も忘れずに。</p>
 	<p><button id='update_settings' tabindex='8' style="display:none">設定更新</button></p>
 	<table id="new_account_settings" class="column-wise">
 		<tr><th>メールアドレス</th><td><input id='new_mail_address' tabindex='3' type='text' size='80' value="" /></td></tr>
@@ -128,7 +128,7 @@ $(document).ready(
 </div>
 </div>
 
-<div id="tools">
+<div id="side" class="tools tools_right">
 	<h2>マイページ</h2>
 	<ul>
 	<%- game_accounts.each do |ga| -%>

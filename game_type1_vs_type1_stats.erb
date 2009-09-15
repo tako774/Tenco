@@ -42,7 +42,7 @@ $(document).ready(
 			else if (value > 37.5) {
 				$(this).addClass("legend_6");
 			}
-			else {
+			else if (value <= 37.5){
 				$(this).addClass("legend_7");
 			}
 		});
@@ -58,7 +58,7 @@ $(document).ready(
 
 <div id="header">
 	<h1><a href="<%= TOP_URL %>"><img alt="Tenco!" src='<%= TOP_URL %>images/Tenco.gif' width='<%= 366/3 %>' height='<%= 126/3 %>' /></a></h1>
-	<p>キャラ対キャラ統計ページ Rev.1 (2009/04/24)</p>
+	<p>キャラ対キャラ統計ページ Rev.2 (2009/08/18)</p>
 	<p id="meta_info">
 		<%= now.strftime('%m/%d %H:%M') %> に作成（毎時0分以降に再生成）<br />
 	</p>
@@ -88,7 +88,11 @@ $(document).ready(
 	<th><%= "#{h type1[type1_id].split(//u)[0]}" %></th>
 	<%- type1.keys.sort.each do |matched_type1_id| -%>
 	<%- gtvts = game_type1_vs_type1_stats[type1_id][matched_type1_id] -%>
+		<%- if gtvts.track_records_count.to_i != 0 -%>
 	<td class="num"><%= "#{((gtvts.wins.to_f / gtvts.track_records_count.to_f) * 1000).round / 10.0}" %></td>
+		<%- else -%>
+	<td class="num">-</td>
+		<%- end -%>
 	<%- end -%>
 </tr>
 <%- end -%>
@@ -118,7 +122,7 @@ $(document).ready(
 </div>
 </div>
 
-<div id="tools">
+<div id="side" class="tools tools_right">
 	<h2>プライズページ</h2>
 	<ul>
 		<li><a href="<%= "#{TOP_URL}game/#{u game_id}/pov/1/" %>">レートランキング</a></li>

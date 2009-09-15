@@ -3,7 +3,7 @@
 # 開始時刻
 now = Time.now
 # リビジョン
-REVISION = 'R0.41'
+REVISION = 'R0.46'
 DEBUG = false
 
 $LOAD_PATH.unshift './common'
@@ -43,8 +43,10 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		type1 = {}          # プレイヤー属性１区分値
 		type1_h = {}        # プレイヤー属性１区分値（HTML エスケープ済み）
 		ratings = []         # プレイヤーのレーティング 
+		estimate_ratings = {} # プレイヤーのレート推定値
 		matched_game_accounts = [] # 対戦相手情報
 		account = nil # 対象アカウントの情報
+		other_games = [] # 対象アカウントのマッチ済み他ゲームID
 		
 		LINK_ERB_PATH   = "./link.erb"   # リンクERBパス
 		FOOTER_ERB_PATH = "./footer.erb" # フッターERBパス
@@ -192,6 +194,30 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							# NGワード伏字化
 							game_account.rep_name = hide_ng_words(game_account.rep_name)
 							
+							# 該当アカウントの他のマッチ済み全ゲーム情報を取得
+							require 'Game'
+							res = db.exec(<<-"SQL")
+								SELECT
+									g.*
+								FROM
+									games g,
+									game_accounts ga
+								WHERE
+									g.id = ga.game_id
+									AND	g.id != #{game_id.to_i}
+									AND ga.account_id = #{account.id.to_i}
+								ORDER BY
+									g.id
+							SQL
+							
+							res.each do |r|
+								g = Game.new
+								res.num_fields.times do |i|
+									g.instance_variable_set("@#{res.fields[i]}", r[i])
+								end
+								other_games << g
+							end
+							
 							# アカウントのレーティング情報を取得
 							require 'GameAccountRating'
 							res = db.exec(<<-"SQL")
@@ -215,6 +241,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 								ratings << rating
 							end
 							res.clear
+							
 							
 							# アカウントの対戦記録を取得			
 							# 未マッチの場合、player2 の名前は暗号化
@@ -274,12 +301,56 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 								track_records << t
 							end
 							res.clear
+
+							# 推定レートの値を取得
+							# アカウントのレートが一定以上の場合のみ取得
+							require 'GameProfileUtil'
 							
-							# NGワード伏字化
+							# 対象のゲーム内プロファイル名を取得
+							game_profile_name_counts = {}
+							est_target_names = []
+							track_records.each do |t|
+								if (
+									t.player2_account_name and
+									t.player2_account_del_flag.to_i == 0
+								) then
+									game_profile_name_counts[t.player1_name] ||= 0
+									game_profile_name_counts[t.player1_name] += 1
+								end
+							end
+							
+							game_profile_name_counts.to_a.each do |name, count|
+								if count >= 10 then
+									est_target_names << name
+								end
+							end
+							
+							est_target_names << game_account.rep_name unless est_target_names.index(game_account.rep_name)
+							
+							# 対象の type1_id を取得
+							est_type1_ids = []
+							ratings.each do |r|
+								if (
+								  r.ratings_deviation.to_f < 150 &&
+								  r.matched_accounts.to_i >= 5 &&
+								  r.rating.to_f.round >= 1800
+								) then
+									est_type1_ids << r.type1_id.to_i
+								end
+							end
+							
+							# 推定レート取得
+							if est_type1_ids.length > 0 then
+								estimate_ratings = GameProfileUtil.estimate_rating(est_target_names, game_id.to_i, est_type1_ids)
+							end
+
+							
+							# ゲーム内プロファイル名NGワード伏字化
 							track_records.each do |t|
 								t.player1_name = hide_ng_words(t.player1_name)
 								t.player2_name = hide_ng_words(t.player2_name)
 							end
+							
 							
 							# 対戦相手一覧作成
 							require 'GameAccount'
@@ -300,6 +371,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							end
 							matched_game_accounts_names = nil
 							
+
 							# Type1 区分値取得
 							res = db.exec(<<-"SQL")
 								SELECT

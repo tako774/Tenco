@@ -5,7 +5,7 @@
 # 開始時刻
 now = Time.now
 # リビジョン
-REVISION = 'R0.04'
+REVISION = 'R0.07'
 
 DEBUG = 1
 
@@ -14,6 +14,7 @@ TOP_DIR = '..'
 
 $LOAD_PATH.unshift "#{TOP_DIR}/common"
 $LOAD_PATH.unshift "#{TOP_DIR}/entity"
+$LOAD_PATH.unshift "#{TOP_DIR}/dao"
 
 require 'time'
 require 'logger'
@@ -39,12 +40,8 @@ logger.level = Logger::DEBUG
 begin
 	require 'GameStat'
 	
-	game_id = 1
 	db = nil   # DB接続
 	
-	game_stat = GameStat.new         # ゲーム統計情報
-	game_type1_stats = []	         # キャラごとの統計情報
-	game_type1_vs_type1_stats = []   # キャラ・対戦キャラごとの統計情報
 						
 	# DB接続
 	db = DB.getInstance
@@ -58,156 +55,183 @@ begin
 	
 	# ゲーム全体の対戦数取得・保存
 	
-	# PostgreSQL は discinct より group by のほうが高速。読みづらいけど。
-	res = db.exec(<<-"SQL")
-	  INSERT INTO
-		game_stats (game_id, date_time, track_records_count, matched_track_records_count, accounts_count, matched_accounts_count, accounts_type1s_count, matched_accounts_type1s_count)
-		  SELECT
-			game_id,
-			LOCALTIMESTAMP AS date_time,
-			COUNT(id) AS track_records_count,
-			SUM(
-			  CASE
-				WHEN matched_track_record_id IS NOT NULL THEN 1
-				ELSE 0
-			  END
-			) AS matched_track_records_count,
-			(
-			  SELECT
-				COUNT(*)
-			  FROM 
-			  (
-				SELECT
-				  player1_account_id
-				FROM
-				  track_records 
-				GROUP BY
-				  player1_account_id
-			  ) AS TEMP1
-			) AS accounts_count,
-			(
-			  SELECT
-				COUNT(*)
-			  FROM 
-			  (
-				SELECT
-				  player1_account_id
-				FROM
-				  track_records
-				WHERE
-				  matched_track_record_id IS NOT NULL 
-				GROUP BY
-				  player1_account_id
-			  ) AS TEMP2
-			) AS matched_accounts_count,
-			(
-			  SELECT
-				COUNT(*)
-			  FROM 
-			  (
-				SELECT
-				  player1_account_id, player1_type1_id
-				FROM
-				  track_records 
-				GROUP BY
-				  player1_account_id, player1_type1_id
-			  ) AS TEMP3
-			) AS accounts_type1s_count,							
-			(
-			  SELECT
-				COUNT(*)
-			  FROM 
-			  (
-				SELECT
-				  player1_account_id, player1_type1_id
-				FROM
-				  track_records
-				WHERE
-				  matched_track_record_id IS NOT NULL  
-				GROUP BY
-				  player1_account_id, player1_type1_id
-			  ) AS TEMP4
-			) AS matched_accounts_type1s_count
-		  FROM
-			track_records
-		  WHERE
-			game_id = #{game_id.to_i}
-		  GROUP BY
-			game_id
-	  RETURNING *
-	SQL
-	
-	res.num_fields.times do |i|
-		game_stat.instance_variable_set("@#{res.fields[i]}", res[0][i])
-	end
-	
-	res.clear
-	
-	res_body << "総対戦結果数 #{game_stat.track_records_count} 件\n"
-	res_body << "マッチ済み対戦結果数 #{game_stat.matched_track_records_count} 件\n"
-	res_body << "game_stat inserted ...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
+	# 処理対象のゲームID取得
+	require 'GameDao'
+	game_dao = GameDao.new
+	game_ids = game_dao.get_batch_target_ids
 		
-	# キャラ別対戦結果情報取得・保存
-	res = db.exec(<<-"SQL")
-	  INSERT INTO
-		game_type1_stats (game_id, type1_id, date_time, track_records_count, accounts_count, wins, loses)
-	  SELECT
-		game_id AS game_id,
-		player1_type1_id AS type1_id,
-		LOCALTIMESTAMP AS date_time,
-		SUM(track_records_count) AS track_records_count,
-		COUNT(player1_account_id) AS accounts_count,
-		SUM(wins) AS wins,
-		SUM(loses) AS loses
-	  FROM
-		(
-		  SELECT
-			game_id,
-			player1_type1_id,
-			player1_account_id,
-			COUNT(id) AS track_records_count,
-			SUM(
-			  CASE
-				WHEN player1_points > player2_points THEN 1
-				ELSE 0
-			  END
-			  ) AS wins,
-			SUM(
-			  CASE
-				WHEN player1_points < player2_points THEN 1
-				ELSE 0
-			  END
-			) AS loses
-		  FROM
-			track_records
-		  WHERE
-			game_id = #{game_id.to_i}
-			AND matched_track_record_id IS NOT NULL
-		  GROUP BY
-			game_id, player1_type1_id, player1_account_id
-	   ) AS temp1
-	 GROUP BY
-	   game_id, player1_type1_id
-	  RETURNING *
-	SQL
+	res_body << "batch target game_ids selected...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
 	
-	require 'GameType1Stat'
-	res.each do |r|
-		gts = GameType1Stat.new
-		res.fields.length.times do |i|
-			gts.instance_variable_set("@#{res.fields[i]}", r[i])
+	# ゲームIDごとにレート計算実行
+	game_ids.each do |game_id|
+		res_body << "★GAME_ID:#{game_id} の処理\n"
+	
+		game_stat = GameStat.new         # ゲーム統計情報
+		game_type1_stats = []	         # キャラごとの統計情報
+		game_type1_vs_type1_stats = []   # キャラ・対戦キャラごとの統計情報
+
+		# PostgreSQL は discinct より group by のほうが高速。読みづらいけど。
+		res = db.exec(<<-"SQL")
+		  INSERT INTO
+			game_stats (
+				game_id,
+				date_time, 
+				track_records_count, 
+				matched_track_records_count, 
+				accounts_count, matched_accounts_count, 
+				accounts_type1s_count, 
+				matched_accounts_type1s_count
+			)
+			SELECT
+			  game_id,
+			  LOCALTIMESTAMP AS date_time,
+			  COUNT(id) AS track_records_count,
+			  SUM(
+				CASE
+				  WHEN matched_track_record_id IS NOT NULL THEN 1
+				  ELSE 0
+				END
+			  ) AS matched_track_records_count,
+			  (
+				SELECT
+				  COUNT(*)
+				FROM 
+				(
+				  SELECT
+					player1_account_id
+				  FROM
+					track_records 
+				  WHERE 
+				    game_id = #{game_id.to_i}
+				  GROUP BY
+					player1_account_id
+				) AS TEMP1
+			  ) AS accounts_count,
+			  (
+				SELECT
+				  COUNT(*)
+				FROM 
+				(
+				  SELECT
+					player1_account_id
+				  FROM
+					track_records
+				  WHERE 
+				    game_id = #{game_id.to_i}
+					AND matched_track_record_id IS NOT NULL 
+				  GROUP BY
+					player1_account_id
+				) AS TEMP2
+			  ) AS matched_accounts_count,
+			  (
+				SELECT
+				  COUNT(*)
+				FROM 
+				(
+				  SELECT
+					player1_account_id, player1_type1_id
+				  FROM
+					track_records 
+				  WHERE 
+				    game_id = #{game_id.to_i}
+				  GROUP BY
+					player1_account_id, player1_type1_id
+				) AS TEMP3
+			  ) AS accounts_type1s_count,							
+			  (
+				SELECT
+				  COUNT(*)
+				FROM 
+				(
+				  SELECT
+					player1_account_id, player1_type1_id
+				  FROM
+					track_records
+				  WHERE 
+				    game_id = #{game_id.to_i}
+					AND matched_track_record_id IS NOT NULL  
+				  GROUP BY
+					player1_account_id, player1_type1_id
+				) AS TEMP4
+			  ) AS matched_accounts_type1s_count
+			  FROM
+				track_records
+			  WHERE
+				game_id = #{game_id.to_i}
+			  GROUP BY
+				game_id
+		  RETURNING *
+		SQL
+		
+		res.num_fields.times do |i|
+			game_stat.instance_variable_set("@#{res.fields[i]}", res[0][i])
 		end
-		game_type1_stats << gts
-	end
-	res.clear
-	
-	res_body << "キャラ別統計情報追加 #{game_type1_stats.length} 件\n"
-	res_body << "game_type1_stats inserted ...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
-	
-	# キャラ別・対戦キャラ別対戦結果情報取得・保存
-	res = db.exec(<<-"SQL")
-	  INSERT INTO
-		game_type1_vs_type1_stats (game_id, type1_id, matched_type1_id, date_time, track_records_count, wins, loses)
+		
+		res.clear
+		
+		res_body << "総対戦結果数 #{game_stat.track_records_count} 件\n"
+		res_body << "マッチ済み対戦結果数 #{game_stat.matched_track_records_count} 件\n"
+		res_body << "game_stat inserted ...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
+			
+		# キャラ別対戦結果情報取得・保存
+		res = db.exec(<<-"SQL")
+		  INSERT INTO
+			game_type1_stats (game_id, type1_id, date_time, track_records_count, accounts_count, wins, loses)
+		  SELECT
+			game_id AS game_id,
+			player1_type1_id AS type1_id,
+			LOCALTIMESTAMP AS date_time,
+			SUM(track_records_count) AS track_records_count,
+			COUNT(player1_account_id) AS accounts_count,
+			SUM(wins) AS wins,
+			SUM(loses) AS loses
+		  FROM
+			(
+			  SELECT
+				game_id,
+				player1_type1_id,
+				player1_account_id,
+				COUNT(id) AS track_records_count,
+				SUM(
+				  CASE
+					WHEN player1_points > player2_points THEN 1
+					ELSE 0
+				  END
+				  ) AS wins,
+				SUM(
+				  CASE
+					WHEN player1_points < player2_points THEN 1
+					ELSE 0
+				  END
+				) AS loses
+			  FROM
+				track_records
+			  WHERE
+				game_id = #{game_id.to_i}
+				AND matched_track_record_id IS NOT NULL
+			  GROUP BY
+				game_id, player1_type1_id, player1_account_id
+		   ) AS temp1
+		 GROUP BY
+		   game_id, player1_type1_id
+		  RETURNING *
+		SQL
+		
+		require 'GameType1Stat'
+		res.each do |r|
+			gts = GameType1Stat.new
+			res.fields.length.times do |i|
+				gts.instance_variable_set("@#{res.fields[i]}", r[i])
+			end
+			game_type1_stats << gts
+		end
+		res.clear
+		
+		res_body << "キャラ別統計情報追加 #{game_type1_stats.length} 件\n"
+		res_body << "game_type1_stats inserted ...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
+		
+		# キャラ別・対戦キャラ別対戦結果情報取得・保存
+		res = db.exec(<<-"SQL")
 		  SELECT
 			game_id,
 			player1_type1_id AS type1_id,
@@ -233,21 +257,77 @@ begin
 			AND matched_track_record_id IS NOT NULL
 		  GROUP BY
 			game_id, player1_type1_id, player2_type1_id
-	  RETURNING *;
-	SQL
-	
-	require 'GameType1VsType1Stat'
-	res.each do |r|
-		gtvts = GameType1VsType1Stat.new
-		res.fields.length.times do |i|
-			gtvts.instance_variable_set("@#{res.fields[i]}", r[i])
+		SQL
+		
+		require 'GameType1VsType1Stat'
+		res.each do |r|
+			gtvts = GameType1VsType1Stat.new
+			res.fields.length.times do |i|
+				gtvts.instance_variable_set("@#{res.fields[i]}", r[i])
+			end
+			game_type1_vs_type1_stats << gtvts
 		end
-		game_type1_vs_type1_stats << gtvts
+		res.clear
+		
+		# UPDATE or INSERT
+		gtvts_inserted_counts = 0
+		gtvts_updated_counts = 0
+		
+		game_type1_vs_type1_stats.each do |gtvts| 
+		
+			res_update = db.exec(<<-"SQL")
+			  UPDATE
+				game_type1_vs_type1_stats
+			  SET
+				date_time = to_timestamp(#{s gtvts.date_time.to_s}, \'YYYY-MM-DD HH24:MI:SS\'),
+				track_records_count = #{gtvts.track_records_count.to_i},
+				wins = #{gtvts.wins.to_i},
+				loses = #{gtvts.loses.to_i},
+				updated_at = now(),
+				lock_version = lock_version + 1
+			  WHERE
+				game_id = #{gtvts.game_id.to_i}
+				AND type1_id = #{gtvts.type1_id.to_i}
+				AND matched_type1_id = #{gtvts.matched_type1_id.to_i}
+			  RETURNING *;
+			SQL
+			
+			# UPDATE 失敗時は INSERT
+			if res_update.num_tuples != 1 then
+				res_insert = db.exec(<<-"SQL")
+				  INSERT INTO
+				    game_type1_vs_type1_stats (game_id, type1_id, matched_type1_id, date_time, track_records_count, wins, loses)
+				  VALUES (
+				    #{gtvts.game_id.to_i},
+				    #{gtvts.type1_id.to_i},
+				    #{gtvts.matched_type1_id.to_i},
+				    to_timestamp(#{s gtvts.date_time.to_s}, \'YYYY-MM-DD HH24:MI:SS\'),
+				    #{gtvts.track_records_count.to_i},
+				    #{gtvts.wins.to_i},
+					#{gtvts.loses.to_i}
+				  )
+				  RETURNING *;
+				SQL
+				
+				if res_insert.num_tuples != 1 then
+					raise "UPDATE 失敗後の INSERT に失敗しました。"
+				else
+					gtvts_inserted_counts += 1
+				end
+				res_insert.clear
+			
+			else
+				gtvts_updated_counts += 1
+			end
+			 
+			res_update.clear
+		end
+
+		
+		res_body << "キャラ別・対戦キャラ別対戦結果情報 #{gtvts_inserted_counts} 件のデータを登録、#{gtvts_updated_counts} 件のデータを更新しました\n"
+		res_body << "game_type1_vs_type1_stats updated/inserted ...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
+		
 	end
-	res.clear
-	
-	res_body << "キャラ別・対戦キャラ別統計情報追加 #{game_type1_vs_type1_stats.length} 件\n"
-	res_body << "game_type1_vs_type1_stats inserted ...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
 	
 	# コミット
 	db.exec("COMMIT")

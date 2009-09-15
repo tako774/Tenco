@@ -4,7 +4,7 @@
 now = Time.now
 
 ### Glicko Ratings 計算 ###
-REVISION = '0.17'
+REVISION = '0.18'
 DEBUG = 1
 
 $LOAD_PATH.unshift '../common'
@@ -37,10 +37,10 @@ begin
 	MAX_RD = 350.0     # Ratings Deviation の最大値
 	MIN_RD_SQ = MIN_RD ** 2.0 # Ratings Deviation の最小値の２乗
 	MAX_RD_SQ = MAX_RD ** 2.0 # Ratings Deviation の最大値の２乗
-	RD_SATURATION_TIME = 365.2422 * 24 * 60 * 60  # RD が時間経過で最小から最大まで飽和するまでの秒数
+	RD_SATURATION_TIME = 365.2422 * 24.0 * 60.0 * 60.0  # RD が時間経過で最小から最大まで飽和するまでの秒数
 	RD_DEC = (MAX_RD ** 2.0 - MIN_RD ** 2.0) / RD_SATURATION_TIME.to_f  # RD の時間経過に伴う逓減係数
 	Q = Math::log(10) / 400.0 # 定数
-	QIP = 3.0 * ((Q / Math::PI) ** 2) # 定数 
+	QIP = 3.0 * ((Q / Math::PI) ** 2.0) # 定数 
 	B = 10.0 ** (1.0/400.0) # 定数 
 	INV_B = 10.0 ** (-1.0/400.0)  # 定数 
 	
@@ -165,8 +165,8 @@ begin
 			# expected_point2 = 1.0 / (1.0 + 10.0 ** (g_rd1 * (rate1 - rate2) * 0.0025))
 
 			# レート変化の分散の逆数
-			d1_inv_sq = ((Q * g_rd2) ** 2) * expected_point1 * (1.0 - expected_point1)
-			d2_inv_sq = ((Q * g_rd1) ** 2) * expected_point2 * (1.0 - expected_point2)
+			d1_inv_sq = ((Q * g_rd2) ** 2.0) * expected_point1 * (1.0 - expected_point1)
+			d2_inv_sq = ((Q * g_rd1) ** 2.0) * expected_point2 * (1.0 - expected_point2)
 
 			# 対戦後RD の２乗
 			rd1_sq = 1.0 / (1.0 / rd1_sq + d1_inv_sq)

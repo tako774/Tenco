@@ -1,19 +1,16 @@
-
-	<h2><%= h game_pov.name %></h2>
+	<h2><%= h game_pov.name %>- <%= h game.name %></h2>
 	<div class="section">
 		<div class="menu">
 			<ul id="type1_list">
-			<%- type1.keys.sort.each do |type1_id| -%>
-				<%- if ratings_each_type1[type1_id] -%>
-<li><a href="#<%= h "type1_#{type1_id.to_i}" %>"><img src="<%= "#{TOP_URL}images/game/#{game_id.to_i}/game_#{game_id.to_i}_type1_#{type1_id.to_i}_list01.png" %>" alt="<%= h type1[type1_id.to_i] %>" width="45" height="135" /></a></li><%- end -%><%- end -%>
-		
+			<%- prizes.each do |p| -%>
+<li><a href="#<%= h "type1_#{p.type1_id.to_i}" %>"><img src="<%= "#{TOP_URL}images/game/#{game_id.to_i}/game_#{game_id.to_i}_type1_#{p.type1_id.to_i}_list01.png" %>" alt="<%= h type1[p.type1_id.to_i] %>" width="45" height="135" /></a></li><%- end -%>
 			</ul>
 		</div>
 	
-		<%- type1.keys.sort.each do |type1_id| -%>
-			<%- if ratings_each_type1[type1_id] -%>
-		<h3 id="<%= h "type1_#{type1_id.to_i}" %>"><%= h type1[type1_id.to_i] %></h3>
-		<table class="account <%= h "type1_#{type1_id.to_i}"%>">
+		<%- prizes.each do |p| -%>
+		<h3 id="<%= h "type1_#{p.type1_id.to_i}" %>"><%= h type1[p.type1_id.to_i] %></h3>
+			<%- if ratings_each_type1[p.type1_id.to_i] -%>
+		<table class="account <%= h "type1_#{p.type1_id.to_i}"%>">
 			<thead>
 				<tr>
 					<th>順位</th>
@@ -25,8 +22,8 @@
 			</thead>
 			<tbody>
 				<%- game_pov_classes.each do |gpc| -%>
-					<%- if ratings_each_type1[type1_id.to_i][gpc.value.to_i] -%>
-						<%- ratings_each_type1[type1_id.to_i][gpc.value.to_i].each do |r| -%>
+					<%- if ratings_each_type1[p.type1_id.to_i][gpc.value.to_i] -%>
+						<%- ratings_each_type1[p.type1_id.to_i][gpc.value.to_i].each do |r| -%>
 							<%- if r.show_ratings_flag.to_i != 0 -%>
 				<tr>
 					<td><%= h r.game_each_type1_ratings_rank %></td>
@@ -41,6 +38,8 @@
 				<%- end -%>
 			</tbody>
 		</table>
+			<%- else -%>
+		<p>プライズ達成条件を満たすプレイヤーなし</p>
 			<%- end -%>
 		<%- end -%>
 	</div>

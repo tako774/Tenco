@@ -102,12 +102,12 @@ $(document).ready(
 <div id="container">
 
 <div id="header">
-<h1><a href="<%= TOP_URL %>"><img alt="Tenco!" src='<%= TOP_URL %>images/Tenco.gif' width='<%= 366/3 %>' height='<%= 126/3 %>' /></a></h1> マイページ 開発中バージョンα6.2（2009/05/16）
+<h1><a href="<%= TOP_URL %>"><img alt="Tenco!" src='<%= TOP_URL %>images/Tenco.gif' width='<%= 366/3 %>' height='<%= 126/3 %>' /></a></h1> マイページ 開発中バージョンα8.1（2009/09/09）
 <p id="meta_info">
 λ＜レートなんて飾りなんです。偉い人にはそれがわからんのです<br />
 <%= now.strftime('%m/%d %H:%M') %> に作成（毎時0分以降に再生成）<br />
-おしらせ：<img alt="" src="<%= TOP_URL %>client/images/tenco.ico" width="16" height="16" /> <a href="<%= TOP_URL %>">報告ツール Ver.0.07c</a> リリース（08/12/27）<br />
-</p>
+おしらせ：<img alt="" src="<%= TOP_URL %>client/images/suwako.ico" width="16" height="16" /> <a href="<%= TOP_URL %>">天則観報告ツール Ver.0.01b</a> リリース（09/09/04）<br />
+おしらせ：高レートキャラのみ対象にレート推定表示を試験運用中(09/09/09)</p>
 </div>
 
 <%#
@@ -125,7 +125,7 @@ $(document).ready(
 	<div id="main">
 	
 	<div class="section">
-		<h2>レーティング Rev.3</h2>
+		<h2>レーティング Rev.3 - <%= "#{h game.name}" %></h2>
 		<%- if account.show_ratings_flag.to_i == 0 then -%>
 		<p class="suppli">
 		レートはあいまい表示設定です。百の位以上のみ表示します。
@@ -136,6 +136,9 @@ $(document).ready(
 				<tr>
 					<th>キャラクター</th>
 					<th>レート<sub>±RD</sub>（対戦人数/対戦数）</th>
+					<%- if estimate_ratings.length > 0 -%>
+					<%= "<th class=\"suppli\">推定レート</th>" %>
+					<%- end -%>
 				</tr>
 			</thead>
 			<tbody>
@@ -146,6 +149,15 @@ $(document).ready(
 					<td><%= "#{r.rating.to_f.round}<sub>±#{r.ratings_deviation.to_f.floor}</sub>（#{r.matched_accounts.to_i}人/#{r.match_counts.to_i}戦）" %></td>
 					<%- else -%>
 					<td><%= "#{(r.rating.to_f.round / 100.0).floor}XX<sub>±#{r.ratings_deviation.to_f.floor}</sub>（#{r.matched_accounts.to_i}人/#{r.match_counts.to_i}戦）" %></td>
+					<%- end -%>
+					<%- if estimate_ratings.length > 0 -%>
+					<td class="num suppli">
+						<%- if !estimate_ratings[r.type1_id.to_i].nil? && !estimate_ratings[r.type1_id.to_i][:rating].nil? -%>
+						<%= estimate_ratings[r.type1_id.to_i][:rating].to_i %>
+						<%- else -%>
+						-
+						<%- end -%>
+					</td>
 					<%- end -%>
 				</tr>
 				<%- end -%>
@@ -159,10 +171,18 @@ $(document).ready(
 			なお、ラウンド取得数は、レート変動に直接影響しません。<br />
 			レート計算は毎時0分ちょっと前に行います。
 		</p>
+		<%- if estimate_ratings.length > 0 -%>
+		<p class="suppli">
+			<a href="<%= TOP_URL %>estimate_rating.cgi?game_id=<%= game_id.to_i %>&amp;name=<%= u est_target_names.join("<>") %>">推定レート</a>は他プレイヤーの対戦結果報告を元に算出されます。<br />
+			推定レート値が通常のレート値より極端に低い場合、<br />
+			負け試合のみを意図して報告しないことが原因の場合があります（確実ではありません）。<br />
+			ハイフンは表示対象外か、推定精度不足のため表示されないことを意味します。
+		<%- end -%>
+		</p>
 	</div>	
 	
 	<div class="section">
-		<h2>対戦記録</h2>
+		<h2>対戦記録 - <%= "#{h game.name}" %></h2>
 		<noscript class="suppli msg">
 			javascript を ON にすると、検索・復号ができます 
 		</noscript>
@@ -235,12 +255,26 @@ $(document).ready(
 </p>
 <%# <canvas id="timechart" width="250" height="225" style="display:block"></canvas> %>
 <p>
-<a href="<%= "#{TOP_URL}game/#{game_id.to_i}/account/#{u account_name}/output=xml" %>"><img width="40" height="18" src="<%= "#{TOP_URL}images/xml.png" %>" alt="アカウント情報（XML形式）" /></a>
+	<a href="<%= "#{TOP_URL}game/#{game_id.to_i}/account/#{u account_name}/output=xml" %>"><img width="40" height="18" src="<%= "#{TOP_URL}images/xml.png" %>" alt="アカウント情報（XML形式）" /></a>
 </p>
+
+<%- if other_games.length > 0 -%>
+<h3>他ゲームのマイページ</h3>
+<ul>
+	<%- other_games.each do |other_game| -%>
+	<li><a href="<%= "#{TOP_URL}game/#{other_game.id.to_i}/account/#{u account_name}/" %>"><%= "#{h other_game.name}" %></a></li>
+	<%- end -%>
+</ul>
+<%- end -%>
+<hr />
+<div class="tools tools_left">
+<h2>リンク</h2>
+<%= link_html %>
 	</div>
 </div>
+</div>
 
-<div id="tools">
+<div id="side" class="tools tools_right">
 	<h2>プライズページ</h2>
 	<ul>
 		<li><a href="<%= "#{TOP_URL}game/#{game_id.to_i}/pov/1/" %>">レートランキング</a></li>
@@ -257,9 +291,6 @@ $(document).ready(
 		<li><a href="<%= "#{TOP_URL}game/#{game_id.to_i}/account/#{u a.account_name}/" %>"><%= xhtml_sp2nbsp(h(a.rep_name)) %></a></li>
 		<%- end -%>
 	</ul>
-	<hr />
-	<h2>リンク</h2>
-	<%= link_html %>
 </div>
 
 

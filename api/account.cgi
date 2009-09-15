@@ -4,7 +4,7 @@
 now = Time.now
 
 ### アカウントI/F API ###
-REVISION = 'R0.04'
+REVISION = 'R0.06'
 
 $LOAD_PATH.unshift '../common'
 $LOAD_PATH.unshift '../entity'
@@ -30,7 +30,6 @@ ACCOUNT_MAIL_ADDRESS_REGEX = /\A[\x01-\x7F]+@(([-a-z0-9]+\.)*[a-z]+|\[\d{1,3}\.\
 
 # URL
 WEB_SERVER_HOST = 'tenco.xrea.jp'
-GAME_ID = '1'
 
 # HTTP/HTTPSレスポンス文字列
 res_status = nil
@@ -108,10 +107,10 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		res_status = "Status: 200 OK\n" unless res_status
 		
 		res_body = "#{account_name}さんのアカウントを登録しました！\n"
-		res_body << "レーティング情報のURLは以下になります\n"
-		# res_body << "緋想天全体の情報ページ：http://#{WEB_SERVER_HOST}/game/#{GAME_ID}/ （作成中）\n"
-		res_body << "レーティング情報ページ（#{account_name}さん用）：http://#{WEB_SERVER_HOST}/game/#{GAME_ID}/account/#{account_name}/ （α版）\n"
-		res_body << "管理用ページ（予定）：http://#{WEB_SERVER_HOST}/account/#{account_name}/manage\n"
+		res_body << "※※※　利用するURLは以下になります　※※※\n"
+		res_body << "マイページ（緋想天用）　：http://#{WEB_SERVER_HOST}/game/1/account/#{account_name}/ \n"
+		res_body << "マイページ（非想天則用）：http://#{WEB_SERVER_HOST}/game/2/account/#{account_name}/ \n"
+		res_body << "アカウント設定用ページ：http://#{WEB_SERVER_HOST}/account/#{account_name}/manage\n"
 	ensure
 		# DB切断
 		db.close if db

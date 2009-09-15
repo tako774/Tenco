@@ -21,7 +21,7 @@ body {
 #main_wrapper {
   width:100%;
   float:right;
-  margin-left:-288px;
+  margin-left:-280px;
 }
 
 #main {
@@ -30,11 +30,11 @@ body {
 }
 
 #profile {
-  width:288px;
+  width:280px;
   float:right;
 }
 
-#tools {
+#side {
   width:180px;
   float:left;
 }

@@ -10,26 +10,26 @@
 	</div>
 	
 	<div id="profile">
-	<h3>プライズの概要</h3>
-	<p>
-	<%= lf2html(h(game_pov.desc)) %>
-	</p>
-	<h3>プライズ達成条件</h3>
-	<p>
-	<%= lf2html(h(game_pov.desc_suppli1)) %>
-	</p>
-	<h3>プライズ達成の歴史</h3>
-	<p>
-		1/1 ○○さん100連勝達成！<br />
-		1/12 ○○さん勝率99%達成！<br />
-	</p>
-	<p class="suppli">
-		...ってけーねが言ってた
-	</p>
+		<h3>プライズの概要</h3>
+		<p>
+		<%= lf2html(h(game_pov.desc)) %>
+		</p>
+		<h3>プライズ達成条件</h3>
+		<p>
+		<%= lf2html(h(game_pov.desc_suppli1)) %>
+		</p>
+		<h3>プライズ達成の歴史</h3>
+		<p>
+			1/1 ○○さん100連勝達成！<br />
+			1/12 ○○さん勝率99%達成！<br />
+		</p>
+		<p class="suppli">
+			...ってけーねが言ってた
+		</p>
 	</div>
 </div>
 
-<div id="tools">
+<div id="side" class="tools tools_right">
 	<h2>関連プライズ</h2>
 	<%= related_game_pov_html %>
 	<h2>リンク</h2>

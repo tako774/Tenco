@@ -1,5 +1,5 @@
 
-	<h2><%= h game_pov.name %></h2>
+	<h2><%= h game_pov.name %>- <%= h game.name %></h2>
 	<%- game_pov_classes.each do |gpc| -%>
 	<%- if ratings[gpc.value.to_i] -%>
 	<h3><%= h gpc.name %></h3>

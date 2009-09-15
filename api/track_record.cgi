@@ -4,7 +4,7 @@
 now = Time.now
 
 ### 対戦結果I/F API ###
-REVISION = 'R0.19'
+REVISION = 'R0.21'
 DEBUG = false
 
 $LOAD_PATH.unshift '../common'
@@ -26,6 +26,9 @@ ERROR_LOG_PATH = "../log/error_#{now.strftime('%Y%m%d')}.log"
 # 一度に受信可能な対戦結果数
 TRACK_RECORD_MAX_SIZE = 250
 
+# 受け入れ最大受信バイト数
+MAX_CONTENT_LENGTH = 1024 * TRACK_RECORD_MAX_SIZE
+
 # 対戦のマッチング時にどれだけ離れた時間のタイムスタンプをマッチングOKとみなすか
 MATCHING_TIME_LIMIT_SECONDS = 300
 
@@ -41,6 +44,7 @@ log_msg = "" # ログに出すメッセージ
 
 if ENV['REQUEST_METHOD'] == 'POST' then
 	begin
+		source_length = ENV['CONTENT_LENGTH'].to_i # 受信バイト数
 		track_records = []         # 今回DBにインサートした対戦記録
 		source_track_records = []  # 受信対戦記録
 		insert_records_count = 0   # 登録件数
@@ -48,12 +52,20 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		is_force_insert = false      # 強制インサートモード設定（同一アカウントからの重複時にエラー終了せず続行する）
 		PLEASE_RETRY_FORCE_INSERT = "<Please Retry in Force-Insert Mode>"  # 強制インサートリトライのお願い文字列
 		
+		# コンテント長のバリデーション
+		if source_length > MAX_CONTENT_LENGTH then
+			res_status = "Status: 400 Bad Request\n"
+			res_body = "送信されたデータサイズが大きすぎます。\n"
+			raise "送信されたデータサイズが大きすぎます（#{source_length} > #{MAX_CONTENT_LENGTH}）。"
+		end
+		
 		# 受信XMLデータをパース
-		source = STDIN.read(ENV['CONTENT_LENGTH'].to_i)
+		source = STDIN.read(source_length)
 		xml_data = REXML::Document.new(source)
 		data = xml_data.elements['/trackrecordPosting']
-		source_track_records = data.elements.each('game/trackrecord') do end
-		game_id = data.elements['game/id'].text.to_i
+		game_data = data.elements['game'] # 複数の game_id を含むデータには未対応なので、一番最初の game タグのみ処理。残りは無視。
+		game_id = game_data.elements['id'].text.to_i
+		source_track_records = game_data.elements.each('trackrecord') do end
 		
 		# DB 接続
 		require 'db'
@@ -74,7 +86,7 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		if (source_track_records.size > TRACK_RECORD_MAX_SIZE) then
 			res_status = "Status: 400 Bad Request\n"
 			res_body = "一度に受信できる対戦結果データ数は#{TRACK_RECORD_MAX_SIZE}件までです。\n"
-			raise "データ件数が多すぎます。"
+			raise "データ件数が多すぎます（#{source_track_records.size} > #{TRACK_RECORD_MAX_SIZE}）。"
 		elsif (source_track_records.size <= 0)
 			res_status = "Status: 400 Bad Request\n"
 			res_body = "送信された対戦結果データ数が0件です。\n"

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ### ユーティリティモジュール
 require 'kakasi'
 include Kakasi

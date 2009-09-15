@@ -5,7 +5,7 @@ begin
 	# 開始時刻
 	now = Time.now
 	# リビジョン
-	REVISION = 'R0.01'
+	REVISION = 'R0.03'
 	DEBUG = false
 
 	$LOAD_PATH.unshift './common'
@@ -83,9 +83,9 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		Dir.mkdir(CACHE_LOCK_DIR, 0700) unless File.exist?(CACHE_LOCK_DIR)
 
 		# キャッシュパス設定・プロセスロックファイルパス設定
-		cache_html_path = "#{CACHE_DIR}/#{File::basename(__FILE__)}.html"
+		cache_html_path = "#{CACHE_DIR}/#{File::basename(__FILE__)}_#{game_id}.html"
 		cache_html_header_path  = "#{cache_html_path}.h"	
-		cache_lock_path = "#{CACHE_LOCK_DIR}/#{File::basename(__FILE__)}.lock"
+		cache_lock_path = "#{CACHE_LOCK_DIR}/#{File::basename(__FILE__)}_#{game_id}.lock"
 		
 		# キャッシュパスのバリデーション
 		if cache_html_path =~ /\.{2}/ or cache_lock_path =~ /\.{2}/ then
@@ -141,12 +141,32 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 						require 'GameType1VsType1Stat'
 						res = db.exec(<<-"SQL")
 							SELECT
-								*
+								#{game_id.to_i} AS game_id,
+								tt.type1_id AS type1_id,
+								tt.matched_type1_id AS matched_type1_id,
+								COALESCE(gtvts.track_records_count, 0) AS track_records_count,
+								COALESCE(gtvts.wins, 0) AS wins,
+								COALESCE(gtvts.loses, 0) AS loses
 							FROM
-								game_type1_vs_type1_stats
-							WHERE
-								date_time = ( SELECT MAX(date_time) FROM game_type1_vs_type1_stats )
-								AND game_id = #{game_id.to_i}
+							(
+								SELECT
+									gt1.type1_id AS type1_id, gt2.type1_id AS matched_type1_id
+								FROM
+									game_type1s gt1,
+									game_type1s gt2
+								WHERE
+									gt1.game_id = #{game_id.to_i}
+									AND gt2.game_id = #{game_id.to_i}
+							) AS tt
+							LEFT OUTER JOIN
+								game_type1_vs_type1_stats gtvts
+							ON	(
+								gtvts.date_time = ( SELECT MAX(date_time) FROM game_type1_vs_type1_stats )
+								AND gtvts.game_id = #{game_id.to_i}
+								AND tt.type1_id = gtvts.type1_id
+								AND tt.matched_type1_id = gtvts.matched_type1_id
+							)	
+
 						SQL
 						
 						res.each do |r|
@@ -173,7 +193,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							type1[r[0].to_i] = r[1]
 						end
 						res.clear
-							
+						
 					rescue => ex
 						res_status = "Status: 500 Server Error\n"
 						res_body << "サーバーエラーです。ごめんなさい。\n"

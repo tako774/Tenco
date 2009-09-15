@@ -5,7 +5,7 @@ begin
 	now = Time.now
 
 	### レート推定  ###
-	REVISION = '0.08'
+	REVISION = '0.12'
 	DEBUG = false
 
 	$LOAD_PATH.unshift './common'
@@ -19,6 +19,7 @@ begin
 	require 'db'
 	require 'utils'
 	include Utils
+	require 'GameProfileUtil'
 	require 'segment_const'
 	require 'erubis'
 	include Erubis::XmlHelper
@@ -52,10 +53,10 @@ begin
 
 	res_body = "#{now.to_s} #{File::basename(__FILE__)} Rev.#{REVISION}\n" if DEBUG
 
-rescue
+rescue => ex
 	print "Status: 500 Internal Server Error\n"
 	print "content-type: text/plain\n\n"
-	print "サーバーエラーです。ごめんなさい。(Initialize Error #{Time.now.strftime('%Y/%m/%d %H:%m:%S')})"
+	print "サーバーエラーです。ごめんなさい。(Initialize Error #{Time.now.strftime('%Y/%m/%d %H:%m:%S')})"	
 end
 
 if ENV['REQUEST_METHOD'] == 'GET' then
@@ -67,17 +68,18 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		# 複数名分解後
 		names = []
 		# ゲームID
-		game_id = 1 # デフォルト
+		game_id = 2 # デフォルト
+		# 最大プロファイル名数
+		max_name_nums = 20
+		
 		# ゲーム名
 		game_name = ""
-		# レート候補
-		rates = [900.0, 950.0, 1000.0, 1050.0, 1100.0, 1150.0, 1200.0, 1250.0, 1300.0, 1350.0, 1400.0, 1450.0, 1500.0, 1550.0, 1600.0, 1650.0, 1700.0, 1750.0, 1800.0, 1850.0, 1900.0, 1950.0, 2000.0, 2050.0, 2100.0, 2150.0, 2200.0, 2250.0, 2300.0, 2350.0, 2400.0]
-		# レートごとの対数尤度
-		log_likelihood = {}
-		# 対戦結果
-		track_records = [] 
+		# 対戦数
+		track_record_counts = 0
 		# type1 区分値
 		type1 = {}
+		# 推定結果
+		estimations = nil
 		
 		# クエリストリング分解
 		ENV['QUERY_STRING'].to_s.split(/[;&]/).each do |q|
@@ -92,14 +94,12 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 			names.delete_if { |str| str == "" }
 			names.uniq!
 			name = names.join(", ")
-			if names.length > 10 then
-				res_body << "入力できるプロファイル名は10以下です\n"
-				raise "入力できるプロファイル名は10以下です\n"
+			if names.length > max_name_nums then
+				res_body << "入力できるプロファイル名は#{max_name_nums}以下です\n"
+				raise "入力できるプロファイル名は#{max_name_nums}以下です\n"
 			end
 			
 			game_id = query['game_id'].to_i if query['game_id']
-			
-			res_body << "#{name} さんのレートを推定します\n"
 			
 			# DB接続
 			require 'db'
@@ -119,49 +119,23 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 				  id = #{game_id.to_i}
 			SQL
 			
+			res_body << "#{name} さんのレートを推定します\n"
+			
 			if res_game.num_tuples >= 1 then
 				game_name = res_game[0][0]
-			
-				require 'TrackRecordRate'
-				res = db.exec(<<-"SQL")
-					SELECT
-					  t.player1_points,
-					  t.player2_points,
-					  t.player2_type1_id,
-					  gar.rating,
-					  gar.ratings_deviation
-					FROM
-					  track_records t,
-					  game_account_ratings gar
-					WHERE
-					  t.game_id = #{game_id.to_i}
-					  AND gar.game_id = #{game_id.to_i}
-					  AND t.player2_name in (#{(names.map { |n| s n }).join(", ")})
-					  AND t.player1_account_id = gar.account_id
-					  AND t.player1_type1_id = gar.type1_id
-					  AND gar.ratings_deviation < 100
-					SQL
-					
-				res.each do |r|
-					t = TrackRecordRate.new
-					# 高速化のためインスタンス名直接指定
-					t.player1_points = r[0].to_i
-					t.player2_points = r[1].to_i
-					t.player2_type1_id = r[2].to_i
-					t.rating = r[3].to_f
-					t.ratings_deviation = r[4].to_f
-#			res.num_fields.times do |i|
-#				t.instance_variable_set("@#{res.fields[i]}", r[i])
-#			end
-					track_records << t
-				end
-				res.clear
-						
-				res_body << "#{track_records.length} 件の対戦結果をレート計算対象として取得。\n"
-				res_body << "matched trackrecords selected...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
 				
-				# 対戦結果が取得できたときはレート推定
-				if track_records.length > 0 then
+				# レート推定
+				estimations = GameProfileUtil.estimate_rating(names, game_id)
+				
+				if estimations.length > 0 then
+					
+					# 対戦結果数取得
+					estimations.values.each do |est|
+						track_record_counts += est[:track_record_counts]
+					end
+							
+					res_body << "#{track_record_counts} 件の#{game_name}の対戦結果をレート計算対象として取得。\n"
+					res_body << "matched trackrecords selected...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
 											
 					# Type1 区分値取得
 					res = db.exec(<<-"SQL")
@@ -177,44 +151,12 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 						type1[r[0].to_i] = r[1]
 					end
 					res.clear
-								
-					# 発生時間順にレート計算
-					track_records.each do |t|
-						
-						# 対数尤度初期化
-						unless log_likelihood[t.player2_type1_id]
-							log_likelihood[t.player2_type1_id] = {}
-							rates.each do |r|
-								log_likelihood[t.player2_type1_id][r] = 0.0
-							end
-						end
-
-						# Player2 取得ポイント
-						point = (1.0 + (t.player2_points.to_i <=> t.player1_points.to_i)) * 0.5
-						
-						# レートごとの尤度計算
-						rates.each do |r|
-							# 期待勝率
-							p_win = 1.0 / (1.0 + 10.0 ** ((t.rating - r) / 400.0))
-							# 発生尤度加算
-							if point == 1
-								log_likelihood[t.player2_type1_id][r] += Math.log(p_win)
-							elsif point == 0
-								log_likelihood[t.player2_type1_id][r] += Math.log(1 - p_win)
-							end
-						end
-						
-					end
-					
-					res_body << "loglikelihood calculated...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
 					
 					# 結果表示
-					log_likelihood.each do |type1_id, type1_log_likelihood|
-						array = type1_log_likelihood.to_a.sort do |a, b|
-							b[1] <=> a[1]
-						end
-						if array[0][1] <= -10
-							res_body << "★#{name} さん（#{type1[type1_id]}）の推定レートは、#{array[0][0].to_i} ぐらいです\n"
+					estimations.keys.sort.each do |type1_id|
+						est = estimations[type1_id]
+						if est[:rating] then
+							res_body << "★#{name} さん（#{type1[type1_id]}）の推定レートは、#{est[:rating].to_i} ぐらいです\n"
 						else
 							res_body << "★#{name} さん（#{type1[type1_id]}）の推定レートは、対戦数が少ないため算出できませんでした\n"
 						end
@@ -223,8 +165,10 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 					
 					res_body << "------------------------------------------\n"
 					res_body << "\n"
-					log_likelihood.each do |type1_id, type1_log_likelihood|
-					res_body << "参考：推定結果テーブル（#{type1[type1_id]}）\n"
+					estimations.keys.sort.each do |type1_id|
+						est = estimations[type1_id]
+						type1_log_likelihood = est[:log_likelihood]
+						res_body << "参考：推定結果テーブル（#{type1[type1_id]}）\n"
 						res_body << "レート\t対数尤度\n"
 						array = type1_log_likelihood.to_a.sort do |a, b|
 							b[1] <=> a[1]
@@ -260,11 +204,12 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 	入力されたゲーム内プロファイル名のレートを推定します。<br />
 	Tenco! 未導入の方でも推定できます。精度はきっとかなり低いです。<br />
 	半角カナは全角になおして入力してください。<br />
-	複数のプロファイル名を使用している場合は、「&lt;&gt;」で区切ってください（10個まで）。<br />
+	複数のプロファイル名を使用している場合は、「&lt;&gt;」で区切ってください（#{max_name_nums}個まで）。<br />
 	</p>
 	<form method="get" action="http://tenco.xrea.jp/estimate_rating.cgi" accept-charset="UTF-8">
-		<input type="text" name="name" id="name" size="40" />
-		<input type="hidden" name="game_id" id="game_id" value="1" />
+		<label><input type="radio" name="game_id" value="1" #{"checked=\"checked\" " if game_id.to_i == 1}/>東方緋想天</label>
+		<label><input type="radio" name="game_id" value="2" #{"checked=\"checked\" " if game_id.to_i != 1}/>東方非想天則</label><br />
+		<input type="text" name="name" size="40" value="#{ h(names.join("<>")) if names }" />
 		<input type="submit" value="推定" />
 	</form>
 	#{"<br />\n\t<hr />\n\t<pre>" + h(res_body) + "</pre>" if res_body != ''} 

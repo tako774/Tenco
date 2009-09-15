@@ -5,7 +5,7 @@ begin
 	# 開始時刻
 	now = Time.now
 	# リビジョン
-	REVISION = 'R0.10'
+	REVISION = 'R0.11'
 	DEBUG = false
 
 	$LOAD_PATH.unshift './common'
@@ -107,7 +107,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 						game_pov_classes = []  # ゲームＰＯＶクラス情報
 						prizes = []            # 達成情報
 						prize_accounts = {}    # 達成したアカウントリスト
-						type1 = {}             # Type1 区分値
+						type1 = {}             # 対象の Type1 区分値
 						ratings = {}
 						ratings_each_type1 = {}
 					
@@ -343,7 +343,8 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 								ratings_each_type1[rating.type1_id.to_i][rating.game_pov_class_id.to_i] << rating
 							end
 							res.clear
-							
+														
+
 							# Type1 区分値取得
 							res = db.exec(<<-"SQL")
 								SELECT

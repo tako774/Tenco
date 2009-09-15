@@ -5,11 +5,13 @@ begin
 	# 開始時刻
 	now = Time.now
 	# リビジョン
-	REVISION = 'R0.06'
+	REVISION = 'R0.07'
 	DEBUG = false
 
-	$LOAD_PATH.unshift './common'
-	$LOAD_PATH.unshift './entity'
+	TOP_DIR = '.'
+	
+	$LOAD_PATH.unshift "#{TOP_DIR}/common"
+	$LOAD_PATH.unshift "#{TOP_DIR}/entity"
 
 	require 'time'
 	require 'logger'
@@ -47,9 +49,10 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		query = {} # クエリストリング
 		db = nil   # DB接続 
 		
-		game_stat = nil # ゲーム統計情報
-		game_type1_stats = [] # キャラ別統計情報
-		type1 = [] # キャラ名区分値
+		games = {} # ゲーム情報
+		game_stats = {} # ゲーム統計情報
+		game_type1_stats = {} # キャラ別統計情報
+		game_type1s = {} # キャラ名区分値
 		
 		FOOTER_ERB_PATH = "./footer.erb" # フッターERBパス
 		
@@ -59,7 +62,6 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		  query[key] = val.gsub(/\+/," ").gsub(/%[a-fA-F\d]{2}/){ $&[1,2].hex.chr } if val
 		end
 		
-		game_id = 1
 		output = query['output'] ||= 'html'    # 出力形式
 		
 		# キャッシュフォルダがなければ生成
@@ -102,40 +104,91 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 						# DB接続
 						db = DB.getInstance
 
-						# ゲーム統計情報を取得
-						require 'GameStat'
+						# ゲーム情報取得
+						require 'Game'
 						res = db.exec(<<-"SQL")
 							SELECT
 								*
 							FROM
-								game_stats
+								games
 							WHERE
-								game_id = #{game_id.to_i}
-								AND date_time = (SELECT MAX(date_time) FROM game_stats)
+								is_batch_target = 1
+							ORDER BY
+								id DESC
 						SQL
 						
-						if res.num_tuples != 1 then
-						else
-							game_stat = GameStat.new
+						res.each do |r|
+							g = Game.new
 							res.fields.length.times do |i|
-								game_stat.instance_variable_set("@#{res.fields[i]}", res[0][i])
+								g.instance_variable_set("@#{res.fields[i]}", r[i])
 							end
+							games[g.id.to_i] = g
 						end
+						res.clear
 						
+						# ゲーム統計情報を取得
+						require 'GameStat'
+						res = db.exec(<<-"SQL")
+							SELECT
+								g.id AS game_id,
+								COALESCE(gs.date_time, CURRENT_TIMESTAMP) AS date_time,
+								COALESCE(gs.accounts_count, 0) AS accounts_count,
+								COALESCE(gs.matched_accounts_count, 0) AS matched_accounts_count,
+								COALESCE(gs.accounts_type1s_count, 0) AS accounts_type1s_count,
+								COALESCE(gs.matched_accounts_type1s_count, 0) AS matched_accounts_type1s_count,
+								COALESCE(gs.track_records_count, 0) AS track_records_count,
+								COALESCE(gs.matched_track_records_count, 0) AS matched_track_records_count
+							FROM
+								games g
+								LEFT OUTER JOIN
+									game_stats gs
+								ON
+									g.id = gs.game_id
+									AND gs.date_time = (SELECT MAX(date_time) FROM game_stats)
+							WHERE
+								g.is_batch_target = 1
+						SQL
+						
+						res.each do |r|
+							gs = GameStat.new
+							res.fields.length.times do |i|
+								gs.instance_variable_set("@#{res.fields[i]}", r[i])
+							end
+							game_stats[gs.game_id.to_i] = gs
+						end
 						res.clear
 						
 						# キャラ別統計情報を取得
 						require 'GameType1Stat'
 						res = db.exec(<<-"SQL")
 							SELECT
-								*
+								gt2.game_id AS game_id,
+								gt2.type1_id AS type1_id,
+								COALESCE(gts.date_time, CURRENT_TIMESTAMP) AS date_time,
+								COALESCE(gts.accounts_count, 0) AS accounts_count,
+								COALESCE(gts.track_records_count, 0) AS track_records_count,
+								COALESCE(gts.wins, 0) AS wins,
+								COALESCE(gts.loses, 0) AS loses
 							FROM
-								game_type1_stats
-							WHERE
-								game_id = #{game_id.to_i}
-								AND date_time = (SELECT MAX(date_time) FROM game_type1_stats)
+								(
+									SELECT
+										g.id AS game_id,
+										gt.type1_id AS type1_id
+									FROM
+										games g,
+										game_type1s gt
+									WHERE
+										g.id = gt.game_id
+										AND g.is_batch_target = 1
+								) AS gt2
+								LEFT OUTER JOIN
+									game_type1_stats gts
+								ON
+									gt2.game_id = gts.game_id
+									AND gt2.type1_id = gts.type1_id
+									AND gts.date_time = (SELECT MAX(date_time) FROM game_type1_stats)
 							ORDER BY
-								type1_id
+								gt2.game_id, gt2.type1_id
 							SQL
 							
 						res.each do |r|
@@ -143,22 +196,24 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							res.fields.length.times do |i|
 								gts.instance_variable_set("@#{res.fields[i]}", r[i])
 							end
-							game_type1_stats << gts
+							game_type1_stats[gts.game_id.to_i] ||= []
+							game_type1_stats[gts.game_id.to_i] << gts
 						end
 						res.clear
 						
 						# Type1 区分値取得
 						res = db.exec(<<-"SQL")
 							SELECT
-								type1_id, name
+								game_id, type1_id, name
 							FROM
 								game_type1s
 							WHERE
-								game_id = #{game_id.to_i}
+								game_id IN (#{games.keys.join(", ")})
 						SQL
 						
 						res.each do |r|
-							type1[r[0].to_i] = r[1]
+							game_type1s[r[0].to_i] ||= {}
+							game_type1s[r[0].to_i][r[1].to_i] = r[2]
 						end
 						res.clear
 						
