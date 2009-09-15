@@ -3,7 +3,7 @@
 # 開始時刻
 now = Time.now
 # リビジョン
-REVISION = 'R0.46'
+REVISION = 'R0.47'
 DEBUG = false
 
 $LOAD_PATH.unshift './common'
@@ -18,10 +18,14 @@ TOP_URL = 'http://tenco.xrea.jp/'
 # ログファイルパス
 LOG_PATH = "./log/log_#{now.strftime('%Y%m%d')}.log"
 ERROR_LOG_PATH = "./log/error_#{now.strftime('%Y%m%d')}.log"
+# キャッシュの有効期限
+cache_expires = (now + 60 * 60) - now.min * 60 - now.sec
+# キャッシュ親パス
+CACHE_BASE="./cache/#{cache_expires.strftime('%Y%m%d%H%M%S')}"
 # キャッシュフォルダパス
-CACHE_DIR = "./cache/#{File::basename(__FILE__)}"
+CACHE_DIR = "#{CACHE_BASE}/#{File::basename(__FILE__)}"
 # キャッシュロックフォルダパス
-CACHE_LOCK_DIR = "./cache/lock/#{File::basename(__FILE__)}"
+CACHE_LOCK_DIR = "#{CACHE_BASE}/lock_#{File::basename(__FILE__)}"
 # キャッシュをつかったかどうか
 is_cache_used = false
 
@@ -64,6 +68,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 			
 			
 			# キャッシュフォルダがなければ生成
+			Dir.mkdir(CACHE_BASE, 0700) unless File.exist?(CACHE_BASE)
 			Dir.mkdir(CACHE_DIR, 0700) unless File.exist?(CACHE_DIR)
 			Dir.mkdir(CACHE_LOCK_DIR, 0700) unless File.exist?(CACHE_LOCK_DIR)
 
@@ -99,9 +104,6 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							require 'time'
 							require 'erubis'
 							include Erubis::XmlHelper
-							
-							# キャッシュの有効期限
-							cache_expires = (now + 60 * 60) - now.min * 60 - now.sec
 							
 							# DB接続
 							db = DB.getInstance
@@ -474,7 +476,10 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 						end
 
 					else
-						logger.info("Info: #{cache_lock_path} is locked.\n")
+						logger.info("Info: #{cache_lock_path} is locked. Wait unlocked.\n")
+						# 先行プロセスがキャッシュを書き出すのを待つ
+						f.flock(File::LOCK_EX)
+						f.flock(File::LOCK_UN)
 						is_cache_used = true
 					end	# if f.flock(File::LOCK_EX | File::LOCK_NB) then	
 				end # File.open(cache_lock_path, 'w') do |f|
