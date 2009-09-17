@@ -5,7 +5,7 @@ begin
 	# 開始時刻
 	now = Time.now
 	# リビジョン
-	REVISION = 'R0.08'
+	REVISION = 'R0.09'
 	DEBUG = false
 
 	TOP_DIR = '.'
@@ -114,8 +114,8 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 								*
 							FROM
 								games
-							WHERE
-								is_batch_target = 1
+							-- WHERE
+							--	is_batch_target = 1
 							ORDER BY
 								id DESC
 						SQL
@@ -143,13 +143,27 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 								COALESCE(gs.matched_track_records_count, 0) AS matched_track_records_count
 							FROM
 								games g
-								LEFT OUTER JOIN
-									game_stats gs
-								ON
-									g.id = gs.game_id
-									AND gs.date_time = (SELECT MAX(date_time) FROM game_stats)
-							WHERE
-								g.is_batch_target = 1
+									LEFT OUTER JOIN
+										(
+										SELECT
+											gst1.*
+										FROM
+											game_stats gst1,
+											(
+												SELECT 
+													game_id,
+													MAX(date_time) AS max_date_time
+												FROM
+													game_stats
+												GROUP BY
+													game_id
+											) AS gst2
+										WHERE
+											gst1.game_id = gst2.game_id
+											AND gst1.date_time = gst2.max_date_time
+										) AS gs
+									ON
+										g.id = gs.game_id
 						SQL
 						
 						res.each do |r|
@@ -182,14 +196,29 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 										game_type1s gt
 									WHERE
 										g.id = gt.game_id
-										AND g.is_batch_target = 1
 								) AS gt2
 								LEFT OUTER JOIN
-									game_type1_stats gts
+									(
+									SELECT
+										gtst1.*
+									FROM
+										game_type1_stats gtst1,
+										(
+											SELECT 
+												game_id,
+												MAX(date_time) AS max_date_time
+											FROM
+												game_type1_stats
+											GROUP BY
+												game_id
+										) AS gtst2
+									WHERE
+										gtst1.game_id = gtst2.game_id
+										AND gtst1.date_time = gtst2.max_date_time
+									) AS gts
 								ON
 									gt2.game_id = gts.game_id
 									AND gt2.type1_id = gts.type1_id
-									AND gts.date_time = (SELECT MAX(date_time) FROM game_type1_stats)
 							ORDER BY
 								gt2.game_id, gt2.type1_id
 							SQL

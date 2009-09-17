@@ -5,7 +5,7 @@ begin
 	# 開始時刻
 	now = Time.now
 	# リビジョン
-	REVISION = 'R0.04'
+	REVISION = 'R0.05'
 	DEBUG = false
 
 	$LOAD_PATH.unshift './common'
@@ -65,7 +65,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		game = nil # ゲーム情報
 		game_type1_vs_type1_stats = {} # ゲームアカウント情報、キー1：使用キャラ、キー2：対戦相手キャラ
 		type1 = {} # キャラ区分値=>キャラ名のハッシュ
-		cache_expires = nil # 生成するキャッシュの期限
+		
 		FOOTER_ERB_PATH = "./footer.erb" # フッターERBパス
 		LINK_ERB_PATH = "./link.erb" # リンクERBパス
 		
@@ -163,11 +163,27 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 									AND gt2.game_id = #{game_id.to_i}
 							) AS tt
 							LEFT OUTER JOIN
-								game_type1_vs_type1_stats gtvts
+								(
+								SELECT
+									gtvts1.*
+								FROM
+									game_type1_vs_type1_stats gtvts1,
+									(
+										SELECT 
+											game_id,
+											MAX(date_time) AS max_date_time
+										FROM
+											game_type1_vs_type1_stats
+										GROUP BY
+											game_id
+									) AS gtvts2
+								WHERE
+									gtvts1.game_id = #{game_id.to_i}
+									AND gtvts2.game_id = #{game_id.to_i}
+									AND gtvts1.date_time = gtvts2.max_date_time
+								) AS gtvts
 							ON	(
-								gtvts.date_time = ( SELECT MAX(date_time) FROM game_type1_vs_type1_stats )
-								AND gtvts.game_id = #{game_id.to_i}
-								AND tt.type1_id = gtvts.type1_id
+								tt.type1_id = gtvts.type1_id
 								AND tt.matched_type1_id = gtvts.matched_type1_id
 							)	
 
