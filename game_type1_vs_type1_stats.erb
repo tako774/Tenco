@@ -47,6 +47,33 @@ $(document).ready(
 			}
 		});
 		
+		var i = 0
+		$("#game_type1_vs_type1_ideal_rating_diff td").each(function() {
+			// セルの値取得
+			var value = $(this).text();
+			
+			if (value >= 100.0) {
+				$(this).addClass("legend_1");
+			}
+			else if (value >= 60.0) {
+				$(this).addClass("legend_2");
+			}
+			else if (value >= 20.0) {
+				$(this).addClass("legend_3");
+			}
+			else if (value > -20.0) {
+				$(this).addClass("legend_4");
+			}
+			else if (value > -60.0) {
+				$(this).addClass("legend_5");
+			}
+			else if (value > -100.0) {
+				$(this).addClass("legend_6");
+			}
+			else if (value <= -100.0){
+				$(this).addClass("legend_7");
+			}
+		});
 	}
 );
 
@@ -58,7 +85,7 @@ $(document).ready(
 
 <div id="header">
 	<h1><a href="<%= TOP_URL %>"><img alt="Tenco!" src='<%= TOP_URL %>images/Tenco.gif' width='<%= 366/3 %>' height='<%= 126/3 %>' /></a></h1>
-	<p>キャラ対キャラ統計ページ Rev.2 (2009/08/18)</p>
+	<p>キャラ対キャラ統計ページ Rev.3 (2009/09/20)</p>
 	<p id="meta_info">
 		<%= now.strftime('%m/%d %H:%M') %> に作成（毎時0分以降に再生成）<br />
 	</p>
@@ -90,6 +117,33 @@ $(document).ready(
 	<%- gtvts = game_type1_vs_type1_stats[type1_id][matched_type1_id] -%>
 		<%- if gtvts.track_records_count.to_i != 0 -%>
 	<td class="num"><%= "#{((gtvts.wins.to_f / gtvts.track_records_count.to_f) * 1000).round / 10.0}" %></td>
+		<%- else -%>
+	<td class="num">-</td>
+		<%- end -%>
+	<%- end -%>
+</tr>
+<%- end -%>
+</table>
+
+<h3>勝率レート換算値（マッチ済）</h3>
+<p class="suppli">
+左側のキャラの、右上側のキャラに対する勝率を理論的なレート差に換算したものです。<br />
+<span class="math">&lt;理論レート差&gt; = 400 * log(&lt;勝率&gt; / (1 - &lt;勝率&gt;))</span>
+</p>
+<table id="game_type1_vs_type1_ideal_rating_diff" class="column-wise stats" summary="マッチ済み対戦結果のキャラ対キャラ別理論レート差表">
+<tr>
+	<th></th>
+<%- type1.keys.sort.each do |type1_id| -%>
+	<th><%= "#{h type1[type1_id].split(//u)[0]}" %></th>
+<%- end -%>
+</tr>
+<%- type1.keys.sort.each do |type1_id| -%>
+<tr>
+	<th><%= "#{h type1[type1_id].split(//u)[0]}" %></th>
+	<%- type1.keys.sort.each do |matched_type1_id| -%>
+	<%- gtvts = game_type1_vs_type1_stats[type1_id][matched_type1_id] -%>
+		<%- if gtvts.track_records_count.to_i != 0 -%>
+	<td class="num"><%= "#{gtvts.ideal_rating_diff.round}" %></td>
 		<%- else -%>
 	<td class="num">-</td>
 		<%- end -%>

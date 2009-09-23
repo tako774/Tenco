@@ -5,7 +5,7 @@ begin
 	# 開始時刻
 	now = Time.now
 	# リビジョン
-	REVISION = 'R0.05'
+	REVISION = 'R0.06'
 	DEBUG = false
 
 	$LOAD_PATH.unshift './common'
@@ -16,6 +16,7 @@ begin
 	require 'logger'
 	require 'utils'
 	include Utils
+	require 'RatingUtil'
 	require 'erb'
 	include ERB::Util
 
@@ -190,12 +191,13 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 						SQL
 						
 						res.each do |r|
-							gtbts = GameType1VsType1Stat.new
+							gtvts = GameType1VsType1Stat.new
 							res.num_fields.times do |i|
-								gtbts.instance_variable_set("@#{res.fields[i]}", r[i])
+								gtvts.instance_variable_set("@#{res.fields[i]}", r[i])
 							end
-							game_type1_vs_type1_stats[gtbts.type1_id.to_i] ||= {}
-							game_type1_vs_type1_stats[gtbts.type1_id.to_i][gtbts.matched_type1_id.to_i] = gtbts
+							gtvts.ideal_rating_diff = win_rate2rating_diff(gtvts.wins.to_f / gtvts.track_records_count.to_f)
+							game_type1_vs_type1_stats[gtvts.type1_id.to_i] ||= {}
+							game_type1_vs_type1_stats[gtvts.type1_id.to_i][gtvts.matched_type1_id.to_i] = gtvts
 						end
 						res.clear
 					
