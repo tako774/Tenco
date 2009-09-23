@@ -5,7 +5,7 @@ begin
 	# 開始時刻
 	now = Time.now
 	# リビジョン
-	REVISION = 'R0.09'
+	REVISION = 'R0.10'
 	DEBUG = false
 
 	TOP_DIR = '.'
@@ -298,7 +298,18 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 				res_header = fh.read()
 			end
 		end
-			
+
+		# 304 Not Modified 判定
+		if ENV['HTTP_IF_MODIFIED_SINCE'] then
+			if res_header =~ /Last-Modified:\s*([^\n]+)/i then
+				last_modified = Time.httpdate($1)
+				since = Time.httpdate(ENV['HTTP_IF_MODIFIED_SINCE'])
+				if last_modified <= since then
+					res_status = "Status: 304 Not Modified\n"
+				end
+			end
+		end
+		
 	rescue => ex
 		res_status = "Status: 500 Server Error\n" unless res_status
 		res_body = "サーバーエラーです。ごめんなさい。\n" unless res_body

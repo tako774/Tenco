@@ -5,7 +5,7 @@ begin
 	# 開始時刻
 	now = Time.now
 	# リビジョン
-	REVISION = 'R0.12'
+	REVISION = 'R0.13'
 	DEBUG = false
 
 	$LOAD_PATH.unshift './common'
@@ -421,16 +421,27 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 			end # unless (File.exist?(cache_html_path) then
 		
 		
-		### 結果をセット
-		res_status = ""
-		File.open(cache_html_path, 'r') do |f|
-			f.flock(File::LOCK_SH)
-			res_body = f.read()
-			File.open(cache_html_header_path, 'r') do |fh|
-				fh.flock(File::LOCK_SH)
-				res_header = fh.read()
+			### 結果をセット
+			res_status = ""
+			File.open(cache_html_path, 'r') do |f|
+				f.flock(File::LOCK_SH)
+				res_body = f.read()
+				File.open(cache_html_header_path, 'r') do |fh|
+					fh.flock(File::LOCK_SH)
+					res_header = fh.read()
+				end
 			end
-		end
+			
+			# 304 Not Modified 判定
+			if ENV['HTTP_IF_MODIFIED_SINCE'] then
+				if res_header =~ /Last-Modified:\s*([^\n]+)/i then
+					last_modified = Time.httpdate($1)
+					since = Time.httpdate(ENV['HTTP_IF_MODIFIED_SINCE'])
+					if last_modified <= since then
+						res_status = "Status: 304 Not Modified\n"
+					end
+				end
+			end
 		
 		else
 			res_status = "Status: 400 Bad Request\n"

@@ -3,7 +3,7 @@
 # 開始時刻
 now = Time.now
 # リビジョン
-REVISION = 'R0.48'
+REVISION = 'R0.49'
 DEBUG = false
 
 $LOAD_PATH.unshift './common'
@@ -509,6 +509,18 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 					end
 				end
 			end
+			
+			# 304 Not Modified 判定
+			if ENV['HTTP_IF_MODIFIED_SINCE'] then
+				if res_header =~ /Last-Modified:\s*([^\n]+)/i then
+					last_modified = Time.httpdate($1)
+					since = Time.httpdate(ENV['HTTP_IF_MODIFIED_SINCE'])
+					if last_modified <= since then
+						res_status = "Status: 304 Not Modified\n"
+					end
+				end
+			end
+			
 		else
 			res_status = "Status: 400 Bad Request\n"
 			res_body = "400 Bad Request\n"
