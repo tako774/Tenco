@@ -1,45 +1,37 @@
 @charset "utf-8";
-
 body {
-  text-align:center;
+  text-align: center;
   margin: 0;
 }
-
 #container {
-  width:98%;
-  margin-left:auto;
-  margin-right:auto;
-  text-align:left;
+  width: 98%;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: left;
 }
-
 #wrapper {
-  width:100%;
-  float:left;
-  margin-right:-181px;
+  width: 100%;
+  float: left;
+  margin-right: -181px;
 }
-
 #main_wrapper {
-  width:100%;
-  float:right;
-  margin-left:-280px;
+  width: 100%;
+  float: right;
+  margin-left: -280px;
 }
-
 #main {
-  margin-right:190px;
-  margin-left:300px;
+  margin-right: 190px;
+  margin-left: 300px;
 }
-
 #profile {
-  width:280px;
-  float:right;
+  width: 280px;
+  float: right;
 }
-
 #side {
-  width:180px;
-  float:left;
+  width: 180px;
+  float: left;
 }
-
 #footer {
-  width:100%;
-  clear:left;
+  width: 100%;
+  clear: left;
 }
