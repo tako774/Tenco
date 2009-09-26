@@ -5,7 +5,7 @@ begin
 	# 開始時刻
 	now = Time.now
 	# リビジョン
-	REVISION = 'R0.13'
+	REVISION = 'R0.14'
 	DEBUG = false
 
 	$LOAD_PATH.unshift './common'
@@ -13,6 +13,8 @@ begin
 
 	require 'time'
 	require 'logger'
+	require 'utils'
+	include Utils
 	
 	# TOP ページ URL
 	TOP_URL = 'http://tenco.xrea.jp/'
@@ -53,10 +55,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		query = {} # クエリストリング
 		
 		# クエリストリング分解・取得
-		ENV['QUERY_STRING'].to_s.split(/[;&]/).each do |q|
-		  key, val = q.split(/=/, 2)
-		  query[key] = val.gsub(/\+/," ").gsub(/%[a-fA-F\d]{2}/){ $&[1,2].hex.chr } if val
-		end
+		query = parse_query_str(ENV['QUERY_STRING'])
 		
 		if (
 			query['game_id'] and

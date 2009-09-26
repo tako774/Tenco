@@ -55,10 +55,7 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		source = STDIN.read(ENV['CONTENT_LENGTH'].to_i)
 		
 		# 入力データ分解
-		source.to_s.split(/[;&]/).each do |q|
-			key, val = q.split(/=/, 2)
-			query[key] = val.gsub(/\+/," ").gsub(/%[a-fA-F\d]{2}/){ $&[1,2].hex.chr } if val
-		end
+		query = parse_query_str(source)
 		
 		# 入力バリデーション
 		unless (

@@ -4,7 +4,7 @@
 now = Time.now
 
 ### 登録済み最終対戦結果時刻出力 API ###
-REVISION = 'R0.07'
+REVISION = 'R0.08'
 
 $LOAD_PATH.unshift '../common'
 $LOAD_PATH.unshift '../model'
@@ -34,10 +34,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		db = nil   # DB接続 
 		
 		# クエリストリング分解
-		ENV['QUERY_STRING'].to_s.split(/[;&]/).each do |q|
-			key, val = q.split(/=/, 2)
-			query[key] = val.gsub(/\+/," ").gsub(/%[a-fA-F\d]{2}/){ $&[1,2].hex.chr } if val
-		end
+		query = parse_query_str(ENV['QUERY_STRING'])
 		
 		if (query['game_id'] and query['game_id'] !='' and query['account_name'] and query['account_name'] != '') then
 			account_name = query['account_name']  # アカウント名

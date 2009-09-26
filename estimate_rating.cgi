@@ -5,7 +5,7 @@ begin
 	now = Time.now
 
 	### レート推定  ###
-	REVISION = '0.12'
+	REVISION = '0.13'
 	DEBUG = false
 
 	$LOAD_PATH.unshift './common'
@@ -82,11 +82,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		estimations = nil
 		
 		# クエリストリング分解
-		ENV['QUERY_STRING'].to_s.split(/[;&]/).each do |q|
-			key, val = q.split(/=/, 2)
-			query[key] = val.gsub(/\+/," ").gsub(/%[a-fA-F\d]{2}/){ $&[1,2].hex.chr } if val
-		end
-		
+		query = parse_query_str(ENV['QUERY_STRING'])
 		
 		# 名前が設定されていなければ推定
 		if query['name'] and query['name'] != "" then
