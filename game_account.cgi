@@ -511,9 +511,10 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 			
 			# 304 Not Modified 判定
 			if ENV['HTTP_IF_MODIFIED_SINCE'] then
-				if res_header =~ /Last-Modified:\s*([^\n;]+)/i then
+				if res_header =~ /Last-Modified:\s*([^\n]+)/i then
 					last_modified = Time.httpdate($1)
-					since = Time.httpdate(ENV['HTTP_IF_MODIFIED_SINCE'])
+					# 古いブラウザによる RFC2616 違反の HTTP ヘッダに対応
+					since = Time.httpdate(ENV['HTTP_IF_MODIFIED_SINCE'].sub(/;.*\z/, ""))
 					if last_modified <= since then
 						res_status = "Status: 304 Not Modified\n"
 					end
