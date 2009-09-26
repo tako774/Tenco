@@ -269,7 +269,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 			
 		# 304 Not Modified 判定
 		if ENV['HTTP_IF_MODIFIED_SINCE'] then
-			if res_header =~ /Last-Modified:\s*([^\n]+)/i then
+			if res_header =~ /Last-Modified:\s*([^\n;]+)/i then
 				last_modified = Time.httpdate($1)
 				since = Time.httpdate(ENV['HTTP_IF_MODIFIED_SINCE'])
 				if last_modified <= since then
