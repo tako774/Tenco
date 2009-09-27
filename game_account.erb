@@ -12,6 +12,7 @@
 	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/webtoolkit.url.js"></script>
 	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/webtoolkit.sha1.js"></script>
 	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/jquery.js"></script>
+	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/jquery.cookie.js"></script>
 	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/jsdeferred.jquery.js"></script>
 	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/show_user_data.js"></script>
 	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/search.js"></script>
@@ -24,26 +25,99 @@
 // ロード時実行
 $(document).ready(
 	function(){
-		// javascript 利用部表示
+		// ラベル：対戦結果表示モード
+		var tr_show_mode_label = {
+			'all'   : '全件表示'
+			, 'top100': '最新100件'
+		//	, 'month' : '月別表示'
+		};
+
+		// 対戦結果表示モードに応じて表示する関数
+		function change_tr_show_mode(tr_show_mode) {
+			var tr_show_mode = tr_show_mode;
+			
+			$("#tr_show_mode").attr("disabled", "disabled");
+			
+			if (tr_show_mode == 'all') {
+				if (!jQuery.browser.msie && !jQuery.browser.opera &&  !jQuery.browser.safari) {
+					loop(
+						{
+							begin: 0,
+							end: $("#track_records > tbody > tr:gt(" + (100 - 1) + ")").length,
+							step: 100
+						},
+						function (n, o) {
+							$("#track_records > tbody > tr:gt(" + (100 - 1) + ")").slice(n, n + o.step).each(
+								function() {
+									$(this).show();
+								}
+							);
+							wait(0);
+						}
+					).next(
+						function() {
+							$("#tr_show_mode").removeAttr("disabled");
+						}
+					);
+				}
+				else {
+					$("#track_records > tbody > tr").show();
+					$("#tr_show_mode").removeAttr("disabled");
+				}
+			}
+			else {
+				$("#track_records > tbody > tr:gt(" + (100 - 1) + ")").hide();
+				$("#tr_show_mode").removeAttr("disabled");
+			}
+		
+		}
+		
+		// javascript 利用部 HTML
 		// IEだとEnterキーでなぜかボタンをクリックするので
 		// formタグで抑制する
 		var track_records_tool_html = "";
+		track_records_tool_html += "<select id=\"tr_show_mode\">\n";
+		track_records_tool_html += "\t<option value='all'>" + tr_show_mode_label['all'] + "</option>\n";
+		track_records_tool_html += "\t<option value='top100'>" + tr_show_mode_label['top100'] + "</option>\n";
+		// track_records_tool_html += "\t<option value='month'>" + tr_show_mode_label['month']  + "</option>\n";
+		track_records_tool_html += "</select>\n";
+		
+		track_records_tool_html += "<span class='input_set'>\n";
 		track_records_tool_html += "<span id='search_tool_msg' class='suppli msg'>search:</span>\n";
 		track_records_tool_html += "<form action='' method='post' onSubmit='return false;' style='display:inline'>\n";
 		track_records_tool_html += "<input id='search_str' name='search_str' tabindex='1' type='text' size='16' />&nbsp;<button id='search_track_records' tabindex='2'>検索</button>\n";
-		track_records_tool_html += "</form>&nbsp;\n";
+		track_records_tool_html += "</form>\n";
+		track_records_tool_html += "</span>\n";
 		
+		track_records_tool_html += "<span class='input_set'>\n";
 		track_records_tool_html += "<span id='decrypt_tool_msg' class='suppli msg'>password:</span>\n";
 		track_records_tool_html += "<span id='decrypt_tool'>\n";
 		track_records_tool_html += "<form action='' method='post' onSubmit='return false;' style='display:inline'>\n";
 		track_records_tool_html += "<input id='account_password' name='account_password' tabindex='3' type='password' size='16' />&nbsp;<button id='show_user_data' tabindex='4'>復号</button>\n";
-		track_records_tool_html += "</form>&nbsp;\n";
-		track_records_tool_html += "\t\t\t\t\t</span>\n";
+		track_records_tool_html += "</form>\n";
+		track_records_tool_html += "</span>\n";
+		track_records_tool_html += "</span>\n";
 
 		$("#track_records_tool").html(track_records_tool_html);
-		
+			
 		// 非同期実行準備
 		$.deferred.define();
+
+		// 対戦結果表示モード取得・表示
+		var tr_show_mode = $.cookie('tr_show_mode') || 'all';
+		$("#tr_show_mode option[value='" + tr_show_mode + "']").attr('selected', 'selected');
+				
+		// 表示モード切替に実行関数紐付け
+		$("#tr_show_mode").change(
+			function() {
+				var selected_tr_show_mode = $("#tr_show_mode option:selected").val();
+				if (tr_show_mode != selected_tr_show_mode) {
+					tr_show_mode = selected_tr_show_mode;
+					$.cookie('tr_show_mode', tr_show_mode, { expires: 1, path: '/'});
+					change_tr_show_mode(tr_show_mode);
+				}		
+			}
+		);
 		
 		// 検索ボタンに実行関数を紐付け
 		$("#search_track_records").click(
@@ -91,6 +165,13 @@ $(document).ready(
 		// 検索テキストボックスでインクリメンタルサーチ
 		// simple_inc_search("#track_records > tbody > tr", "table-row", "#search_str", 1000);
 		
+		// ツール部分表示
+		$("#track_records_tool").show();
+		
+		// 全件表示の場合は表示する
+		if (tr_show_mode == 'all') {
+			change_tr_show_mode(tr_show_mode);
+		}
 	}
 );
 
@@ -102,7 +183,7 @@ $(document).ready(
 <div id="container">
 
 <div id="header">
-<h1><a href="<%= TOP_URL %>"><img alt="Tenco!" src='<%= TOP_URL %>images/Tenco.gif' width='<%= 366/3 %>' height='<%= 126/3 %>' /></a></h1> マイページ 開発中バージョンα8.1（2009/09/09）
+<h1><a href="<%= TOP_URL %>"><img alt="Tenco!" src='<%= TOP_URL %>images/Tenco.gif' width='<%= 366/3 %>' height='<%= 126/3 %>' /></a></h1> マイページ 開発中バージョンα9（2009/09/27）
 <p id="meta_info">
 λ＜レートなんて飾りなんです。偉い人にはそれがわからんのです<br />
 <%= now.strftime('%m/%d %H:%M') %> に作成（毎時0分以降に再生成）<br />
@@ -177,8 +258,8 @@ $(document).ready(
 			推定レート値が通常のレート値より極端に低い場合、<br />
 			負け試合のみを意図して報告しないことが原因の場合があります（確実ではありません）。<br />
 			ハイフンは表示対象外か、推定精度不足のため表示されないことを意味します。
-		<%- end -%>
 		</p>
+		<%- end -%>
 	</div>	
 	
 	<div class="section">
@@ -186,9 +267,9 @@ $(document).ready(
 		<noscript class="suppli msg">
 			javascript を ON にすると、検索・復号ができます 
 		</noscript>
+		<div id="track_records_tool" style="text-align:left">
+		</div>
 		<table id="track_records">
-			<caption id="track_records_tool" style="text-align:left; white-space:nowrap">
-			</caption>
 			<thead>
 				<tr>
 					<th>対戦日時</th>
@@ -198,10 +279,15 @@ $(document).ready(
 				</tr>
 			</thead>
 			<tbody>
-				<%- track_records.each do |t| -%>
-					<%- if t.player1_points > t.player2_points -%>
+				<%- track_records.each_index do |i| -%>
+					<%- t = track_records[i] -%>
+					<%- if i < 100 then -%>
+				<tr class="top100">
+					<%- else -%>
 				<tr>
-					<td class="time"><%= pgsql_timestamp_str_to_time(t.play_timestamp).strftime('%y/%m/%d %H:%M') %></td>
+					<%- end -%>
+					<%- if t.player1_points > t.player2_points -%>
+					<td class="time suppli"><%= pgsql_timestamp_str_to_time(t.play_timestamp).strftime('%y/%m/%d %H:%M') %></td>
 					<td><%= "#{z2h_long_str(xhtml_sp2nbsp(h(t.player1_name)))} (#{type1_h[t.player1_type1_id.to_i]})" %></td>
 					<td class="vs"><%= "#{t.player1_points.to_i} - #{t.player2_points.to_i}" %></td>
 						<%- unless t.player2_account_name.nil? -%>
@@ -209,10 +295,8 @@ $(document).ready(
 						<%- else -%>
 					<td><span class="enc_alt"><%= "◇#{t.player2_name[11..14]}" %></span><span class="enc"><%= u(h(t.player2_name)) %></span> <%= "(#{type1_h[t.player2_type1_id.to_i]})" %></td>
 						<%- end -%>
-				</tr>
 					<%- else -%>
-				<tr>
-					<td class="time"><%= pgsql_timestamp_str_to_time(t.play_timestamp).strftime('%y/%m/%d %H:%M')  %></td>
+					<td class="time suppli"><%= pgsql_timestamp_str_to_time(t.play_timestamp).strftime('%y/%m/%d %H:%M')  %></td>
 						<%- unless t.player2_account_name.nil? -%>
 					<td><a href="<%= "#{TOP_URL}game/#{game_id.to_i}/account/#{u t.player2_account_name}/" %>"><%= z2h_long_str(xhtml_sp2nbsp(h(t.player2_name))) %></a><%= " (#{type1_h[t.player2_type1_id.to_i]})" %></td>
 						<%- else -%>
@@ -220,8 +304,9 @@ $(document).ready(
 						<%- end -%>
 					<td class="vs"><%= "#{t.player2_points.to_i} - #{t.player1_points.to_i}" %></td>
 					<td><%= "#{z2h_long_str(xhtml_sp2nbsp(h(t.player1_name)))} (#{type1_h[t.player1_type1_id.to_i]})" %></td>
-				</tr>
+				
 					<%- end -%>
+				</tr>
 				<%- end -%>
 			</tbody>
 		</table>

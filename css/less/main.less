@@ -6,7 +6,7 @@ body {
   line-height:1.5em;
 }
 
-A         { color: #191919;} 
+A         { color: #F2864D; text-decoration: underline; } 
 A:link    { color: #F2864D; text-decoration: underline; } 
 A:visited { color: #996666; text-decoration: underline; } 
 A:active  { color: #FFFFFF; text-decoration: underline; background-color: #330000;} 
@@ -27,6 +27,10 @@ button {
   border-width: 1px;
   border-right-color: #999999;
   border-bottom-color: #999999;
+}
+
+select {
+  color: #666666;
 }
 
 hr {
@@ -60,13 +64,6 @@ caption {
   text-align:left;
   padding: 0.25em 0.5em 0.15em;
   background-color: #FFFFD0;
-}
-
-caption button {
-  background-color: #FFFFE0;
-  border-width: 1px;
-  border-right-color: #E0E0E0; 
-  border-bottom-color: #E0E0E0; 
 }
 
 th, td {
@@ -212,11 +209,7 @@ table.account {
 	border-width:0px 1px 1px 0px;
 }
 
-#search_tool * {
-  white-space: nowrap;
-}
-
-#decrypt_tool * {
+.input_set, .input_set * {
   white-space: nowrap;
 }
 
@@ -242,12 +235,23 @@ table.account {
   font-size: 100%;
 }
 
+#track_records_tool {
+  margin: 0em 0.4em;
+  padding: 0.2em 0.4em;
+}
+#track_records_tool button {
+  border-width: 1px;
+  border-right-color: #e0e0e0;
+  border-bottom-color: #e0e0e0;
+}
 #track_records {
   text-align: center;
   line-height: 1.8em;
   font-size: 85%;
 }
-
+#track_records > tbody > tr {display:none;}
+#track_records > tbody > tr.top100 {display:table-row;}
+		
 .tools {
   font-size:82%;
   margin-top:0.2em;

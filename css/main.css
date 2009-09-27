@@ -4,7 +4,10 @@ body {
   color: #333333;
   line-height: 1.5em;
 }
-A { color: #191919; }
+A {
+  color: #f2864d;
+  text-decoration: underline;
+}
 A:link {
   color: #f2864d;
   text-decoration: underline;
@@ -40,6 +43,7 @@ button {
   border-right-color: #999999;
   border-bottom-color: #999999;
 }
+select { color: #666666; }
 hr {
   border-top: solid 1px #746710;
   border-right: none;
@@ -67,12 +71,6 @@ caption {
   text-align: left;
   padding: 0.25em 0.5em 0.15em;
   background-color: #ffffd0;
-}
-caption button {
-  background-color: #ffffe0;
-  border-width: 1px;
-  border-right-color: #e0e0e0;
-  border-bottom-color: #e0e0e0;
 }
 th, td {
   line-height: 1.6em;
@@ -159,8 +157,8 @@ table.account { font-size: 95%; }
   border-style: solid;
   border-width: 0px 1px 1px 0px;
 }
-#search_tool * { white-space: nowrap; }
-#decrypt_tool * { white-space: nowrap; }
+.input_set { white-space: nowrap; }
+.input_set * { white-space: nowrap; }
 #main h2 {
   margin-top: 1em;
   font-size: 1.25em;
@@ -169,11 +167,22 @@ table.account { font-size: 95%; }
 #main h2:first-letter { font-size: 161.8%; }
 #profile { font-size: 95%; }
 #profile h3 { font-size: 100%; }
+#track_records_tool {
+  margin: 0em 0.4em;
+  padding: 0.2em 0.4em;
+}
+#track_records_tool button {
+  border-width: 1px;
+  border-right-color: #e0e0e0;
+  border-bottom-color: #e0e0e0;
+}
 #track_records {
   text-align: center;
   line-height: 1.8em;
   font-size: 85%;
 }
+#track_records > tbody > tr { display: none; }
+#track_records > tbody > tr.top100 { display: table-row; }
 .tools {
   font-size: 82%;
   margin-top: 0.2em;
