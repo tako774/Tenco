@@ -14,10 +14,12 @@ begin
 	require 'time'
 	require 'logger'
 	require 'utils'
-	include Utils
+	require 'setting'
 	
+	# 設定読み込み
+	CFG = Setting.new
 	# TOP ページ URL
-	TOP_URL = 'http://tenco.xrea.jp/'
+	TOP_URL = CFG['top_url']
 	# TOP ディレクトリパス
 	TOP_DIR = '.'
 	# ログファイルパス
@@ -305,8 +307,11 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 								FROM
 								  accounts a,
 								  game_accounts ga
-								    LEFT OUTER JOIN game_clusters gc
-									ON ga.game_id = gc.game_id AND ga.cluster_id = gc.cluster_id,
+								    LEFT OUTER JOIN
+									  game_clusters gc
+									ON
+									  ga.game_id = gc.game_id
+									  AND ga.cluster_id = gc.cluster_id,
 								  game_account_ratings r,
 								  prize_accounts pa,
 								  prizes p,
@@ -350,7 +355,8 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							# Type1 区分値取得
 							res = db.exec(<<-"SQL")
 								SELECT
-									type1_id, name
+									type1_id,
+									name
 								FROM
 									game_type1s
 								WHERE

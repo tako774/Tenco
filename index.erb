@@ -13,7 +13,7 @@
 <div id="container">
 
 <div id="header">
-	<a href="http://tenco.xrea.jp"><img alt="Tenco!" src='./images/Tenco.gif' width='366' height='126' /></a>
+	<a href="<%= TOP_URL %>"><img alt="Tenco!" src='./images/Tenco.gif' width='366' height='126' /></a>
 	<h1>Tenco! 東方非想天則／東方緋想天レーティング</h1>
 </div>
 
@@ -24,11 +24,11 @@
 	<h2>天則観報告ツール</h2>
 
 	<p>
-	<img alt="" src="./client/images/suwako.ico" width="32" height="32" /> <a href="./client/tsk_report_v001b.zip" style="font-weight:bold;font-size:110%;">天則観報告ツール Ver.0.01b</a>（2009/09/04 <a href="./client/tsk_report_history.txt">更新履歴</a> <a href="./client/tsk_report_readme.txt">Readme.txt</a>）
+	<img alt="" src="./client/images/suwako.ico" width="32" height="32" /> <a href="./client/tsk_report_v002.zip" style="font-weight:bold;font-size:110%;">天則観報告ツール Ver.0.02</a>（2009/10/15 <a href="./client/tsk_report_history.txt">更新履歴</a> <a href="./client/tsk_report_readme.txt">Readme.txt</a>）
 	</p>
 	<p>
 	<a href="http://mint.s150.xrea.com/?%E5%A4%A9%E5%89%87%E8%A6%B3" target="_blank" style="font-weight:bold">天則観</a>の対戦結果を、Tenco! サーバーに報告するアプリです。<br />
-	対戦結果を報告すると、非想天則の<a href="http://tenco.xrea.jp/game/2/account/nanashi/" style="font-weight:bold">マイページ</a>が見られるようになります。<br />
+	対戦結果を報告すると、非想天則の<a href="<%= TOP_URL %>game/2/account/nanashi/" style="font-weight:bold">マイページ</a>が見られるようになります。<br />
 	すでに緋行跡報告ツールを使っている方は、一度でもマッチングすれば、そのあと既存のマイページからリンクが貼られます。<br />
 	<span class="suppli">（上記のリンク先は、nanashi@Tenco!企画・制作・運用担当のページです）</span>
 	</p>
@@ -51,11 +51,11 @@
 	<h2>緋行跡報告ツール</h2>
 
 	<p>
-	<img alt="" src="./client/images/tenco.ico" width="32" height="32" /> <a href="./client/hks_report_v007c.zip" style="font-weight:bold;font-size:110%;">緋行跡報告ツール Ver.0.07c</a>（2008/12/27 <a href="./client/hks_report_history.txt">更新履歴</a> <a href="./client/hks_report_readme.txt">Readme.txt</a>）
+	<img alt="" src="./client/images/tenco.ico" width="32" height="32" /> <a href="./client/hks_report_v008.zip" style="font-weight:bold;font-size:110%;">緋行跡報告ツール Ver.0.08</a>（2009/10/15 <a href="./client/hks_report_history.txt">更新履歴</a> <a href="./client/hks_report_readme.txt">Readme.txt</a>）
 	</p>
 	<p>
 	<a href="http://mint.s150.xrea.com/?%E7%B7%8B%E8%A1%8C%E8%B7%A1" target="_blank" style="font-weight:bold">緋行跡 (Rev.10** 系列)</a>の対戦結果を、Tenco! サーバーに報告するアプリです。<br />
-	対戦結果を報告すると、緋想天の<a href="http://tenco.xrea.jp/game/1/account/nanashi/" style="font-weight:bold">マイページ</a>が見られるようになります。<br />
+	対戦結果を報告すると、緋想天の<a href="<%= TOP_URL %>game/1/account/nanashi/" style="font-weight:bold">マイページ</a>が見られるようになります。<br />
 	<span class="suppli">（上記のリンク先は、nanashi@Tenco!企画・制作・運用担当のページです）</span>
 	</p>
 
@@ -110,11 +110,36 @@
 <div class="section">
 <h2>プロジェクトの状況</h2>
 <ul>
-<li>報告：<strong>非想天則についてサーバー側対応済み！クライアント側は戦績記録ツールの対応待ち</strong></li>
+<li>報告：<strong>非想天則について対応済み！</strong></li>
 <li>計算：<strong>'08/12/16レーティング計算Rev.3リリース！「グリコレーティング」になり、レート信頼度・適正レートへの収束速度が大幅改善！</strong>毎時0分ちょっと前に更新。</li>
-<li>表示：非想天則の追加に伴い、ページ間リンクなど変更中！<a href="http://tenco.xrea.jp/game/1/account/nanashi/">開発版ページ</a>。マイページ作成中！</li>
-<li>ドキュメント作成・QA：<a href="http://mint.s150.xrea.com/?%E7%B7%8B%E8%A1%8C%E8%B7%A1%E5%A0%B1%E5%91%8A%E3%83%84%E3%83%BC%E3%83%AB%20Tenco%21" target="_blank">東方 Tools Wiki</a> や <a href="http://jbbs.livedoor.jp/game/44334/">萃磨選堆の東方緋想天掲示板</a> のツールスレに多少の説明書きがあります</li>
+<li>表示：<a href="<%= TOP_URL %>game/2/account/nanashi/">開発版ページ</a>。マイページ開発中！</li>
+<li>ドキュメント作成・QA：<a href="http://mint.s150.xrea.com/?%E7%B7%8B%E8%A1%8C%E8%B7%A1%E5%A0%B1%E5%91%8A%E3%83%84%E3%83%BC%E3%83%AB%20Tenco%21" target="_blank">東方 Tools Wiki</a> や <a href="http://jbbs.livedoor.jp/game/48698/">萃磨選堆の東方非想天則掲示板</a> のツールスレに多少の説明書きがあります</li>
 </ul>
+<p id="info_20091006">
+2009/10/15 01:00<br />
+<strong>告知：Tenco!のサイトのURLを段階的に変えます</strong><br />
+<br />
+●10/16の0時頃
+<ol>
+<li>ウェブページのアドレスを <a href="http://tenco.info/">http://tenco.info/</a> に変更します</li>
+<li>報告ツールの送信できる相手に、 tenco.info を追加します</li>
+<li>tenco.info に対応した各報告ツールをリリース<strong>★報告ツールの最新版への更新を推奨します</strong></li>
+</ol>
+報告ツールはそのままでも報告できますが、11/23 には報告が出来なくなります。<br />
+（更新するかわりに、手動で env.yaml の3箇所ある tenco.xrea.jp を tenco.info にしてもOKです）<br />
+ウェブページは、元のアドレスからも、自動的に転送されるようにしておきますので、この段階では、特に意識する必要はありません。<br />
+リンク・ブックマークは、変えたほうがよいです。<br />
+<br />
+●11月下旬頃（11/23（月）＝勤労感謝の日＝Tenco! 1周年の予定）★この日までに、報告ツールの更新が必須です
+<ol>
+<li>tenco.xrea.jp の廃止</li>
+</ol>
+<p>
+今のレンタルサーバーの環境だといろいろと危なくなってきたので
+中身をいつでも移転できるように、URLを独自ドメインに変更します。
+なお、まだサーバーの場所は変わっていないので、特に動作は変わりありません。
+</p>
+</p>
 <p id="info_20090815_1915">
 	2009/08/15 19:15<br />
 	★東方非想天則への対応について<br />
@@ -126,7 +151,7 @@
 <p>
 2009/03/16 04:50<br />
 久しぶりに大型の更新です（書いていない細かいチューニングはかなりやってたのですが）。<br />
-<a href="http://tenco.xrea.jp/game/1/pov/2/" style="font-weight:bold">マッチングアカウント数のランキング</a>を追加しました<br />
+<a href="<%= TOP_URL %>game/1/pov/2/" style="font-weight:bold">マッチングアカウント数のランキング</a>を追加しました<br />
 １位の人が自分の倍近いです。すごい。
 </p>
 <p>
@@ -195,7 +220,7 @@ IE7以下でもそうなのであれば、さすがに対策が必要そうで�
 </p>
 <p>
 2008/12/08 0:05<br />
-<a href="http://tenco.xrea.jp/game/1/account/nanashi/" style="font-weight:bold">マイページ</a> を更新しました。
+<a href="<%= TOP_URL %>game/1/account/nanashi/" style="font-weight:bold">マイページ</a> を更新しました。
 </p>
 <ul>
 	<li>右カラムのリンクをつけました。</li>

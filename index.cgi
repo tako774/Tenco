@@ -16,10 +16,12 @@ begin
 	require 'time'
 	require 'logger'
 	require 'utils'
-	include Utils
+	require 'setting'
 
+	# 設定読み込み
+	CFG = Setting.new
 	# TOP ページ URL
-	TOP_URL = 'http://tenco.xrea.jp/'
+	TOP_URL = CFG['top_url']
 	# TOP ディレクトリパス
 	TOP_DIR = '.'
 	# ログファイルパス

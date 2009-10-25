@@ -5,7 +5,7 @@ begin
 	# 開始時刻
 	now = Time.now
 	# リビジョン
-	REVISION = 'R0.07'
+	REVISION = 'R0.08'
 	DEBUG = false
 
 	$LOAD_PATH.unshift './common'
@@ -15,13 +15,15 @@ begin
 	require 'time'
 	require 'logger'
 	require 'utils'
-	include Utils
+	require 'setting'
 	require 'RatingUtil'
-	require 'erb'
-	include ERB::Util
+	require 'erubis'
+	include Erubis::XmlHelper
 
+	# 設定読み込み
+	CFG = Setting.new
 	# TOP ページ URL
-	TOP_URL = 'http://tenco.xrea.jp/'
+	TOP_URL = CFG['top_url']
 	# TOP ディレクトリパス
 	TOP_DIR = '.'
 	# ログファイルパス

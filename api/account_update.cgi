@@ -15,8 +15,13 @@ require 'yaml'
 require 'time'
 require 'logger'
 require 'utils'
-include Utils
+require 'setting'
 require 'cryption'
+
+# 設定読み込み
+CFG = Setting.new
+# TOP ページ URL
+TOP_URL = CFG['top_url']
 
 # ログファイルパス
 LOG_PATH = "../log/log_#{now.strftime('%Y%m%d')}.log"
@@ -27,9 +32,6 @@ ACCOUNT_PASSWORD_BYTE_MIN = 4
 ACCOUNT_PASSWORD_BYTE_MAX = 16
 ACCOUNT_MAIL_ADDRESS_BYTE_MAX = 256
 ACCOUNT_MAIL_ADDRESS_REGEX = /\A[\x01-\x7F]+@(([-a-z0-9]+\.)*[a-z]+|\[\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\])\z/
-
-# URL
-WEB_SERVER_HOST = 'tenco.xrea.jp'
 
 # HTTP/HTTPSレスポンス文字列
 res_status = nil

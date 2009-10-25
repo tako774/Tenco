@@ -15,11 +15,13 @@ $LOAD_PATH.unshift "#{TOP_DIR}/entity"
 
 require 'logger'
 require 'utils'
-include Utils
 require 'cryption'
-
+require 'setting'
+	
+# 設定読み込み
+CFG = Setting.new
 # TOP ページ URL
-TOP_URL = 'http://tenco.xrea.jp/'
+TOP_URL = CFG['top_url']
 # ログファイルパス
 LOG_PATH = "#{TOP_DIR}/log/log_#{now.strftime('%Y%m%d')}.log"
 ERROR_LOG_PATH = "#{TOP_DIR}/log/error_#{now.strftime('%Y%m%d')}.log"

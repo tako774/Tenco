@@ -14,8 +14,10 @@
 	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/jquery.js"></script>
 	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/jquery.cookie.js"></script>
 	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/jsdeferred.jquery.js"></script>
+	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/utils.js"></script>
 	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/show_user_data.js"></script>
 	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/search.js"></script>
+	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/account_tag.js"></script>
 	<%# <script type="text/javascript" charset="utf-8" src="<％TOP_URL％>js/timechart.js"></script>
 	<!--[if IE]><script type="text/javascript" src="<％TOP_URL％>js/excanvas.js"></script><![endif]--> %>
 	<title><%= h game_account.rep_name %> / <%= h game.name %> - Tenco!</title>
@@ -24,6 +26,7 @@
 	
 // ロード時実行
 $(document).ready(
+		
 	function(){
 		// ラベル：対戦結果表示モード
 		var tr_show_mode_label = {
@@ -102,9 +105,47 @@ $(document).ready(
 			
 		// 非同期実行準備
 		$.deferred.define();
+				
+		// タグ編集リンクに実行関数紐付け
+		var is_edit_tags_visible = false;
+		$("#toggle_edit_tags").click(
+			function() {
+				if (is_edit_tags_visible) {
+					$("#edit_tags").hide();
+					is_edit_tags_visible = false;
+				}
+				else {
+					$("#edit_tags").show();
+					if (!got_account_tags) {
+						get_account_tags("<%= h account_name %>");
+					}
+					is_edit_tags_visible = true;
+				}
+			}
+		);
+		
+		// プレイヤータグ追加ボタンに実行関数紐付け
+		$("#add_account_tag").click(
+			function() {
+				var tag_name = $("#input_account_tag_name").val();
+				if (tag_name != '') {
+					add_account_tag("<%= h account_name %>", tag_name);
+				}
+			}
+		);
 
+		// プレイヤータグ削除ボタンに実行関数紐付け
+		$("#delete_account_tag").click(
+			function() {
+				var tag_name = $("#input_account_tag_name").val();
+				if (tag_name != '') {
+					delete_account_tag("<%= h account_name %>", tag_name);
+				}
+			}
+		);
+		
 		// 対戦結果表示モード取得・表示
-		var tr_show_mode = $.cookie('tr_show_mode') || 'all';
+		var tr_show_mode = $.cookie('tr_show_mode') || 'top100';
 		$("#tr_show_mode option[value='" + tr_show_mode + "']").attr('selected', 'selected');
 				
 		// 表示モード切替に実行関数紐付け
@@ -113,7 +154,7 @@ $(document).ready(
 				var selected_tr_show_mode = $("#tr_show_mode option:selected").val();
 				if (tr_show_mode != selected_tr_show_mode) {
 					tr_show_mode = selected_tr_show_mode;
-					$.cookie('tr_show_mode', tr_show_mode, { expires: 1, path: '/'});
+					$.cookie('tr_show_mode', tr_show_mode, { expires: 2000, path: '/'});
 					change_tr_show_mode(tr_show_mode);
 				}		
 			}
@@ -183,12 +224,13 @@ $(document).ready(
 <div id="container">
 
 <div id="header">
-<h1><a href="<%= TOP_URL %>"><img alt="Tenco!" src='<%= TOP_URL %>images/Tenco.gif' width='<%= 366/3 %>' height='<%= 126/3 %>' /></a></h1> マイページ 開発中バージョンα9（2009/09/27）
+<h1><a href="<%= TOP_URL %>"><img alt="Tenco!" src='<%= TOP_URL %>images/Tenco.gif' width='<%= 366/3 %>' height='<%= 126/3 %>' /></a></h1> マイページ 開発中バージョンα10.1（2009/10/12）
 <p id="meta_info">
 λ＜レートなんて飾りなんです。偉い人にはそれがわからんのです<br />
 <%= now.strftime('%m/%d %H:%M') %> に作成（毎時0分以降に再生成）<br />
-おしらせ：<img alt="" src="<%= TOP_URL %>client/images/suwako.ico" width="16" height="16" /> <a href="<%= TOP_URL %>">天則観報告ツール Ver.0.01b</a> リリース（09/09/04）<br />
-おしらせ：緋想天のバッチ処理を一時停止します（頻度を減らし再開予定）(09/09/18)</p>
+<strong>重要なお知らせ</strong>：<img alt="" src="<%= TOP_URL %>client/images/suwako.ico" width="16" height="16" /> <img alt="" src="<%= TOP_URL %>client/images/tenco.ico" width="16" height="16" /> <a href="<%= TOP_URL %>">報告ツール</a>を最新版に更新する必要があります→<a href="<%= TOP_URL %>#info_20091006">詳細</a>（09/10/16）<br />
+おしらせ：<a href="<%= TOP_URL %>tag/">タグ一覧ページ</a>をリリースしました(09/10/20)
+</p>
 </div>
 
 <%#
@@ -316,9 +358,7 @@ $(document).ready(
 	</div>
 	
 	<div id="profile">
-	<%= xhtml_sp2nbsp(h(game_account.rep_name)) %> さん<br />
-	<br />
-キャラクター使用率
+	<%= xhtml_sp2nbsp(h(game_account.rep_name)) %> さん
 <pre class="AA">##ビジュアル表現を予定##
 
 　　　　 ,.ｨrｰr 、
@@ -331,18 +371,32 @@ $(document).ready(
 
 ##ビジュアル表現を予定##
 </pre>
-そのほかプロフィールあれこれ<br />
+<h3>プロフィールあれこれ</h3>
 <p>
 <%- if game_account.cluster_name -%><%= "#{h game_account.cluster_name}クラスタ所属" %><%- end -%>
 </p>
+<h3>プレイヤータグ</h3>
+<ul id="account_tags">
+<%- account_tags.each do |at| -%>
+	<li><a href="<%= TOP_URL %>tag/<%= u(at.tag_disp_name).gsub(/%2f/i, '/') %>"><%= h at.tag_disp_name %></a></li>
+<%- end -%>
+</ul>
+<a id="toggle_edit_tags" class="suppli">タグ編集</a>
+<div id="edit_tags" style="display:none">
+	<div id="account_tag_tool">
+		<input id='input_account_tag_name' name='input_account_tag_name' type='text' size='40' value="" /><br />
+		<button id='add_account_tag'>タグ追加</button>&nbsp;<button id='delete_account_tag'>タグ削除</button>
+	</div>
+	<span id='account_tag_msg' class="suppli"></span>
+</div>
+
+<%# <canvas id="timechart" width="250" height="225" style="display:block"></canvas> %>
 <p>
 <a href="<%= "#{TOP_URL}account/#{u account_name}/manage/" %>">アカウント設定</a>
 </p>
-<%# <canvas id="timechart" width="250" height="225" style="display:block"></canvas> %>
 <p>
 	<a href="<%= "#{TOP_URL}game/#{game_id.to_i}/account/#{u account_name}/output=xml" %>"><img width="40" height="18" src="<%= "#{TOP_URL}images/xml.png" %>" alt="アカウント情報（XML形式）" /></a>
 </p>
-
 <%- if other_games.length > 0 -%>
 <h3>他ゲームのマイページ</h3>
 <ul>
@@ -368,7 +422,12 @@ $(document).ready(
 	</ul>
 	<h2>統計</h2>
 	<ul>
+		<li><a href="<%= "#{TOP_URL}game/#{game_id.to_i}/type1_stats/" %>">全キャラ統計（作成中）</a></li>
 		<li><a href="<%= "#{TOP_URL}game/#{game_id.to_i}/type1_vs_type1_stats/" %>">キャラ対キャラ統計</a></li>
+	</ul>
+	<h2>タグ</h2>
+	<ul>
+		<li><a href="<%= TOP_URL %>tag/">タグ一覧</a></li>
 	</ul>
 	<h2>過去の対戦相手</h2>
 	<ul>

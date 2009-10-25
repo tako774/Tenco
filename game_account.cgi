@@ -3,7 +3,7 @@
 # 開始時刻
 now = Time.now
 # リビジョン
-REVISION = 'R0.49'
+REVISION = 'R0.51'
 DEBUG = false
 
 $LOAD_PATH.unshift './common'
@@ -13,10 +13,12 @@ require 'time'
 require 'logger'
 require 'segment_const'
 require 'utils'
-include Utils
+require 'setting'
 
+# 設定読み込み
+CFG = Setting.new
 # TOP ページ URL
-TOP_URL = 'http://tenco.xrea.jp/'
+TOP_URL = CFG['top_url']
 # ログファイルパス
 LOG_PATH = "./log/log_#{now.strftime('%Y%m%d')}.log"
 ERROR_LOG_PATH = "./log/error_#{now.strftime('%Y%m%d')}.log"
@@ -50,6 +52,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		type1_h = {}        # プレイヤー属性１区分値（HTML エスケープ済み）
 		ratings = []         # プレイヤーのレーティング 
 		estimate_ratings = {} # プレイヤーのレート推定値
+		account_tags = [] # アカウントタグ情報
 		matched_game_accounts = [] # 対戦相手情報
 		account = nil # 対象アカウントの情報
 		other_games = [] # 対象アカウントのマッチ済み他ゲームID
@@ -243,7 +246,29 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							end
 							res.clear
 							
+							# アカウントタグ情報取得
+							require 'AccountTag'
+							res = db.exec(<<-"SQL")
+								SELECT
+									at.tag_id,
+									COALESCE(at.tag_disp_name, t.name) AS tag_disp_name
+								FROM
+									account_tags at,
+									tags t
+								WHERE
+									at.account_id = #{account.id.to_i}
+									AND at.tag_id = t.id 
+							SQL
 							
+							res.each do |r|
+								account_tag = AccountTag.new
+								res.num_fields.times do |i|
+									account_tag.instance_variable_set("@#{res.fields[i]}", r[i])
+								end
+								account_tags << account_tag
+							end
+							res.clear
+		
 							# アカウントの対戦記録を取得			
 							# 未マッチの場合、player2 の名前は暗号化
 							require 'TrackRecord'
@@ -403,7 +428,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							res_body << "サーバーエラーです。ごめんなさい。\n" unless res_body
 							raise ex
 						ensure
-							db.close  if db
+							db.close if db
 						end
 						
 						### キャッシュXML生成

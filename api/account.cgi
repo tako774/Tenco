@@ -4,7 +4,7 @@
 now = Time.now
 
 ### アカウントI/F API ###
-REVISION = 'R0.06'
+REVISION = 'R0.08'
 
 $LOAD_PATH.unshift '../common'
 $LOAD_PATH.unshift '../entity'
@@ -14,7 +14,13 @@ require 'kconv'
 require 'yaml'
 require 'time'
 require 'logger'
-
+require 'setting'
+	
+# 設定読み込み
+CFG = Setting.new
+# TOP ページ URL
+TOP_URL = CFG['top_url']
+	
 # ログファイルパス
 LOG_PATH = "../log/log_#{now.strftime('%Y%m%d')}.log"
 ERROR_LOG_PATH = "../log/error_#{now.strftime('%Y%m%d')}.log"
@@ -27,9 +33,6 @@ ACCOUNT_PASSWORD_BYTE_MIN = 4
 ACCOUNT_PASSWORD_BYTE_MAX = 16
 ACCOUNT_MAIL_ADDRESS_BYTE_MAX = 256
 ACCOUNT_MAIL_ADDRESS_REGEX = /\A[\x01-\x7F]+@(([-a-z0-9]+\.)*[a-z]+|\[\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\])\z/
-
-# URL
-WEB_SERVER_HOST = 'tenco.xrea.jp'
 
 # HTTP/HTTPSレスポンス文字列
 res_status = nil
@@ -107,10 +110,10 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		res_status = "Status: 200 OK\n" unless res_status
 		
 		res_body = "#{account_name}さんのアカウントを登録しました！\n"
-		res_body << "※※※　利用するURLは以下になります　※※※\n"
-		res_body << "マイページ（緋想天用）　：http://#{WEB_SERVER_HOST}/game/1/account/#{account_name}/ \n"
-		res_body << "マイページ（非想天則用）：http://#{WEB_SERVER_HOST}/game/2/account/#{account_name}/ \n"
-		res_body << "アカウント設定用ページ：http://#{WEB_SERVER_HOST}/account/#{account_name}/manage\n"
+		res_body << "※※※　ご利用URL　※※※\n"
+		res_body << "☆マイページ（緋想天）　：#{TOP_URL}game/1/account/#{account_name}/\n"
+		res_body << "☆マイページ（非想天則）：#{TOP_URL}game/2/account/#{account_name}/\n"
+		res_body << "☆アカウント設定用ページ：#{TOP_URL}account/#{account_name}/manage/\n"
 	ensure
 		# DB切断
 		db.close if db

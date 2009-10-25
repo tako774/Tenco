@@ -5,7 +5,7 @@ begin
 	now = Time.now
 
 	### レート推定  ###
-	REVISION = '0.13'
+	REVISION = '0.15'
 	DEBUG = false
 
 	$LOAD_PATH.unshift './common'
@@ -18,7 +18,7 @@ begin
 
 	require 'db'
 	require 'utils'
-	include Utils
+	require 'setting'
 	require 'GameProfileUtil'
 	require 'segment_const'
 	require 'erubis'
@@ -26,8 +26,10 @@ begin
 
 	source = ""
 
+	# 設定読み込み
+	CFG = Setting.new
 	# TOP ページ URL
-	TOP_URL = 'http://tenco.xrea.jp/'
+	TOP_URL = CFG['top_url']
 	# TOP ディレクトリパス
 	TOP_DIR = '.'
 	# ログファイルパス
@@ -202,7 +204,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 	半角カナは全角になおして入力してください。<br />
 	複数のプロファイル名を使用している場合は、「&lt;&gt;」で区切ってください（#{max_name_nums}個まで）。<br />
 	</p>
-	<form method="get" action="http://tenco.xrea.jp/estimate_rating.cgi" accept-charset="UTF-8">
+	<form method="get" action="#{TOP_URL}estimate_rating.cgi" accept-charset="UTF-8">
 		<label><input type="radio" name="game_id" value="1" #{"checked=\"checked\" " if game_id.to_i == 1}/>東方緋想天</label>
 		<label><input type="radio" name="game_id" value="2" #{"checked=\"checked\" " if game_id.to_i != 1}/>東方非想天則</label><br />
 		<input type="text" name="name" size="40" value="#{ h(names.join("<>")) if names }" />
