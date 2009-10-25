@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns='http://www.w3.org/1999/xhtml' xml:lang='ja' lang='ja'>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta http-equiv="content-style-type" content="text/css" />
+	<meta http-equiv="content-script-type" content="text/javascript" />
+	<link rel="stylesheet" type="text/css" href="<%= TOP_URL %>css/main.css" />
+	<link rel="stylesheet" type="text/css" href="<%= TOP_URL %>css/3cols_sides-width-fixed.css" />
+	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/jquery.js"></script>
+	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/jsdeferred.jquery.js"></script>
+	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/utils.js"></script>
+	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/search.js"></script>
+	<%# <!--[if IE]><script type="text/javascript" src="<％TOP_URL％>js/excanvas.js"></script><![endif]--> %>
+	<title>タグ一覧 - Tenco!</title>
+	<script type="text/javascript">
+//<![CDATA[ 
+	
+// ロード時実行
+$(document).ready(
+	function(){
+	
+		// javascript 利用部 HTML
+		// IEだとEnterキーでなぜかボタンをクリックするので
+		// formタグで抑制する
+		var tags_tool_html = "";
+		
+		tags_tool_html += "<span class='input_set'>\n";
+		tags_tool_html += "<span id='search_tool_msg' class='suppli msg'>search:</span>\n";
+		tags_tool_html += "<form action='' method='post' onSubmit='return false;' style='display:inline'>\n";
+		tags_tool_html += "<input id='search_str' name='search_str' tabindex='1' type='text' size='16' />&nbsp;<button id='search_tags' tabindex='2'>検索</button>\n";
+		tags_tool_html += "</form>\n";
+		tags_tool_html += "</span>\n";
+		
+		$("#tags_tool").html(tags_tool_html);
+	
+		// 検索ボタンに実行関数を紐付け
+		$("#search_tags").click(
+			function() {
+				(function() {search("#tags > tbody > tr", "table-row", "#search_str")})();
+			}
+		);
+		// 検索語入力欄でエンターでも実行
+		$("#search_str").keyup(
+			function(evt) {
+				if (evt.which == 13) {
+					$("#search_track_records").click();
+				}			
+			}
+		);
+	}
+);
+
+// ]]>
+	</script>
+</head>
+<body>
+
+<div id="container">
+
+<div id="header">
+<h1><a href="<%= TOP_URL %>"><img alt="Tenco!" src='<%= TOP_URL %>images/Tenco.gif' width='<%= 366/3 %>' height='<%= 126/3 %>' /></a></h1>
+タグ一覧ページ α1（2009/10/20）
+<p id="meta_info">
+<%= now.strftime('%m/%d %H:%M') %> に作成（毎時0分以降に再生成）<br />
+</p>
+</div>
+
+<%#
+<div class="menu">
+<ul>
+	<li><a href=""></a></li>
+</ul>
+</div>
+-%>
+
+<hr />
+
+<div id="wrapper">
+	<div id="main_wrapper">
+	<div id="main">
+	
+	<div class="section">
+		<h2>タグ一覧</h2>
+			<noscript class="suppli msg">
+				javascript を ON にすると、検索・復号ができます 
+			</noscript>
+			<div id="tags_tool" style="text-align:left">
+			</div>
+			<table id="tags">
+			<thead>
+				<tr>
+					<th>タグ</th>
+					<th>アカウント数</th>
+				</tr>
+			</thead>
+			<tbody>			
+		<%- tags.each do |tag| -%>
+			<tr>
+				<td><a href="<%= TOP_URL %>tag/<%= u(tag.rep_disp_name).gsub(/%2f/i, '/') %>"><%= h tag.rep_disp_name %></a></td>
+				<td class="num"><%= tag.account_num.to_i %> 名</td>
+			</tr>
+		<%- end -%>
+			</tbody>
+			</table>
+	</div>
+	
+	
+	</div><%# main %>
+	</div><%# main_wrapper %>
+	
+	<div id="profile">
+		<h3>タグクラウド</h3>
+		<p class="suppli AA">
+		### ビジュアル表現を予定
+		</p>
+		<h3>最近説明が追加されたタグ</h3>
+		<p class="suppli AA">
+		### 新規説明追加タグ表示予定
+		</p>
+	</div>
+	
+</div><%# wrapper %>
+
+<div id="side" class="tools tools_right">
+	<h2>リンク</h2>
+	<%= link_html %>
+</div>
+
+
+<hr />
+<div id="footer">
+<%= footer_html %>
+</div>
+
+</div>
+
+</body>
+</html>
+

@@ -235,11 +235,11 @@ table.account {
   font-size: 100%;
 }
 
-#track_records_tool {
+#track_records_tool, #tags_tool {
   margin: 0em 0.4em;
   padding: 0.2em 0.4em;
 }
-#track_records_tool button {
+#track_records_tool button, #tags_tool button {
   border-width: 1px;
   border-right-color: #e0e0e0;
   border-bottom-color: #e0e0e0;
@@ -249,9 +249,15 @@ table.account {
   line-height: 1.8em;
   font-size: 85%;
 }
+
 #track_records > tbody > tr {display:none;}
+/* IE6 only */
+* html #track_records tbody tr {display:none;}
+
 #track_records > tbody > tr.top100 {display:table-row;}
-		
+/* IE7 and below */
+* html #track_records tbody tr.top100, *:first-child+html #track_records > tbody > tr.top100 {display:block;}
+
 .tools {
   font-size:82%;
   margin-top:0.2em;

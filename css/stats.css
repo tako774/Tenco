@@ -59,3 +59,33 @@
   background-color: #ffdddd;
   text-decoration: underline;
 }
+#game_type1_rate_range .legend_1 {
+  color: #0000ff;
+  font-weight: normal;
+  background-color: #ccccff;
+}
+#game_type1_rate_range .legend_2 {
+  color: #0000ff;
+  font-weight: normal;
+  background-color: #ddddff;
+}
+#game_type1_rate_range .legend_3 {
+  color: #008800;
+  font-weight: normal;
+  background-color: #ddeedd;
+}
+#game_type1_rate_range .legend_5 {
+  color: #ee6600;
+  font-weight: normal;
+  background-color: #ffeedd;
+}
+#game_type1_rate_range .legend_6 {
+  color: #ff0000;
+  font-weight: normal;
+  background-color: #ffdddd;
+}
+#game_type1_rate_range .legend_7 {
+  color: #ff0000;
+  font-weight: normal;
+  background-color: #ffcccc;
+}

@@ -58,7 +58,7 @@ function show_account_settings(account_name, account_password) {
 	
 	$.ajax({
 		type: "POST",
-		url: "http://tenco.xrea.jp/api/account_select.cgi",
+		url: "http://" + location.host + "/api/account_select.cgi",
 		data: {
 			account_name: account_name,
 			account_password: account_password
@@ -122,7 +122,7 @@ function update_account_settings(account_name, account_password, new_mail_addres
 	
 	$.ajax({
 		type: "POST",
-		url: "http://tenco.xrea.jp/api/account_update.cgi",
+		url: "http://" + location.host + "/api/account_update.cgi",
 		data: {
 			account_name: account_name,
 			account_password: account_password,

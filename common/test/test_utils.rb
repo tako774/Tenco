@@ -62,4 +62,19 @@ class Test_Utils < Test::Unit::TestCase
 			assert_equal(time, pgsql_timestamp_str_to_time(s))
 		end
 	end
+	
+	def test_str_norm
+		test_strs = [
+			"０",
+			"　ｱアあ＠ＡAaａ"
+		]
+		result_strs = [
+			"0",
+			" あああ@aaaa"
+		]
+		
+		test_strs.each_index do |i|
+			assert_equal(result_strs[i], str_norm(test_strs[i]))
+		end
+	end
 end

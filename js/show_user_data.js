@@ -26,7 +26,7 @@ function decrypt(account_name, account_password) {
 		
 	$.ajax({
 		type: "POST",
-		url: "http://tenco.xrea.jp/api/account_data_password.cgi",
+		url: "http://" + location.host + "/api/account_data_password.cgi",
 		data: {
 			account_name: account_name,
 			account_password: account_password

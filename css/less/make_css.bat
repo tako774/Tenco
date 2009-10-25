@@ -1,0 +1,1 @@
+ruby -r 'rubygems' -r '../../common/CssUtil' -e 'lessc_dir "."'

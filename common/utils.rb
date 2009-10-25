@@ -25,6 +25,15 @@ module Utils
 	def xhtml_sp2nbsp(str)
 		return	str.gsub(/\s|\t|\r\n|\r|\n/, "&nbsp;")
 	end
+		
+	# 文字列正規化
+	# 大文字→小文字
+	# カタカナ→ひらがな
+	# 半角カナ→ひらがな
+	# 全角英数記号→半角英数記号
+	def str_norm(str)
+		NKF.nkf('-w -E -m0 -x', kakasi('-Ea -kH -KH -i euc', NKF.nkf('-e -W -m0 -x', str))).downcase
+	end
 	
 	# 全角カナを半角カナに変換
 	def z2h(str)
@@ -61,5 +70,51 @@ module Utils
 	def hide_ng_words(str, alt = "**")
 		str.gsub(NG_WORDS_REGEXP, alt)
 	end
+	
+	# 虹色変換
+	def col_rainbow(rate, start_arg = 0.0, end_arg = 360.0)
+		r = nil
+		g = nil
+		b = nil
+		
+		f = (((end_arg - start_arg) * rate + start_arg) % 360.0) / 60.0
+		
+		if (0 <= f && f <= 6) then
+			if (1 <= f && f < 2) then
+				r = 255 * (2 - f)
+			elsif (2 <= f && f < 4) then
+				r = 0
+			elsif (4 <= f && f < 5) then
+				r = 255 * (f - 4)
+			else
+				r = 255
+			end
 
+			if (0 <= f && f < 1) then
+				g = 255 * f
+			elsif (1 <= f && f < 3) then
+				g = 255
+			elsif (3 <= f && f < 4) then
+				g = 255 * (4 - f)
+			else
+				g = 0
+			end
+
+			if (0 <= f && f < 2) then
+				b = 0
+			elsif (2 <= f && f < 3) then
+				b = 255 * (f - 2)
+			elsif (3 <= f && f <= 5) then
+				b = 255
+			else
+				b = 255 * (6 - f)
+			end
+			
+			return [r.round, g.round, b.round]
+		else
+			return [nil, nil, nil]
+		end
+	end
 end
+
+include Utils

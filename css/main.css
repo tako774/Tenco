@@ -167,11 +167,16 @@ table.account { font-size: 95%; }
 #main h2:first-letter { font-size: 161.8%; }
 #profile { font-size: 95%; }
 #profile h3 { font-size: 100%; }
-#track_records_tool {
+#track_records_tool, #tags_tool {
   margin: 0em 0.4em;
   padding: 0.2em 0.4em;
 }
 #track_records_tool button {
+  border-width: 1px;
+  border-right-color: #e0e0e0;
+  border-bottom-color: #e0e0e0;
+}
+#tags_tool button {
   border-width: 1px;
   border-right-color: #e0e0e0;
   border-bottom-color: #e0e0e0;
@@ -182,7 +187,10 @@ table.account { font-size: 95%; }
   font-size: 85%;
 }
 #track_records > tbody > tr { display: none; }
+* html #track_records tbody tr { display: none; }
 #track_records > tbody > tr.top100 { display: table-row; }
+* html #track_records tbody tr.top100 { display: block; }
+*:first-child + html #track_records > tbody > tr.top100 { display: block; }
 .tools {
   font-size: 82%;
   margin-top: 0.2em;

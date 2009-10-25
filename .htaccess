@@ -5,7 +5,10 @@ RewriteRule ^game/([0-9]+)$/ game.cgi?id=$1 [L]
 RewriteRule ^game/([0-9]+)/account/([0-9A-Za-z_][0-9A-Za-z_\.]*)/([^/]*)$ game_account.cgi?game_id=$1&account_name=$2&$3 [L]
 RewriteRule ^game/([0-9]+)/pov/([0-9]+)/$ pov.cgi?game_id=$1&pov_id=$2&pov_eval_unit=game [L]
 RewriteRule ^game/([0-9]+)/pov/([0-9]+)/type1/$ pov.cgi?game_id=$1&pov_id=$2&pov_eval_unit=game_type1 [L]
+RewriteRule ^game/([0-9]+)/type1_stats/$ game_type1_stats.cgi?game_id=$1 [L]
 RewriteRule ^game/([0-9]+)/type1_vs_type1_stats/$ game_type1_vs_type1_stats.cgi?game_id=$1 [L]
+RewriteRule ^tag/(.+)$ tag.cgi?tag_name=$1 [L]
+RewriteRule ^tag/$ tag_index.cgi [L]
 
 <IfModule mod_gzip.c>
 mod_gzip_on yes
