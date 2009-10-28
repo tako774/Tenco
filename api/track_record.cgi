@@ -4,7 +4,7 @@
 now = Time.now
 
 ### 対戦結果I/F API ###
-REVISION = 'R0.21'
+REVISION = 'R0.23'
 DEBUG = false
 
 $LOAD_PATH.unshift '../common'
@@ -16,12 +16,14 @@ require 'yaml'
 require 'time'
 require 'logger'
 require 'utils'
-include Utils
 require 'cryption'
 
 # ログファイルパス
 LOG_PATH = "../log/log_#{now.strftime('%Y%m%d')}.log"
 ERROR_LOG_PATH = "../log/error_#{now.strftime('%Y%m%d')}.log"
+
+# マッチ済み対戦結果トランザクションファイルディレクトリ
+TRN_DATA_DIR = "../dat/matched_track_records_trn"
 
 # 一度に受信可能な対戦結果数
 TRACK_RECORD_MAX_SIZE = 250
@@ -51,6 +53,9 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		matched_records_count = 0    # マッチング成功件数
 		is_force_insert = false      # 強制インサートモード設定（同一アカウントからの重複時にエラー終了せず続行する）
 		PLEASE_RETRY_FORCE_INSERT = "<Please Retry in Force-Insert Mode>"  # 強制インサートリトライのお願い文字列
+		matched_track_records_str = "" # マッチ済み対戦結果トランザクションデータ
+		matched_track_records_trn_file = nil # マッチ済み対戦結果トランザクションファイルパス
+		matched_track_records_trn_ok_file = nil # マッチ済み対戦結果トランザクションOKファイルパス
 		
 		# コンテント長のバリデーション
 		if source_length > MAX_CONTENT_LENGTH then
@@ -341,6 +346,9 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 					# 更新バージョン不一致時はやり直し
 					redo if updated_res.cmdstatus != 'UPDATE 1'
 					updated_res.clear
+					
+					# マッチ済み対戦結果トランザクションデータ追加
+					matched_track_records_str << "#{rep_timestamp.to_i},#{t.player1_account_id},#{matched_record.player1_account_id},#{t.player1_type1_id},#{t.player2_type1_id},#{t.player1_points},#{t.player2_points}\n"
 				end
 				res.clear
 			end
@@ -358,6 +366,23 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		log_msg << "\t#{Time.now - now}"
 		
 		res_body << "matched records search finish...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
+		
+		# マッチ済み対戦結果トランザクションデータ追加書き込み
+		matched_track_records_trn_file = "#{TRN_DATA_DIR}/#{game_id}_#{now.to_i}_#{$$}.dat"
+		matched_track_records_trn_temp_file = "#{matched_track_records_trn_file}.temp"
+		
+		if (matched_track_records_str.length > 0) then
+			log_msg << "\t#{matched_track_records_trn_file}"
+	
+			if (File.exist?(matched_track_records_trn_file) || File.exist?(matched_track_records_trn_temp_file)) then
+				raise "エラー：マッチ済み対戦結果トランザクションデータファイル（#{matched_track_records_trn_file}）がすでに存在します"
+			end
+			
+			File.open(matched_track_records_trn_temp_file, 'wb') do |w|
+				w.print matched_track_records_str
+			end
+			File.rename(matched_track_records_trn_temp_file, matched_track_records_trn_file)
+		end
 		
 		# トランザクション終了
 		db.exec("COMMIT;")
