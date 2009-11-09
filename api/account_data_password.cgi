@@ -1,44 +1,67 @@
 #!/usr/bin/ruby
 
-# 開始時刻
-now = Time.now
+begin
+	# 開始時刻
+	now = Time.now
 
-### アカウントデータパスワードI/F API ###
-REVISION = 'R0.01'
-DEBUG = false
+	### アカウントデータパスワードI/F API ###
+	REVISION = 'R0.03'
+	DEBUG = false
 
-# TOP ディレクトリ
-TOP_DIR = '..'
+	# TOP ディレクトリ
+	TOP_DIR = '..'
 
-$LOAD_PATH.unshift "#{TOP_DIR}/common"
-$LOAD_PATH.unshift "#{TOP_DIR}/entity"
+	$LOAD_PATH.unshift "#{TOP_DIR}/common"
+	$LOAD_PATH.unshift "#{TOP_DIR}/entity"
 
-require 'logger'
-require 'utils'
-require 'setting'
+	require 'logger'
+	require 'utils'
+	require 'setting'
+		
+	# 設定読み込み
+	CFG = Setting.new
+	# TOP ページ URL
+	TOP_URL = CFG['top_url']
+	# ログファイルパス
+	LOG_PATH = "#{TOP_DIR}/log/log_#{now.strftime('%Y%m%d')}.log"
+	ACCESS_LOG_PATH = "#{TOP_DIR}/log/access_#{now.strftime('%Y%m%d')}.log"
+	ERROR_LOG_PATH = "#{TOP_DIR}/log/error_#{now.strftime('%Y%m%d')}.log"
+	# キャッシュフォルダパス
+	CACHE_DIR = "#{TOP_DIR}/cache/eternal/#{File::basename(__FILE__)}"
+	# キャッシュロックフォルダパス
+	CACHE_LOCK_DIR = "#{TOP_DIR}/cache/eternal/lock/#{File::basename(__FILE__)}"
+	# キャッシュをつかったかどうか
+	is_cache_used = false
+
+	# HTTP/HTTPSレスポンス文字列
+	res_status = nil
+	res_header = ''
+	res_body = ""
+
+	# ログ開始
+	logger = Logger.new(LOG_PATH)
+	logger.level = Logger::DEBUG
+
+	# アクセスログ記録
+	access_logger = Logger.new(ACCESS_LOG_PATH)
+	access_logger.level = Logger::DEBUG
+	access_logger.info(
+		[
+			"",
+			now.strftime('%Y/%m/%d %H:%M:%S'),
+			ENV['REMOTE_ADDR'],
+			ENV['HTTP_USER_AGENT'],
+			ENV['REQUEST_URI'],
+			File::basename(__FILE__)
+		].join("\t")
+	)
 	
-# 設定読み込み
-CFG = Setting.new
-# TOP ページ URL
-TOP_URL = CFG['top_url']
-# ログファイルパス
-LOG_PATH = "#{TOP_DIR}/log/log_#{now.strftime('%Y%m%d')}.log"
-ERROR_LOG_PATH = "#{TOP_DIR}/log/error_#{now.strftime('%Y%m%d')}.log"
-# キャッシュフォルダパス
-CACHE_DIR = "#{TOP_DIR}/cache/eternal/#{File::basename(__FILE__)}"
-# キャッシュロックフォルダパス
-CACHE_LOCK_DIR = "#{TOP_DIR}/cache/eternal/lock/#{File::basename(__FILE__)}"
-# キャッシュをつかったかどうか
-is_cache_used = false
-
-# HTTP/HTTPSレスポンス文字列
-res_status = nil
-res_header = ''
-res_body = ""
-
-# ログ開始
-logger = Logger.new(LOG_PATH)
-logger.level = Logger::DEBUG
+rescue
+	print "Status: 500 Internal Server Error\n"
+	print "content-type: text/plain\n\n"
+	print "サーバーエラーです。ごめんなさい。(Initialize Error #{Time.now.strftime('%Y/%m/%d %H:%m:%S')})"
+	exit
+end
 
 if ENV['REQUEST_METHOD'] == 'POST' then
 	begin
@@ -46,7 +69,11 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		source = nil # POSTデータ
 		db = nil   # DB接続 
 		account = nil # アカウント情報
+		
+		# バリデーション用定数
 		MAX_POST_DATA_BYTES = 10000; # 最大受付ポストデータサイズ
+		ACCOUNT_NAME_REGEX = /\A[a-zA-Z0-9_]+\z/
+		ACCOUNT_PASSWORD_REGEX = /\A[\x01-\x7F]+\z/
 		
 		# ポストデータ取得
 		if ENV['CONTENT_LENGTH'].to_i > MAX_POST_DATA_BYTES then
@@ -62,9 +89,9 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		# 入力バリデーション
 		unless (
 			query['account_name'] and
-			query['account_name'] != '' and
+			query['account_name'] =~ ACCOUNT_NAME_REGEX and
 			query['account_password'] and
-			query['account_password'] != ''
+			query['account_password'] =~ ACCOUNT_PASSWORD_REGEX
 		) then
 			res_status = "Status: 400 Bad Request\n"
 			res_body = "入力データが正しくありません\ninput data validation error.\n"

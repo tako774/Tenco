@@ -14,6 +14,8 @@ begin
 
 	require 'time'
 	require 'logger'
+	require 'kconv'
+	
 	require 'segment_const'
 	require 'utils'
 	require 'setting'
@@ -24,9 +26,13 @@ begin
 	CFG = Setting.new
 	# TOP ページ URL
 	TOP_URL = CFG['top_url']
+	# TOP ディレクトリパス
+	TOP_DIR = '.'
 	# ログファイルパス
-	LOG_PATH = "./log/log_#{now.strftime('%Y%m%d')}.log"
-	ERROR_LOG_PATH = "./log/error_#{now.strftime('%Y%m%d')}.log"
+	LOG_PATH = "#{TOP_DIR}/log/log_#{now.strftime('%Y%m%d')}.log"
+	ACCESS_LOG_PATH = "#{TOP_DIR}/log/access_#{now.strftime('%Y%m%d')}.log"
+	ERROR_LOG_PATH = "#{TOP_DIR}/log/error_#{now.strftime('%Y%m%d')}.log"
+	
 	# キャッシュの有効期限
 	cache_expires = (now + 60 * 60) - now.min * 60 - now.sec
 	# キャッシュ親パス
@@ -47,10 +53,26 @@ begin
 	logger = Logger.new(LOG_PATH)
 	logger.level = Logger::DEBUG
 
+	# アクセスログ記録
+	access_logger = Logger.new(ACCESS_LOG_PATH)
+	access_logger.level = Logger::DEBUG
+	access_logger.info(
+		[
+			"",
+			now.strftime('%Y/%m/%d %H:%M:%S'),
+			ENV['REMOTE_ADDR'],
+			ENV['HTTP_USER_AGENT'],
+			ENV['REQUEST_URI'],
+			File::basename(__FILE__)
+		].join("\t")
+	)
+	
+
 rescue
 	print "Status: 500 Internal Server Error\n"
 	print "content-type: text/plain\n\n"
 	print "サーバーエラーです。ごめんなさい。(Initialize Error #{Time.now.strftime('%Y/%m/%d %H:%m:%S')})"
+	exit
 end
 
 if ENV['REQUEST_METHOD'] == 'GET' then
@@ -75,7 +97,8 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		# バリデーション
 		unless (
 			query['tag_name'] and
-			query['tag_name'] != ''
+			query['tag_name'] != '' and
+			Kconv.isutf8(query['tag_name'])
 		) then
 			res_status = "Status: 400 Bad Request\n"
 			res_body = "400 Bad Request\n"

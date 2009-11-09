@@ -1,47 +1,74 @@
 #!/usr/bin/ruby
 
-# 開始時刻
-now = Time.now
-# リビジョン
-REVISION = 'R0.51'
-DEBUG = false
+begin
+	# 開始時刻
+	now = Time.now
+	# リビジョン
+	REVISION = 'R0.52'
+	DEBUG = false
 
-$LOAD_PATH.unshift './common'
-$LOAD_PATH.unshift './entity'
+	$LOAD_PATH.unshift './common'
+	$LOAD_PATH.unshift './entity'
 
-require 'time'
-require 'logger'
-require 'segment_const'
-require 'utils'
-require 'setting'
+	require 'time'
+	require 'logger'
+	require 'segment_const'
+	require 'utils'
+	require 'setting'
 
-# 設定読み込み
-CFG = Setting.new
-# TOP ページ URL
-TOP_URL = CFG['top_url']
-# ログファイルパス
-LOG_PATH = "./log/log_#{now.strftime('%Y%m%d')}.log"
-ERROR_LOG_PATH = "./log/error_#{now.strftime('%Y%m%d')}.log"
-# キャッシュの有効期限
-cache_expires = (now + 60 * 60) - now.min * 60 - now.sec
-# キャッシュ親パス
-CACHE_BASE="./cache/#{cache_expires.strftime('%Y%m%d%H%M%S')}"
-# キャッシュフォルダパス
-CACHE_DIR = "#{CACHE_BASE}/#{File::basename(__FILE__)}"
-# キャッシュロックフォルダパス
-CACHE_LOCK_DIR = "#{CACHE_BASE}/lock_#{File::basename(__FILE__)}"
-# キャッシュをつかったかどうか
-is_cache_used = false
+	# 設定読み込み
+	CFG = Setting.new
+	# TOP ページ URL
+	TOP_URL = CFG['top_url']
+	# TOP ディレクトリパス
+	TOP_DIR = '.'
+	# ログファイルパス
+	LOG_PATH = "#{TOP_DIR}/log/log_#{now.strftime('%Y%m%d')}.log"
+	ACCESS_LOG_PATH = "#{TOP_DIR}/log/access_#{now.strftime('%Y%m%d')}.log"
+	ERROR_LOG_PATH = "#{TOP_DIR}/log/error_#{now.strftime('%Y%m%d')}.log"
+	
+	# キャッシュの有効期限
+	cache_expires = (now + 60 * 60) - now.min * 60 - now.sec
+	# キャッシュ親パス
+	CACHE_BASE="./cache/#{cache_expires.strftime('%Y%m%d%H%M%S')}"
+	# キャッシュフォルダパス
+	CACHE_DIR = "#{CACHE_BASE}/#{File::basename(__FILE__)}"
+	# キャッシュロックフォルダパス
+	CACHE_LOCK_DIR = "#{CACHE_BASE}/lock_#{File::basename(__FILE__)}"
+	# キャッシュをつかったかどうか
+	is_cache_used = false
 
-# HTTP/HTTPSレスポンス文字列
-res_status = "Status: 500 Server Error\n"
-res_header = "content-type:text/plain; charset=utf-8\n"
-res_body = ""
+	# HTTP/HTTPSレスポンス文字列
+	res_status = "Status: 500 Server Error\n"
+	res_header = "content-type:text/plain; charset=utf-8\n"
+	res_body = ""
 
-# ログ開始
-logger = Logger.new(LOG_PATH)
-logger.level = Logger::DEBUG
+	# ログ開始
+	logger = Logger.new(LOG_PATH)
+	logger.level = Logger::DEBUG
 
+	# アクセスログ記録
+	access_logger = Logger.new(ACCESS_LOG_PATH)
+	access_logger.level = Logger::DEBUG
+	access_logger.info(
+		[
+			"",
+			now.strftime('%Y/%m/%d %H:%M:%S'),
+			ENV['REMOTE_ADDR'],
+			ENV['HTTP_USER_AGENT'],
+			ENV['REQUEST_URI'],
+			File::basename(__FILE__)
+		].join("\t")
+	)
+	
+rescue
+	print "Status: 500 Internal Server Error\n"
+	print "content-type: text/plain\n\n"
+	print "サーバーエラーです。ごめんなさい。(Initialize Error #{Time.now.strftime('%Y/%m/%d %H:%m:%S')})"
+	exit
+end
+
+		
 if ENV['REQUEST_METHOD'] == 'GET' then
 	begin
 		query = {} # クエリストリング
@@ -542,6 +569,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 					since = Time.httpdate(ENV['HTTP_IF_MODIFIED_SINCE'].sub(/;.*\z/, ""))
 					if last_modified <= since then
 						res_status = "Status: 304 Not Modified\n"
+						res_body = ""
 					end
 				end
 			end
@@ -556,6 +584,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		File.open(ERROR_LOG_PATH, 'a') do |err_log|
 			err_log.puts "#{now.to_s} #{File::basename(__FILE__)} #{REVISION}" 
 			err_log.puts ENV['QUERY_STRING']
+			err_log.puts ENV['HTTP_IF_MODIFIED_SINCE']
 			err_log.puts ex.to_s
 			err_log.puts ex.backtrace.join("\n").to_s
 			err_log.puts

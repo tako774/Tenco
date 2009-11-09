@@ -1,48 +1,76 @@
 #!/usr/bin/ruby
 
-# 開始時刻
-now = Time.now
+begin
+	# 開始時刻
+	now = Time.now
 
-### 対戦結果I/F API ###
-REVISION = 'R0.23'
-DEBUG = false
+	### 対戦結果I/F API ###
+	REVISION = 'R0.24'
+	DEBUG = false
 
-$LOAD_PATH.unshift '../common'
-$LOAD_PATH.unshift '../entity'
+	$LOAD_PATH.unshift '../common'
+	$LOAD_PATH.unshift '../entity'
 
-require 'rexml/document'
-require 'kconv'
-require 'yaml'
-require 'time'
-require 'logger'
-require 'utils'
-require 'cryption'
+	require 'rexml/document'
+	require 'kconv'
+	require 'yaml'
+	require 'time'
+	require 'logger'
+	require 'utils'
+	require 'cryption'
 
-# ログファイルパス
-LOG_PATH = "../log/log_#{now.strftime('%Y%m%d')}.log"
-ERROR_LOG_PATH = "../log/error_#{now.strftime('%Y%m%d')}.log"
+	# ログファイルパス
+	LOG_PATH = "../log/log_#{now.strftime('%Y%m%d')}.log"
+	ACCESS_LOG_PATH = "../log/access_#{now.strftime('%Y%m%d')}.log"
+	ERROR_LOG_PATH = "../log/error_#{now.strftime('%Y%m%d')}.log"
 
-# マッチ済み対戦結果トランザクションファイルディレクトリ
-TRN_DATA_DIR = "../dat/matched_track_records_trn"
+	# マッチ済み対戦結果トランザクションファイルディレクトリ
+	TRN_DATA_DIR = "../dat/matched_track_records_trn"
 
-# 一度に受信可能な対戦結果数
-TRACK_RECORD_MAX_SIZE = 250
+	# 一度に受信可能な対戦結果数
+	TRACK_RECORD_MAX_SIZE = 250
 
-# 受け入れ最大受信バイト数
-MAX_CONTENT_LENGTH = 1024 * TRACK_RECORD_MAX_SIZE
+	# 受け入れ最大受信バイト数
+	MAX_CONTENT_LENGTH = 1024 * TRACK_RECORD_MAX_SIZE
 
-# 対戦のマッチング時にどれだけ離れた時間のタイムスタンプをマッチングOKとみなすか
-MATCHING_TIME_LIMIT_SECONDS = 300
+	# 対戦のマッチング時にどれだけ離れた時間のタイムスタンプをマッチングOKとみなすか
+	MATCHING_TIME_LIMIT_SECONDS = 300
 
-# HTTP/HTTPSレスポンス文字列
-res_status = "Status: 500 Internal Server Error\n"
-res_header = ''
-res_body = ""
+	# バリデーション用定数
+	ID_REGEX = /\A[0-9]+\z/
+	ACCOUNT_NAME_REGEX = /\A[a-zA-Z0-9_]+\z/
+	ACCOUNT_PASSWORD_REGEX = /\A[\x01-\x7F]+\z/
+			
+	# HTTP/HTTPSレスポンス文字列
+	res_status = "Status: 500 Internal Server Error\n"
+	res_header = ''
+	res_body = ""
 
-# ログ開始
-log = Logger.new(LOG_PATH)
-log.level = Logger::DEBUG
-log_msg = "" # ログに出すメッセージ
+	# ログ開始
+	log = Logger.new(LOG_PATH)
+	log.level = Logger::DEBUG
+	log_msg = "" # ログに出すメッセージ
+
+	# アクセスログ記録
+	access_logger = Logger.new(ACCESS_LOG_PATH)
+	access_logger.level = Logger::DEBUG
+	access_logger.info(
+		[
+			"",
+			now.strftime('%Y/%m/%d %H:%M:%S'),
+			ENV['REMOTE_ADDR'],
+			ENV['HTTP_USER_AGENT'],
+			ENV['REQUEST_URI'],
+			File::basename(__FILE__)
+		].join("\t")
+	)
+	
+rescue
+	print "Status: 500 Internal Server Error\n"
+	print "content-type: text/plain\n\n"
+	print "サーバーエラーです。ごめんなさい。(Initialize Error #{Time.now.strftime('%Y/%m/%d %H:%m:%S')})"
+	exit
+end
 
 if ENV['REQUEST_METHOD'] == 'POST' then
 	begin
@@ -64,30 +92,37 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 			raise "送信されたデータサイズが大きすぎます（#{source_length} > #{MAX_CONTENT_LENGTH}）。"
 		end
 		
-		# 受信XMLデータをパース
+		# 受信データ文字コードチェック
 		source = STDIN.read(source_length)
+		unless (Kconv.isutf8(source)) then
+			res_status = "Status: 400 Bad Request\n"
+			res_body = "エラー：入力された文字コードがUTF8ではないようです"
+			raise "input char code validation error."
+		end
+		
+		# 受信XMLデータをパース
 		xml_data = REXML::Document.new(source)
 		data = xml_data.elements['/trackrecordPosting']
 		game_data = data.elements['game'] # 複数の game_id を含むデータには未対応なので、一番最初の game タグのみ処理。残りは無視。
 		game_id = game_data.elements['id'].text.to_i
+		account_name = data.elements['account/name'].text
+		account_password = data.elements['account/password'].text
 		source_track_records = game_data.elements.each('trackrecord') do end
 		
-		# DB 接続
-		require 'db'
-		db = DB.getInstance
-		
-		# アカウント認証
-		# 認証失敗時は例外が投げられる
-		require 'authentication'
-		begin
-			account = Authentication.login(data.elements['account/name'].text, data.elements['account/password'].text)
-		rescue => ex
-			res_status = "Status: 401 Unauthorized\n"
-			res_body = "アカウント認証エラーです。\n"
-			raise ex
+		# バリデーション
+		unless (
+			account_name and
+			account_name =~ ACCOUNT_NAME_REGEX and
+			account_password and
+			account_password =~ ACCOUNT_PASSWORD_REGEX and
+			game_id and
+			game_id.to_s =~ ID_REGEX
+		) then
+			res_status = "Status: 400 Bad Request\n"
+			res_body = "入力データが正しくありません\ninput data validation error.\n"
+			raise "input data validation error."
 		end
 		
-		# バリデーション
 		if (source_track_records.size > TRACK_RECORD_MAX_SIZE) then
 			res_status = "Status: 400 Bad Request\n"
 			res_body = "一度に受信できる対戦結果データ数は#{TRACK_RECORD_MAX_SIZE}件までです。\n"
@@ -98,6 +133,21 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 			raise "受信報告データなし。"
 		end
 		
+		# DB 接続
+		require 'db'
+		db = DB.getInstance
+		
+		# アカウント認証
+		# 認証失敗時は例外が投げられる
+		require 'authentication'
+		begin
+			account = Authentication.login(account_name, account_password)
+		rescue => ex
+			res_status = "Status: 401 Unauthorized\n"
+			res_body = "アカウント認証エラーです。\n"
+			raise ex
+		end
+				
 		# インサートモード設定
 		if (data.elements['is_force_insert'] && data.elements['is_force_insert'].text && data.elements['is_force_insert'].text.to_s == 'true')
 			is_force_insert = true

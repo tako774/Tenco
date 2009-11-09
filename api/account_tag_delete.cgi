@@ -1,46 +1,73 @@
 #!/usr/bin/ruby
 
-# 開始時刻
-now = Time.now
+begin
+	# 開始時刻
+	now = Time.now
 
-### アカウントタグ削除 API ###
-REVISION = 'R0.01'
-DEBUG = false
+	### アカウントタグ削除 API ###
+	REVISION = 'R0.01'
+	DEBUG = false
 
-$LOAD_PATH.unshift '../common'
-$LOAD_PATH.unshift '../entity'
+	$LOAD_PATH.unshift '../common'
+	$LOAD_PATH.unshift '../entity'
 
-require 'kconv'
-require 'yaml'
-require 'time'
-require 'logger'
-require 'utils'
-require 'setting'
+	require 'kconv'
+	require 'yaml'
+	require 'time'
+	require 'logger'
+	require 'utils'
+	require 'setting'
+		
+	# 設定読み込み
+	CFG = Setting.new
+	# TOP ページ URL
+	TOP_URL = CFG['top_url']
+
+	# ログファイルパス
+	LOG_PATH = "../log/log_#{now.strftime('%Y%m%d')}.log"
+	ACCESS_LOG_PATH = "../log/access_#{now.strftime('%Y%m%d')}.log"
+	ERROR_LOG_PATH = "../log/error_#{now.strftime('%Y%m%d')}.log"
+
+	# HTTP/HTTPSレスポンス文字列
+	res_status = nil
+	res_header = ''
+	res_body = ''
+
+	# ログ開始
+	log = Logger.new(LOG_PATH)
+	log.level = Logger::DEBUG
+
+	# アクセスログ記録
+	access_logger = Logger.new(ACCESS_LOG_PATH)
+	access_logger.level = Logger::DEBUG
+	access_logger.info(
+		[
+			"",
+			now.strftime('%Y/%m/%d %H:%M:%S'),
+			ENV['REMOTE_ADDR'],
+			ENV['HTTP_USER_AGENT'],
+			ENV['REQUEST_URI'],
+			File::basename(__FILE__)
+		].join("\t")
+	)
 	
-# 設定読み込み
-CFG = Setting.new
-# TOP ページ URL
-TOP_URL = CFG['top_url']
+rescue
+	print "Status: 500 Internal Server Error\n"
+	print "content-type: text/plain\n\n"
+	print "サーバーエラーです。ごめんなさい。(Initialize Error #{Time.now.strftime('%Y/%m/%d %H:%m:%S')})"
+	exit
+end
 
-# ログファイルパス
-LOG_PATH = "../log/log_#{now.strftime('%Y%m%d')}.log"
-ERROR_LOG_PATH = "../log/error_#{now.strftime('%Y%m%d')}.log"
-
-# HTTP/HTTPSレスポンス文字列
-res_status = nil
-res_header = ''
-res_body = ''
-
-# ログ開始
-log = Logger.new(LOG_PATH)
-log.level = Logger::DEBUG
 
 if ENV['REQUEST_METHOD'] == 'POST' then
 	begin
 		query = {} # クエリストリング
 		source = nil # POSTデータ
 		db = nil   # DB接続 
+		
+		# バリデーション用定数
 		MAX_POST_DATA_BYTES = 1000; # 最大受付ポストデータサイズ
+		ACCOUNT_NAME_REGEX = /\A[a-zA-Z0-9_]+\z/
 		
 		account_name = nil # アカウント名
 		tag_id = nil # タグID
@@ -59,7 +86,7 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		# 入力バリデーション
 		unless (
 			query['account_name'] and
-			query['account_name'] != '' and
+			query['account_name'] =~ ACCOUNT_NAME_REGEX
 			query['tag_name'] and
 			query['tag_name'] != ''
 		) then
@@ -68,6 +95,14 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 			raise "input data validation error."
 		end
 
+		unless (
+			Kconv.isutf8(query['tag_name'])
+		) then
+			res_status = "Status: 400 Bad Request\n"
+			res_body = "エラー：入力されたタグの文字コードがUTF8ではないようです"
+			raise "input tag_name char code validation error."
+		end
+		
 		# 値設定
 		account_name = query['account_name']
 		tag_name = query['tag_name']

@@ -1,46 +1,69 @@
 #!/usr/bin/ruby
 
-# 開始時刻
-now = Time.now
+begin
+	# 開始時刻
+	now = Time.now
 
-### アカウントタグ取得 API ###
-REVISION = 'R0.02'
-DEBUG = false
+	### アカウントタグ取得 API ###
+	REVISION = 'R0.02'
+	DEBUG = false
 
-# TOP ディレクトリ
-TOP_DIR = '..'
+	# TOP ディレクトリ
+	TOP_DIR = '..'
 
-$LOAD_PATH.unshift "#{TOP_DIR}/common"
-$LOAD_PATH.unshift "#{TOP_DIR}/entity"
+	$LOAD_PATH.unshift "#{TOP_DIR}/common"
+	$LOAD_PATH.unshift "#{TOP_DIR}/entity"
 
-require 'logger'
-require 'utils'
-require 'setting'
-require 'erubis'
-include Erubis::XmlHelper
+	require 'logger'
+	require 'utils'
+	require 'setting'
+	require 'erubis'
+	include Erubis::XmlHelper
 
-# 設定読み込み
-CFG = Setting.new
-# TOP ページ URL
-TOP_URL = CFG['top_url']
-# ログファイルパス
-LOG_PATH = "#{TOP_DIR}/log/log_#{now.strftime('%Y%m%d')}.log"
-ERROR_LOG_PATH = "#{TOP_DIR}/log/error_#{now.strftime('%Y%m%d')}.log"
-# キャッシュフォルダパス
-CACHE_DIR = "#{TOP_DIR}/cache/eternal/#{File::basename(__FILE__)}"
-# キャッシュロックフォルダパス
-CACHE_LOCK_DIR = "#{TOP_DIR}/cache/eternal/lock/#{File::basename(__FILE__)}"
-# キャッシュをつかったかどうか
-is_cache_used = false
+	# 設定読み込み
+	CFG = Setting.new
+	# TOP ページ URL
+	TOP_URL = CFG['top_url']
+	# ログファイルパス
+	LOG_PATH = "#{TOP_DIR}/log/log_#{now.strftime('%Y%m%d')}.log"
+	ACCESS_LOG_PATH = "../log/access_#{now.strftime('%Y%m%d')}.log"
+	ERROR_LOG_PATH = "#{TOP_DIR}/log/error_#{now.strftime('%Y%m%d')}.log"
+	# キャッシュフォルダパス
+	CACHE_DIR = "#{TOP_DIR}/cache/eternal/#{File::basename(__FILE__)}"
+	# キャッシュロックフォルダパス
+	CACHE_LOCK_DIR = "#{TOP_DIR}/cache/eternal/lock/#{File::basename(__FILE__)}"
+	# キャッシュをつかったかどうか
+	is_cache_used = false
 
-# HTTP/HTTPSレスポンス文字列
-res_status = nil
-res_header = ''
-res_body = ""
+	# HTTP/HTTPSレスポンス文字列
+	res_status = nil
+	res_header = ''
+	res_body = ""
 
-# ログ開始
-logger = Logger.new(LOG_PATH)
-logger.level = Logger::DEBUG
+	# ログ開始
+	logger = Logger.new(LOG_PATH)
+	logger.level = Logger::DEBUG
+
+	# アクセスログ記録
+	access_logger = Logger.new(ACCESS_LOG_PATH)
+	access_logger.level = Logger::DEBUG
+	access_logger.info(
+		[
+			"",
+			now.strftime('%Y/%m/%d %H:%M:%S'),
+			ENV['REMOTE_ADDR'],
+			ENV['HTTP_USER_AGENT'],
+			ENV['REQUEST_URI'],
+			File::basename(__FILE__)
+		].join("\t")
+	)
+	
+rescue
+	print "Status: 500 Internal Server Error\n"
+	print "content-type: text/plain\n\n"
+	print "サーバーエラーです。ごめんなさい。(Initialize Error #{Time.now.strftime('%Y/%m/%d %H:%m:%S')})"
+	exit
+end
 
 if ENV['REQUEST_METHOD'] == 'GET' then
 	begin
@@ -53,7 +76,9 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		account = nil # アカウント情報
 		account_tags = [] # アカウントタグ情報
 		
-		MAX_POST_DATA_BYTES = 10000; # 最大受付ポストデータサイズ
+		# バリデーション用定数
+		MAX_POST_DATA_BYTES = 1000; # 最大受付ポストデータサイズ
+		ACCOUNT_NAME_REGEX = /\A[a-zA-Z0-9_]+\z/
 		
 		# クエリデータ取得
 		source = ENV['QUERY_STRING']
@@ -64,7 +89,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		# 入力バリデーション
 		unless (
 			query['account_name'] and
-			query['account_name'] != ''
+			query['account_name'] =~ ACCOUNT_NAME_REGEX
 		) then
 			res_status = "Status: 400 Bad Request\n"
 			res_body = "入力データが正しくありません\ninput data validation error.\n"

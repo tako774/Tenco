@@ -1,45 +1,69 @@
 #!/usr/bin/ruby
 
-# 開始時刻
-now = Time.now
+begin
+	# 開始時刻
+	now = Time.now
 
-### アカウントタグ情報 API ###
-REVISION = 'R0.02'
-DEBUG = false
+	### アカウントタグ情報 API ###
+	REVISION = 'R0.02'
+	DEBUG = false
 
-$LOAD_PATH.unshift '../common'
-$LOAD_PATH.unshift '../entity'
+	$LOAD_PATH.unshift '../common'
+	$LOAD_PATH.unshift '../entity'
 
-require 'rexml/document'
-require 'kconv'
-require 'yaml'
-require 'time'
-require 'logger'
-require 'utils'
-require 'setting'
+	require 'rexml/document'
+	require 'kconv'
+	require 'yaml'
+	require 'time'
+	require 'logger'
+	require 'utils'
+	require 'setting'
+		
+	# 設定読み込み
+	CFG = Setting.new
+	# TOP ページ URL
+	TOP_URL = CFG['top_url']
+
+	# ログファイルパス
+	LOG_PATH = "../log/log_#{now.strftime('%Y%m%d')}.log"
+	ACCESS_LOG_PATH = "../log/access_#{now.strftime('%Y%m%d')}.log"
+	ERROR_LOG_PATH = "../log/error_#{now.strftime('%Y%m%d')}.log"
+
+	# バリデーション用定数
+	TAG_NAME_LENGTH_MIN = 2
+	TAG_NAME_LENGTH_MAX = 20
+	ACCOUNT_TAG_COUNT_MAX = 10
+
+	# HTTP/HTTPSレスポンス文字列
+	res_status = nil
+	res_header = ''
+	res_body = ''
+
+	# ログ開始
+	log = Logger.new(LOG_PATH)
+	log.level = Logger::DEBUG
+
+	# アクセスログ記録
+	access_logger = Logger.new(ACCESS_LOG_PATH)
+	access_logger.level = Logger::DEBUG
+	access_logger.info(
+		[
+			"",
+			now.strftime('%Y/%m/%d %H:%M:%S'),
+			ENV['REMOTE_ADDR'],
+			ENV['HTTP_USER_AGENT'],
+			ENV['REQUEST_URI'],
+			File::basename(__FILE__)
+		].join("\t")
+	)
 	
-# 設定読み込み
-CFG = Setting.new
-# TOP ページ URL
-TOP_URL = CFG['top_url']
+rescue
+	print "Status: 500 Internal Server Error\n"
+	print "content-type: text/plain\n\n"
+	print "サーバーエラーです。ごめんなさい。(Initialize Error #{Time.now.strftime('%Y/%m/%d %H:%m:%S')})"
+	exit
+end
 
-# ログファイルパス
-LOG_PATH = "../log/log_#{now.strftime('%Y%m%d')}.log"
-ERROR_LOG_PATH = "../log/error_#{now.strftime('%Y%m%d')}.log"
-
-# バリデーション用定数
-TAG_NAME_LENGTH_MIN = 2
-TAG_NAME_LENGTH_MAX = 20
-ACCOUNT_TAG_COUNT_MAX = 10
-
-# HTTP/HTTPSレスポンス文字列
-res_status = nil
-res_header = ''
-res_body = ''
-
-# ログ開始
-log = Logger.new(LOG_PATH)
-log.level = Logger::DEBUG
 
 if ENV['REQUEST_METHOD'] == 'POST' then
 	begin
@@ -51,7 +75,10 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		tag_display_name = nil # タグ表示名
 		tag_name_length = nil # タグ名の長さ
 		rep_disp_name = nil # タグ代表表示名
+		
+		# バリデーション用定数
 		MAX_POST_DATA_BYTES = 1000; # 最大受付ポストデータサイズ
+		ACCOUNT_NAME_REGEX = /\A[a-zA-Z0-9_]+\z/
 		
 		account = nil # アカウント情報
 		tag_id = nil # タグID
@@ -70,7 +97,7 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		# 入力バリデーション
 		unless (
 			query['account_name'] and
-			query['account_name'] != '' and
+			query['account_name'] =~ ACCOUNT_NAME_REGEX
 			query['tag_name'] and
 			query['tag_name'] != ''
 		) then

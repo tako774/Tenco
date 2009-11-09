@@ -28,6 +28,7 @@ begin
 	TOP_DIR = '.'
 	# ログファイルパス
 	LOG_PATH = "#{TOP_DIR}/log/log_#{now.strftime('%Y%m%d')}.log"
+	ACCESS_LOG_PATH = "#{TOP_DIR}/log/access_#{now.strftime('%Y%m%d')}.log"
 	ERROR_LOG_PATH = "#{TOP_DIR}/log/error_#{now.strftime('%Y%m%d')}.log"
 
 	# キャッシュの有効期限
@@ -43,6 +44,8 @@ begin
 
 	# 最大受付POSTデータサイズ（byte）
 	MAX_POST_DATA_BYTES = 10000;
+	# バリデーション用文字列
+	ID_REGEX = /\A[0-9]+\z/
 
 	# HTTP/HTTPSレスポンス文字列
 	res_status = "Status: 500 Server Error\n"
@@ -52,10 +55,26 @@ begin
 	# ログ開始
 	logger = Logger.new(LOG_PATH)
 	logger.level = Logger::DEBUG
+
+	# アクセスログ記録
+	access_logger = Logger.new(ACCESS_LOG_PATH)
+	access_logger.level = Logger::DEBUG
+	access_logger.info(
+		[
+			"",
+			now.strftime('%Y/%m/%d %H:%M:%S'),
+			ENV['REMOTE_ADDR'],
+			ENV['HTTP_USER_AGENT'],
+			ENV['REQUEST_URI'],
+			File::basename(__FILE__)
+		].join("\t")
+	)
+	
 rescue
 	print "Status: 500 Internal Server Error\n"
 	print "content-type: text/plain\n\n"
 	print "サーバーエラーです。ごめんなさい。(Initialize Error #{Time.now.strftime('%Y/%m/%d %H:%m:%S')})"
+	exit
 end
 
 if ENV['REQUEST_METHOD'] == 'GET' then
@@ -74,7 +93,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		# 入力バリデーション
 		unless (
 			query['game_id'] and
-			query['game_id'] != ""
+			query['game_id'] =~ ID_REGEX
 		) then
 			res_status = "Status: 400 Bad Request\n"
 			res_body = "入力データが正しくありません\ninput data validation error.\n"

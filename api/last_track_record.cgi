@@ -1,42 +1,73 @@
 #!/usr/bin/ruby
 
-# 開始時刻
-now = Time.now
+begin
+	# 開始時刻
+	now = Time.now
 
-### 登録済み最終対戦結果時刻出力 API ###
-REVISION = 'R0.08'
+	### 登録済み最終対戦結果時刻出力 API ###
+	REVISION = 'R0.09'
 
-$LOAD_PATH.unshift '../common'
-$LOAD_PATH.unshift '../model'
+	$LOAD_PATH.unshift '../common'
+	$LOAD_PATH.unshift '../model'
 
-require 'yaml'
-require 'time'
-require 'logger'
-require 'utils'
-include Utils
+	require 'yaml'
+	require 'time'
+	require 'logger'
+	require 'utils'
 
-# ログファイルパス
-LOG_PATH = "../log/log_#{now.strftime('%Y%m%d')}.log"
-ERROR_LOG_PATH = "../log/error_#{now.strftime('%Y%m%d')}.log"
+	# ログファイルパス
+	LOG_PATH = "../log/log_#{now.strftime('%Y%m%d')}.log"
+	ACCESS_LOG_PATH = "../log/access_#{now.strftime('%Y%m%d')}.log"
+	ERROR_LOG_PATH = "../log/error_#{now.strftime('%Y%m%d')}.log"
 
-# HTTP/HTTPSレスポンス文字列
-res_status = ''
-res_header = ''
-res_body = ""
+	# HTTP/HTTPSレスポンス文字列
+	res_status = ''
+	res_header = ''
+	res_body = ""
 
-# ログ開始
-log = Logger.new(LOG_PATH)
-log.level = Logger::DEBUG
+	# ログ開始
+	log = Logger.new(LOG_PATH)
+	log.level = Logger::DEBUG
+
+	# アクセスログ記録
+	access_logger = Logger.new(ACCESS_LOG_PATH)
+	access_logger.level = Logger::DEBUG
+	access_logger.info(
+		[
+			"",
+			now.strftime('%Y/%m/%d %H:%M:%S'),
+			ENV['REMOTE_ADDR'],
+			ENV['HTTP_USER_AGENT'],
+			ENV['REQUEST_URI'],
+			File::basename(__FILE__)
+		].join("\t")
+	)
+	
+rescue
+	print "Status: 500 Internal Server Error\n"
+	print "content-type: text/plain\n\n"
+	print "サーバーエラーです。ごめんなさい。(Initialize Error #{Time.now.strftime('%Y/%m/%d %H:%m:%S')})"
+	exit
+end
 
 if ENV['REQUEST_METHOD'] == 'GET' then
 	begin
 		query = {} # クエリストリング
 		db = nil   # DB接続 
 		
+		# バリデーション用定数
+		ID_REGEX = /\A[0-9]+\z/
+		ACCOUNT_NAME_REGEX = /\A[a-zA-Z0-9_]+\z/
+		
 		# クエリストリング分解
 		query = parse_query_str(ENV['QUERY_STRING'])
 		
-		if (query['game_id'] and query['game_id'] !='' and query['account_name'] and query['account_name'] != '') then
+		if (
+			query['game_id'] and
+			query['game_id'] =~ ID_REGEX and
+			query['account_name'] and
+			query['account_name'] =~ ACCOUNT_NAME_REGEX
+		) then
 			account_name = query['account_name']  # アカウント名
 			game_id = query['game_id'].to_i       # ゲーム番号
 			

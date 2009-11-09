@@ -1,47 +1,71 @@
 #!/usr/bin/ruby
 
-# 開始時刻
-now = Time.now
+begin
+	# 開始時刻
+	now = Time.now
 
-### アカウントI/F API ###
-REVISION = 'R0.08'
+	### アカウントI/F API ###
+	REVISION = 'R0.10'
 
-$LOAD_PATH.unshift '../common'
-$LOAD_PATH.unshift '../entity'
+	$LOAD_PATH.unshift '../common'
+	$LOAD_PATH.unshift '../entity'
 
-require 'rexml/document'
-require 'kconv'
-require 'yaml'
-require 'time'
-require 'logger'
-require 'setting'
-	
-# 設定読み込み
-CFG = Setting.new
-# TOP ページ URL
-TOP_URL = CFG['top_url']
-	
-# ログファイルパス
-LOG_PATH = "../log/log_#{now.strftime('%Y%m%d')}.log"
-ERROR_LOG_PATH = "../log/error_#{now.strftime('%Y%m%d')}.log"
+	require 'rexml/document'
+	require 'kconv'
+	require 'yaml'
+	require 'time'
+	require 'logger'
+	require 'setting'
+		
+	# 設定読み込み
+	CFG = Setting.new
+	# TOP ページ URL
+	TOP_URL = CFG['top_url']
+		
+	# ログファイルパス
+	LOG_PATH = "../log/log_#{now.strftime('%Y%m%d')}.log"
+	ACCESS_LOG_PATH = "../log/access_#{now.strftime('%Y%m%d')}.log"
+	ERROR_LOG_PATH = "../log/error_#{now.strftime('%Y%m%d')}.log"
 
-# バリデーション用定数
-ACCOUNT_NAME_BYTE_MIN = 1
-ACCOUNT_NAME_BYTE_MAX = 32
-ACCOUNT_NAME_REGEX = /\A[a-zA-Z0-9_]+\z/
-ACCOUNT_PASSWORD_BYTE_MIN = 4
-ACCOUNT_PASSWORD_BYTE_MAX = 16
-ACCOUNT_MAIL_ADDRESS_BYTE_MAX = 256
-ACCOUNT_MAIL_ADDRESS_REGEX = /\A[\x01-\x7F]+@(([-a-z0-9]+\.)*[a-z]+|\[\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\])\z/
+	# バリデーション用定数
+	ACCOUNT_NAME_BYTE_MIN = 1
+	ACCOUNT_NAME_BYTE_MAX = 32
+	ACCOUNT_NAME_REGEX = /\A[a-zA-Z0-9_]+\z/
+	ACCOUNT_PASSWORD_BYTE_MIN = 4
+	ACCOUNT_PASSWORD_BYTE_MAX = 16
+	ACCOUNT_PASSWORD_REGEX = /\A[\x01-\x7F]+\z/
+	ACCOUNT_MAIL_ADDRESS_BYTE_MAX = 256
+	ACCOUNT_MAIL_ADDRESS_REGEX = /\A[\x01-\x7F]+@(([-a-z0-9]+\.)*[a-z]+|\[\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\])\z/
 
-# HTTP/HTTPSレスポンス文字列
-res_status = nil
-res_header = ''
-res_body = ''
+	# HTTP/HTTPSレスポンス文字列
+	res_status = nil
+	res_header = ''
+	res_body = ''
 
-# ログ開始
-log = Logger.new(LOG_PATH)
-log.level = Logger::DEBUG
+	# ログ開始
+	log = Logger.new(LOG_PATH)
+	log.level = Logger::DEBUG
+
+	# アクセスログ記録
+	access_logger = Logger.new(ACCESS_LOG_PATH)
+	access_logger.level = Logger::DEBUG
+	access_logger.info(
+		[
+			"",
+			now.strftime('%Y/%m/%d %H:%M:%S'),
+			ENV['REMOTE_ADDR'],
+			ENV['HTTP_USER_AGENT'],
+			ENV['REQUEST_URI'],
+			File::basename(__FILE__)
+		].join("\t")
+	)
+
+rescue
+	print "Status: 500 Internal Server Error\n"
+	print "content-type: text/plain\n\n"
+	print "サーバーエラーです。ごめんなさい。(Initialize Error #{Time.now.strftime('%Y/%m/%d %H:%m:%S')})"
+	exit
+end
 
 if ENV['REQUEST_METHOD'] == 'POST' then
 	begin
@@ -58,6 +82,7 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 			account_name =~ ACCOUNT_NAME_REGEX and 
 			account_name.length >= ACCOUNT_NAME_BYTE_MIN and 
 			account_name.length <= ACCOUNT_NAME_BYTE_MAX and
+			account_password =~ ACCOUNT_PASSWORD_REGEX and 
 			account_password.length >= ACCOUNT_PASSWORD_BYTE_MIN and 
 			account_password.length <= ACCOUNT_PASSWORD_BYTE_MAX and
 			account_password != account_name and # アカウント名とパスワードが一緒ならはじく
@@ -72,6 +97,7 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 			res_body << "アカウントの新規登録に失敗しました。再登録をお願いします。\n"
 			res_body << "・アカウント名の使用可能文字は、半角英数とアンダースコア_のみです\n"
 			res_body << "・アカウント名の長さは、#{ACCOUNT_NAME_BYTE_MIN}バイト以上#{ACCOUNT_NAME_BYTE_MAX}バイト以内に制限しています\n"
+			res_body << "・パスワードの使用可能文字は、半角英数記号のみです\n"
 			res_body << "・パスワードの長さは、#{ACCOUNT_PASSWORD_BYTE_MIN}バイト以上#{ACCOUNT_PASSWORD_BYTE_MAX}バイト以内に制限しています\n"
 			res_body << "・パスワードとアカウント名は、別の文字列にしてください。\n"
 			res_body << "・メールアドレスは正しい形式で入力してください。\n"
