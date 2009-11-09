@@ -6,7 +6,7 @@ begin
 # 開始時刻
 now = Time.now
 
-REVISION = '0.04'
+REVISION = '0.05'
 DEBUG = 1
 
 $LOAD_PATH.unshift '../common'
@@ -182,6 +182,28 @@ begin
 		res_body << "ratings rank counts selected...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
 		begin
 			require 'PrizeAccount'
+			res_update = db.exec(<<-"SQL")
+				PREPARE
+				  update_prize_accounts(int, int, int, int)
+				AS
+				  UPDATE
+					prize_accounts
+				  SET
+					game_pov_class_id = $1,
+					date_time =
+					  CASE game_pov_class_id
+						WHEN $1 THEN date_time
+						ELSE CURRENT_TIMESTAMP
+					  END,
+					updated_at = CURRENT_TIMESTAMP,
+					lock_version = lock_version + 1
+				  WHERE
+					prize_id = $2
+					AND account_id = $3
+					AND type1_id = $4
+				  RETURNING id
+			SQL
+				
 			game_account_ratings.each do |gar|
 				
 				# 更新後のクラスを算出
@@ -203,22 +225,7 @@ begin
 				
 				# 更新または作成。クラスが変わらない場合、時刻は更新しない。
 				res_update = db.exec(<<-"SQL")
-					UPDATE
-					  prize_accounts
-					SET
-					  game_pov_class_id = #{game_pov_class_id.to_i},
-					  date_time =
-						CASE game_pov_class_id
-						  WHEN #{game_pov_class_id.to_i} THEN date_time
-						  ELSE CURRENT_TIMESTAMP
-						END,
-					  updated_at = CURRENT_TIMESTAMP,
-					  lock_version = lock_version + 1
-					WHERE
-					  prize_id = #{prizes[0].id}
-					  AND account_id = #{gar.account_id}
-					  AND type1_id = #{gar.type1_id}
-					RETURNING id
+				  EXECUTE update_prize_accounts(#{game_pov_class_id.to_i}, #{prizes[0].id}, #{gar.account_id}, #{gar.type1_id})
 				SQL
 								
 				# UPDATE 失敗時は INSERT
