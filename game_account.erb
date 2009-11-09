@@ -13,6 +13,7 @@
 	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/webtoolkit.sha1.js"></script>
 	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/jquery.js"></script>
 	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/jquery.cookie.js"></script>
+	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/jquery.tablesorter.js"></script>
 	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/jsdeferred.jquery.js"></script>
 	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/utils.js"></script>
 	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/show_user_data.js"></script>
@@ -105,7 +106,15 @@ $(document).ready(
 			
 		// 非同期実行準備
 		$.deferred.define();
-				
+		
+		// レーティングテーブルソート機能追加
+		$("#ratings").addClass("tablesorter");
+		$("#ratings").tablesorter({
+			textExtraction: function(node) {
+				return node.getAttribute('title') || node.innerHTML;
+			}
+		});
+		
 		// タグ編集リンクに実行関数紐付け
 		var is_edit_tags_visible = false;
 		$("#toggle_edit_tags").click(
@@ -224,7 +233,7 @@ $(document).ready(
 <div id="container">
 
 <div id="header">
-<h1><a href="<%= TOP_URL %>"><img alt="Tenco!" src='<%= TOP_URL %>images/Tenco.gif' width='<%= 366/3 %>' height='<%= 126/3 %>' /></a></h1> マイページ 開発中バージョンα10.1（2009/10/12）
+<h1><a href="<%= TOP_URL %>"><img alt="Tenco!" src='<%= TOP_URL %>images/Tenco.gif' width='<%= 366/3 %>' height='<%= 126/3 %>' /></a></h1> マイページ 開発中バージョンα10.2（2009/11/08）
 <p id="meta_info">
 λ＜レートなんて飾りなんです。偉い人にはそれがわからんのです<br />
 <%= now.strftime('%m/%d %H:%M') %> に作成（毎時0分以降に再生成）<br />
@@ -267,7 +276,7 @@ $(document).ready(
 			<tbody>
 				<%- ratings.each do |r| -%>
 				<tr>
-					<td><%= "#{type1_h[r.type1_id.to_i]}" %></td>
+					<td title="<%= r.type1_id.to_i %>"><%= "#{type1_h[r.type1_id.to_i]}" %></td>
 					<%- if account.show_ratings_flag.to_i != 0 then -%>
 					<td><%= "#{r.rating.to_f.round}<sub>±#{r.ratings_deviation.to_f.floor}</sub>（#{r.matched_accounts.to_i}人/#{r.match_counts.to_i}戦）" %></td>
 					<%- else -%>
