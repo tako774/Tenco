@@ -6,8 +6,10 @@ class DaoBase
 		$LOAD_PATH.unshift '../entity'
 		$LOAD_PATH.unshift '../common'
 		require 'db'
+		require 'cache'
 		
 		@db = DB.getInstance()
+		@cache = Cache.instance
 	end
 
 end
