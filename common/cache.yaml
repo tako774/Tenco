@@ -1,2 +1,3 @@
 :server: localhost:11211
+:marshal: false
 :support_cas: true

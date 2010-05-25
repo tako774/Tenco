@@ -8,12 +8,32 @@ class Cache
   def initialize(config_file = "#{File.basename(__FILE__, '.*')}.yaml")
     config = YAML.load_file(config_file)
 	
-	server = config[:server]
-	config.delete :server 
+	server = config.delete(:server) 
+	@marshal = config.delete(:marshal)
 	
-	option = config
+	options = config
 	
-	@cache = Memcached.new(server, option)
+	@cache = Memcached.new(server, options)
+  end
+  
+  def add(key, val, marshal = @marshal)
+    @cache.add(key, val, @cache.options[:default_ttl], marshal)
+  end
+  
+  def cas(key, marshal = @marshal, &block)
+    @cache.cas(key, @cache.options[:default_ttl], marshal, &block)
+  end
+  
+  def get(keys, marshal = @marshal)
+    @cache.get(keys, marshal)
+  end
+
+  def replace(key, val, marshal = @marshal)
+    @cache.replace(key, val, @cache.options[:default_ttl], marshal)
+  end
+  
+  def set(key, val, marshal = @marshal)
+    @cache.set(key, val, @cache.options[:default_ttl], marshal)
   end
   
   def method_missing(method_name, *args, &block)
