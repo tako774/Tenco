@@ -4,11 +4,12 @@ begin
 	# 開始時刻
 	now = Time.now
 	# リビジョン
-	REVISION = 'R0.52'
+	REVISION = 'R0.55'
 	DEBUG = false
 
 	$LOAD_PATH.unshift './common'
 	$LOAD_PATH.unshift './entity'
+	$LOAD_PATH.unshift './dao'
 
 	require 'time'
 	require 'logger'
@@ -37,6 +38,9 @@ begin
 	CACHE_LOCK_DIR = "#{CACHE_BASE}/lock_#{File::basename(__FILE__)}"
 	# キャッシュをつかったかどうか
 	is_cache_used = false
+	
+	# 件数制限
+	MAX_TRACK_RECORDS = 100
 
 	# HTTP/HTTPSレスポンス文字列
 	res_status = "Status: 500 Server Error\n"
@@ -74,6 +78,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		query = {} # クエリストリング
 		db = nil   # DB接続 
 		
+		track_record_ids = [] # 対戦結果ID一覧
 		track_records = []  # 対戦結果
 		type1 = {}          # プレイヤー属性１区分値
 		type1_h = {}        # プレイヤー属性１区分値（HTML エスケープ済み）
@@ -298,62 +303,70 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		
 							# アカウントの対戦記録を取得			
 							# 未マッチの場合、player2 の名前は暗号化
+							require 'TrackRecordDao'
 							require 'TrackRecord'
-							res = db.exec(<<-"SQL")
-								SELECT
-									t.play_timestamp,
-									t.player1_name,
-			  						t.player1_type1_id,
-			  						t.player1_points,
-									case
-										when a2.name IS NULL then t.encrypted_base64_player2_name
-										else t.player2_name
-									end AS player2_name,
-			  						t.player2_type1_id,
-			  						t.player2_points,
-									a2.name AS player2_account_name,
-									ga.rep_name AS player2_rep_name,
-									a2.del_flag AS player2_account_del_flag
-								FROM
-									track_records t
-									LEFT OUTER JOIN
-									(
-									  accounts a2
-									    LEFT OUTER JOIN
-									      game_accounts ga
-									    ON
-									      ga.account_id = a2.id
-										  AND ga.game_id = #{game_id.to_i}
-									)
-									ON
-									  t.player2_account_id = a2.id
-									  AND a2.del_flag = 0
-								WHERE
-									t.game_id = #{game_id.to_i}
-									AND t.player1_account_id = #{account.id.to_i}
-								ORDER BY
-									t.play_timestamp DESC
-								SQL
 							
-							res.each do |r|
-								t = TrackRecord.new
-								# 高速化のため変数名直接指定
-								t.play_timestamp = r[0]
-								t.player1_name = r[1]
-								t.player1_type1_id = r[2]
-								t.player1_points = r[3]
-								t.player2_name = r[4]
-								t.player2_type1_id = r[5]
-								t.player2_points = r[6]
-								t.player2_account_name = r[7]
-								t.player2_rep_name = r[8]
-								t.player2_account_del_flag = r[9]								
-								#res.num_fields.times do |i|
-								#	t.instance_variable_set("@#{res.fields[i]}", r[i])
-								#end
-								track_records << t
+							# 対戦結果ID一覧取得
+							trd = TrackRecordDao.new
+							track_record_ids = trd.get_track_record_ids(game_id, account.id)
+							
+							# 対戦結果取得
+							if track_record_ids.length > 0 then
+								res = db.exec(<<-"SQL")
+									SELECT
+										t.play_timestamp,
+										t.player1_name,
+										t.player1_type1_id,
+										t.player1_points,
+										case
+											when a2.name IS NULL then t.encrypted_base64_player2_name
+											else t.player2_name
+										end AS player2_name,
+										t.player2_type1_id,
+										t.player2_points,
+										a2.name AS player2_account_name,
+										ga.rep_name AS player2_rep_name,
+										a2.del_flag AS player2_account_del_flag
+									FROM
+										track_records t
+										LEFT OUTER JOIN
+										(
+										  accounts a2
+											LEFT OUTER JOIN
+											  game_accounts ga
+											ON
+											  ga.account_id = a2.id
+											  AND ga.game_id = #{game_id.to_i}
+										)
+										ON
+										  t.player2_account_id = a2.id
+										  AND a2.del_flag = 0
+									WHERE
+										t.id in (#{(track_record_ids[0..MAX_TRACK_RECORDS - 1].map { |i| "'#{i.to_i}'" }).join(", ")})
+									ORDER BY
+										t.play_timestamp DESC
+									SQL
+								
+								res.each do |r|
+									t = TrackRecord.new
+									# 高速化のため変数名直接指定
+									t.play_timestamp = r[0]
+									t.player1_name = r[1]
+									t.player1_type1_id = r[2]
+									t.player1_points = r[3]
+									t.player2_name = r[4]
+									t.player2_type1_id = r[5]
+									t.player2_points = r[6]
+									t.player2_account_name = r[7]
+									t.player2_rep_name = r[8]
+									t.player2_account_del_flag = r[9]								
+									#res.num_fields.times do |i|
+									#	t.instance_variable_set("@#{res.fields[i]}", r[i])
+									#end
+									track_records << t
+								end
+								res.clear
 							end
-							res.clear
 
 							# 推定レートの値を取得
 							# アカウントのレートが一定以上の場合のみ取得

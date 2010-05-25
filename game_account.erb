@@ -5,22 +5,22 @@
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<meta http-equiv="content-style-type" content="text/css" />
 	<meta http-equiv="content-script-type" content="text/javascript" />
-	<link rel="stylesheet" type="text/css" href="<%= TOP_URL %>css/main.css" />
-	<link rel="stylesheet" type="text/css" href="<%= TOP_URL %>css/3cols_sides-width-fixed.css" />
-	<link rel="meta" type="text/xml" title="Game Account Profile" href="<%= "#{TOP_URL}game/#{game_id.to_i}/account/#{u account_name}/output=xml" %>" />
-	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/gibberish-aes.js"></script>
-	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/webtoolkit.url.js"></script>
-	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/webtoolkit.sha1.js"></script>
-	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/jquery.js"></script>
-	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/jquery.cookie.js"></script>
-	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/jquery.tablesorter.js"></script>
-	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/jsdeferred.jquery.js"></script>
-	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/utils.js"></script>
-	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/show_user_data.js"></script>
-	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/search.js"></script>
-	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/account_tag.js"></script>
-	<%# <script type="text/javascript" charset="utf-8" src="<％TOP_URL％>js/timechart.js"></script>
-	<!--[if IE]><script type="text/javascript" src="<％TOP_URL％>js/excanvas.js"></script><![endif]--> %>
+	<link rel="stylesheet" type="text/css" href="<%= CFG[:static_url] %>css/main.css" />
+	<link rel="stylesheet" type="text/css" href="<%= CFG[:static_url] %>css/3cols_sides-width-fixed.css" />
+	<link rel="meta" type="text/xml" title="Game Account Profile" href="<%= "#{CFG[:top_url]}game/#{game_id.to_i}/account/#{u account_name}/output=xml" %>" />
+	<script type="text/javascript" charset="utf-8" src="<%= CFG[:static_url] %>js/gibberish-aes.js"></script>
+	<script type="text/javascript" charset="utf-8" src="<%= CFG[:static_url] %>js/webtoolkit.url.js"></script>
+	<script type="text/javascript" charset="utf-8" src="<%= CFG[:static_url] %>js/webtoolkit.sha1.js"></script>
+	<script type="text/javascript" charset="utf-8" src="<%= CFG[:static_url] %>js/jquery.js"></script>
+	<script type="text/javascript" charset="utf-8" src="<%= CFG[:static_url] %>js/jquery.cookie.js"></script>
+	<script type="text/javascript" charset="utf-8" src="<%= CFG[:static_url] %>js/jquery.tablesorter.js"></script>
+	<script type="text/javascript" charset="utf-8" src="<%= CFG[:static_url] %>js/jsdeferred.jquery.js"></script>
+	<script type="text/javascript" charset="utf-8" src="<%= CFG[:static_url] %>js/utils.js"></script>
+	<script type="text/javascript" charset="utf-8" src="<%= CFG[:static_url] %>js/show_user_data.js"></script>
+	<script type="text/javascript" charset="utf-8" src="<%= CFG[:static_url] %>js/search.js"></script>
+	<script type="text/javascript" charset="utf-8" src="<%= CFG[:static_url] %>js/account_tag.js"></script>
+	<%# <script type="text/javascript" charset="utf-8" src="<％CFG[:static_url]％>js/timechart.js"></script>
+	<!--[if IE]><script type="text/javascript" src="<％CFG[:static_url]％>js/excanvas.js"></script><![endif]--> %>
 	<title><%= h game_account.rep_name %> / <%= h game.name %> - Tenco!</title>
 	<script type="text/javascript">
 //<![CDATA[ 
@@ -233,12 +233,13 @@ $(document).ready(
 <div id="container">
 
 <div id="header">
-<h1><a href="<%= TOP_URL %>"><img alt="Tenco!" src='<%= TOP_URL %>images/Tenco.gif' width='<%= 366/3 %>' height='<%= 126/3 %>' /></a></h1> マイページ 開発中バージョンα10.2（2009/11/08）
+<h1><a href="<%= CFG[:top_url] %>"><img alt="Tenco!" src='<%= CFG[:static_url] %>images/Tenco.gif' width='<%= 366/3 %>' height='<%= 126/3 %>' /></a></h1> マイページ 開発中バージョンα10.2（2009/11/08）
 <p id="meta_info">
 λ＜レートなんて飾りなんです。偉い人にはそれがわからんのです<br />
 <%= now.strftime('%m/%d %H:%M') %> に作成（毎時0分以降に再生成）<br />
-<strong>重要なお知らせ</strong>：<img alt="" src="<%= TOP_URL %>client/images/suwako.ico" width="16" height="16" /> <img alt="" src="<%= TOP_URL %>client/images/tenco.ico" width="16" height="16" /> <a href="<%= TOP_URL %>">報告ツール</a>を最新版に更新する必要があります→<a href="<%= TOP_URL %>#info_20091006">詳細</a>（09/10/16）<br />
-おしらせ：<a href="<%= TOP_URL %>tag/">タグ一覧ページ</a>をリリースしました(09/10/20)
+<!-- <strong>重要なお知らせ</strong>：<img alt="" src="<%= CFG[:static_url] %>client/images/suwako.ico" width="16" height="16" /> <img alt="" src="<%= CFG[:static_url] %>client/images/tenco.ico" width="16" height="16" /> <a href="<%= CFG[:top_url] %>">報告ツール</a>を最新版に更新する必要があります→<a href="<%= CFG[:top_url] %>#info_20091006">詳細</a>（09/10/16）<br /> -->
+お知らせ：鯖屋の身売り？にともない、急遽サーバーを移転しました（10/04/03 03:30）<br />
+<strong>現在、対戦履歴表示を直近報告の最大100件のみにしています。現在対応中です。（10/05/26 04:07）</strong><br />
 </p>
 </div>
 
@@ -305,7 +306,7 @@ $(document).ready(
 		</p>
 		<%- if estimate_ratings.length > 0 -%>
 		<p class="suppli">
-			<a href="<%= TOP_URL %>estimate_rating.cgi?game_id=<%= game_id.to_i %>&amp;name=<%= u est_target_names.join("<>") %>">推定レート</a>は他プレイヤーの対戦結果報告を元に算出されます。<br />
+			<a href="<%= CFG[:top_url] %>estimate_rating.cgi?game_id=<%= game_id.to_i %>&amp;name=<%= u est_target_names.join("<>") %>">推定レート</a>は他プレイヤーの対戦結果報告を元に算出されます。<br />
 			推定レート値が通常のレート値より極端に低い場合、<br />
 			負け試合のみを意図して報告しないことが原因の場合があります（確実ではありません）。<br />
 			ハイフンは表示対象外か、推定精度不足のため表示されないことを意味します。
@@ -342,14 +343,14 @@ $(document).ready(
 					<td><%= "#{z2h_long_str(xhtml_sp2nbsp(h(t.player1_name)))} (#{type1_h[t.player1_type1_id.to_i]})" %></td>
 					<td class="vs"><%= "#{t.player1_points.to_i} - #{t.player2_points.to_i}" %></td>
 						<%- unless t.player2_account_name.nil? -%>
-					<td><a href="<%= "#{TOP_URL}game/#{game_id.to_i}/account/#{u t.player2_account_name}/" %>"><%= z2h_long_str(xhtml_sp2nbsp(h(t.player2_name))) %></a><%= " (#{type1_h[t.player2_type1_id.to_i]})" %></td>
+					<td><a href="<%= "#{CFG[:top_url]}game/#{game_id.to_i}/account/#{u t.player2_account_name}/" %>"><%= z2h_long_str(xhtml_sp2nbsp(h(t.player2_name))) %></a><%= " (#{type1_h[t.player2_type1_id.to_i]})" %></td>
 						<%- else -%>
 					<td><span class="enc_alt"><%= "◇#{t.player2_name[11..14]}" %></span><span class="enc"><%= u(h(t.player2_name)) %></span> <%= "(#{type1_h[t.player2_type1_id.to_i]})" %></td>
 						<%- end -%>
 					<%- else -%>
 					<td class="time suppli"><%= pgsql_timestamp_str_to_time(t.play_timestamp).strftime('%y/%m/%d %H:%M')  %></td>
 						<%- unless t.player2_account_name.nil? -%>
-					<td><a href="<%= "#{TOP_URL}game/#{game_id.to_i}/account/#{u t.player2_account_name}/" %>"><%= z2h_long_str(xhtml_sp2nbsp(h(t.player2_name))) %></a><%= " (#{type1_h[t.player2_type1_id.to_i]})" %></td>
+					<td><a href="<%= "#{CFG[:top_url]}game/#{game_id.to_i}/account/#{u t.player2_account_name}/" %>"><%= z2h_long_str(xhtml_sp2nbsp(h(t.player2_name))) %></a><%= " (#{type1_h[t.player2_type1_id.to_i]})" %></td>
 						<%- else -%>
 					<td><span class="enc_alt"><%= "◇#{t.player2_name[11..14]}" %></span><span class="enc"><%= u(h(t.player2_name)) %></span> <%= "(#{type1_h[t.player2_type1_id.to_i]})" %></td>
 						<%- end -%>
@@ -387,9 +388,10 @@ $(document).ready(
 <h3>プレイヤータグ</h3>
 <ul id="account_tags">
 <%- account_tags.each do |at| -%>
-	<li><a href="<%= TOP_URL %>tag/<%= u(at.tag_disp_name).gsub(/%2f/i, '/') %>"><%= h at.tag_disp_name %></a></li>
+	<li><a href="<%= CFG[:top_url] %>tag/<%= u(at.tag_disp_name).gsub(/%2f/i, '/') %>"><%= h at.tag_disp_name %></a></li>
 <%- end -%>
 </ul>
+
 <a id="toggle_edit_tags" class="suppli">タグ編集</a>
 <div id="edit_tags" style="display:none">
 	<div id="account_tag_tool">
@@ -401,16 +403,16 @@ $(document).ready(
 
 <%# <canvas id="timechart" width="250" height="225" style="display:block"></canvas> %>
 <p>
-<a href="<%= "#{TOP_URL}account/#{u account_name}/manage/" %>">アカウント設定</a>
+<a href="<%= "#{CFG[:top_url]}account/#{u account_name}/manage/" %>">アカウント設定</a>
 </p>
 <p>
-	<a href="<%= "#{TOP_URL}game/#{game_id.to_i}/account/#{u account_name}/output=xml" %>"><img width="40" height="18" src="<%= "#{TOP_URL}images/xml.png" %>" alt="アカウント情報（XML形式）" /></a>
+	<a href="<%= "#{CFG[:top_url]}game/#{game_id.to_i}/account/#{u account_name}/output=xml" %>"><img width="40" height="18" src="<%= "#{CFG[:static_url]}images/xml.png" %>" alt="アカウント情報（XML形式）" /></a>
 </p>
 <%- if other_games.length > 0 -%>
 <h3>他ゲームのマイページ</h3>
 <ul>
 	<%- other_games.each do |other_game| -%>
-	<li><a href="<%= "#{TOP_URL}game/#{other_game.id.to_i}/account/#{u account_name}/" %>"><%= "#{h other_game.name}" %></a></li>
+	<li><a href="<%= "#{CFG[:top_url]}game/#{other_game.id.to_i}/account/#{u account_name}/" %>"><%= "#{h other_game.name}" %></a></li>
 	<%- end -%>
 </ul>
 <%- end -%>
@@ -425,23 +427,23 @@ $(document).ready(
 <div id="side" class="tools tools_right">
 	<h2>プライズページ</h2>
 	<ul>
-		<li><a href="<%= "#{TOP_URL}game/#{game_id.to_i}/pov/1/" %>">レートランキング</a></li>
-		<li><a href="<%= "#{TOP_URL}game/#{game_id.to_i}/pov/1/type1/" %>">レートランキング（キャラ別）</a></li>
-		<li><a href="<%= "#{TOP_URL}game/#{game_id.to_i}/pov/2/" %>">マッチ数ランキング</a></li>
+		<li><a href="<%= "#{CFG[:top_url]}game/#{game_id.to_i}/pov/1/" %>">レートランキング</a></li>
+		<li><a href="<%= "#{CFG[:top_url]}game/#{game_id.to_i}/pov/1/type1/" %>">レートランキング（キャラ別）</a></li>
+		<li><a href="<%= "#{CFG[:top_url]}game/#{game_id.to_i}/pov/2/" %>">マッチ数ランキング</a></li>
 	</ul>
 	<h2>統計</h2>
 	<ul>
-		<li><a href="<%= "#{TOP_URL}game/#{game_id.to_i}/type1_stats/" %>">全キャラ統計（作成中）</a></li>
-		<li><a href="<%= "#{TOP_URL}game/#{game_id.to_i}/type1_vs_type1_stats/" %>">キャラ対キャラ統計</a></li>
+		<li><a href="<%= "#{CFG[:top_url]}game/#{game_id.to_i}/type1_stats/" %>">全キャラ統計（作成中）</a></li>
+		<li><a href="<%= "#{CFG[:top_url]}game/#{game_id.to_i}/type1_vs_type1_stats/" %>">キャラ対キャラ統計</a></li>
 	</ul>
 	<h2>タグ</h2>
 	<ul>
-		<li><a href="<%= TOP_URL %>tag/">タグ一覧</a></li>
+		<li><a href="<%= CFG[:top_url] %>tag/">タグ一覧</a></li>
 	</ul>
 	<h2>過去の対戦相手</h2>
 	<ul>
 		<%- matched_game_accounts.each do |a| -%>
-		<li><a href="<%= "#{TOP_URL}game/#{game_id.to_i}/account/#{u a.account_name}/" %>"><%= xhtml_sp2nbsp(h(a.rep_name)) %></a></li>
+		<li><a href="<%= "#{CFG[:top_url]}game/#{game_id.to_i}/account/#{u a.account_name}/" %>"><%= xhtml_sp2nbsp(h(a.rep_name)) %></a></li>
 		<%- end -%>
 	</ul>
 </div>
