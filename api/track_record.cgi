@@ -5,7 +5,7 @@ begin
 	now = Time.now
 
 	### 対戦結果I/F API ###
-	REVISION = 'R0.24'
+	REVISION = 'R0.31'
 	DEBUG = false
 
 	$LOAD_PATH.unshift '../common'
@@ -18,6 +18,7 @@ begin
 	require 'logger'
 	require 'utils'
 	require 'cryption'
+	require 'cache'
 
 	# ログファイルパス
 	LOG_PATH = "../log/log_#{now.strftime('%Y%m%d')}.log"
@@ -77,13 +78,33 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		source_length = ENV['CONTENT_LENGTH'].to_i # 受信バイト数
 		track_records = []         # 今回DBにインサートした対戦記録
 		source_track_records = []  # 受信対戦記録
-		insert_records_count = 0   # 登録件数
-		matched_records_count = 0    # マッチング成功件数
 		is_force_insert = false      # 強制インサートモード設定（同一アカウントからの重複時にエラー終了せず続行する）
 		PLEASE_RETRY_FORCE_INSERT = "<Please Retry in Force-Insert Mode>"  # 強制インサートリトライのお願い文字列
 		matched_track_records_str = "" # マッチ済み対戦結果トランザクションデータ
 		matched_track_records_trn_file = nil # マッチ済み対戦結果トランザクションファイルパス
 		matched_track_records_trn_ok_file = nil # マッチ済み対戦結果トランザクションOKファイルパス
+		
+		records_count = 0   # 登録件数
+		matched_records_count = 0   # マッチング成功件数
+		type1_summary = {}  # キャラ別サマリ
+		                    # キー1：キャラID
+		                    # キー2：:matched_count マッチした対戦数 :wins マッチ済勝利数 :loses マッチ済敗北数
+		type1_vs_type1_summary = {} # キャラ対キャラ別サマリ
+		                            # キー1：キャラID
+		                            # キー2：対戦キャラID
+		                            # キー3： :matched_count マッチした対戦数 :wins マッチ済勝利数 :loses マッチ済敗北数
+		account_summary = {} # アカウント別サマリ
+		                     # キー1：アカウントID
+		                     # キー2： :matched_count マッチした対戦数 :wins マッチ済勝利数 :loses マッチ済敗北数
+		account_type1_summary = {} # アカウントキャラ別サマリ
+		                           # キー1：アカウントID
+		                           # キー2：キャラID
+		                           # キー3： :matched_count マッチした対戦数 :wins マッチ済勝利数 :loses マッチ済敗北数
+		account_player_name_summary = {} # アカウントプレイヤー名別サマリ
+		                           # キー1：アカウントID
+		                           # キー2：プレイヤー名
+		                           # キー3： :matched_count マッチした対戦数
+		
 		
 		# コンテント長のバリデーション
 		if source_length > MAX_CONTENT_LENGTH then
@@ -136,6 +157,8 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		# DB 接続
 		require 'db'
 		db = DB.getInstance
+		# キャッシュ接続
+		cache = Cache.instance
 		
 		# アカウント認証
 		# 認証失敗時は例外が投げられる
@@ -173,7 +196,8 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 				
 				# 既存の同一アカウントの対戦結果タイムスタンプを取得
 				res = db.exec(<<-"SQL")
-				  SELECT play_timestamp
+				  SELECT
+				    play_timestamp
 				  FROM
 				    track_records
 				  WHERE
@@ -269,6 +293,7 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 					track_records << t
 				end
 				res.clear
+				
 			end
 		rescue => ex
 			res_status = "Status: 400 Bad Request\n"
@@ -295,14 +320,21 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 			res_body << "対戦結果の登録に成功しました（#{track_records.length}件登録しました）。\n"
 		end
 		
-		insert_records_count = source_track_records.length
+		records_count = source_track_records.length
 		
 		# ログ記録
-		log_msg = "#{insert_records_count} ins.\t" + log_msg if source_track_records
+		log_msg = "#{records_count} ins.\t" + log_msg if source_track_records
 
 		log_msg << "\t#{Time.now - now}"
 		
 		res_body << "multiple insert finished...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
+		
+		# キャラ別対戦数記録
+		track_records.each do |t|
+			type1_summary[t.player1_type1_id] ||= {}
+			type1_summary[t.player1_type1_id][:count] ||= 0
+			type1_summary[t.player1_type1_id][:count] += 1
+		end
 		
 		## インサートした対戦結果のマッチング
 		
@@ -389,7 +421,7 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 						updated_at = now(),
 						lock_version = lock_version + 1
 					  WHERE
-					    id = #{matched_record.id.to_i}
+					        id = #{matched_record.id.to_i}
 					    AND lock_version = #{matched_record.lock_version.to_i}
 					SQL
 					
@@ -397,6 +429,85 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 					redo if updated_res.cmdstatus != 'UPDATE 1'
 					updated_res.clear
 					
+					# サマリ情報を変数に記録
+					type1_summary[t.player1_type1_id] ||= {}
+					type1_summary[t.player1_type1_id][:matched_count] ||= 0
+					type1_summary[t.player1_type1_id][:wins] ||= 0
+					type1_summary[t.player1_type1_id][:loses] ||= 0
+					type1_summary[t.player1_type1_id][:matched_count] += 1
+					type1_summary[t.player1_type1_id][:wins]  += ((t.player1_points.to_i <=> t.player2_points.to_i) + 1) / 2
+					type1_summary[t.player1_type1_id][:loses] += ((t.player2_points.to_i <=> t.player1_points.to_i) + 1) / 2
+					
+					type1_summary[t.player2_type1_id] ||= {}
+					type1_summary[t.player2_type1_id][:matched_count] ||= 0
+					type1_summary[t.player2_type1_id][:wins]  ||= 0
+					type1_summary[t.player2_type1_id][:loses] ||= 0
+					type1_summary[t.player2_type1_id][:matched_count] += 1
+					type1_summary[t.player2_type1_id][:wins]  += ((t.player2_points.to_i <=> t.player1_points.to_i) + 1) / 2
+					type1_summary[t.player2_type1_id][:loses] += ((t.player1_points.to_i <=> t.player2_points.to_i) + 1) / 2
+					
+					type1_vs_type1_summary[t.player1_type1_id] ||= {}
+					type1_vs_type1_summary[t.player1_type1_id][t.player2_type1_id] ||= {}
+					type1_vs_type1_summary[t.player1_type1_id][t.player2_type1_id][:matched_count] ||= 0
+					type1_vs_type1_summary[t.player1_type1_id][t.player2_type1_id][:wins]  ||= 0
+					type1_vs_type1_summary[t.player1_type1_id][t.player2_type1_id][:loses] ||= 0
+					type1_vs_type1_summary[t.player1_type1_id][t.player2_type1_id][:matched_count] += 1
+					type1_vs_type1_summary[t.player1_type1_id][t.player2_type1_id][:wins]  += ((t.player1_points.to_i <=> t.player2_points.to_i) + 1) / 2
+					type1_vs_type1_summary[t.player1_type1_id][t.player2_type1_id][:loses] += ((t.player2_points.to_i <=> t.player1_points.to_i) + 1) / 2
+					
+					type1_vs_type1_summary[t.player2_type1_id] ||= {}
+					type1_vs_type1_summary[t.player2_type1_id][t.player1_type1_id] ||= {}
+					type1_vs_type1_summary[t.player2_type1_id][t.player1_type1_id][:matched_count] ||= 0
+					type1_vs_type1_summary[t.player2_type1_id][t.player1_type1_id][:wins]  ||= 0
+					type1_vs_type1_summary[t.player2_type1_id][t.player1_type1_id][:loses] ||= 0
+					type1_vs_type1_summary[t.player2_type1_id][t.player1_type1_id][:matched_count] += 1
+					type1_vs_type1_summary[t.player2_type1_id][t.player1_type1_id][:wins]  += ((t.player2_points.to_i <=> t.player1_points.to_i) + 1) / 2
+					type1_vs_type1_summary[t.player2_type1_id][t.player1_type1_id][:loses] += ((t.player1_points.to_i <=> t.player2_points.to_i) + 1) / 2
+					
+					account_summary[t.player1_account_id] ||= {}
+					account_summary[t.player1_account_id][:matched_count] ||= 0
+					account_summary[t.player1_account_id][:wins] ||= 0
+					account_summary[t.player1_account_id][:loses] ||= 0
+					account_summary[t.player1_account_id][:matched_count] += 1
+					account_summary[t.player1_account_id][:wins]  += ((t.player1_points.to_i <=> t.player2_points.to_i) + 1) / 2
+					account_summary[t.player1_account_id][:loses] += ((t.player2_points.to_i <=> t.player1_points.to_i) + 1) / 2
+					
+					account_summary[matched_record.player1_account_id] ||= {}
+					account_summary[matched_record.player1_account_id][:matched_count] ||= 0
+					account_summary[matched_record.player1_account_id][:wins] ||= 0
+					account_summary[matched_record.player1_account_id][:loses] ||= 0
+					account_summary[matched_record.player1_account_id][:matched_count] += 1
+					account_summary[matched_record.player1_account_id][:wins]  += ((t.player2_points.to_i <=> t.player1_points.to_i) + 1) / 2
+					account_summary[matched_record.player1_account_id][:loses] += ((t.player1_points.to_i <=> t.player2_points.to_i) + 1) / 2
+
+					account_type1_summary[t.player1_account_id] ||= {}
+					account_type1_summary[t.player1_account_id][t.player1_type1_id] ||= {}
+					account_type1_summary[t.player1_account_id][t.player1_type1_id][:matched_count] ||= 0
+					account_type1_summary[t.player1_account_id][t.player1_type1_id][:wins] ||= 0
+					account_type1_summary[t.player1_account_id][t.player1_type1_id][:loses] ||= 0
+					account_type1_summary[t.player1_account_id][t.player1_type1_id][:matched_count] += 1
+					account_type1_summary[t.player1_account_id][t.player1_type1_id][:wins]  += ((t.player1_points.to_i <=> t.player2_points.to_i) + 1) / 2
+					account_type1_summary[t.player1_account_id][t.player1_type1_id][:loses] += ((t.player2_points.to_i <=> t.player1_points.to_i) + 1) / 2
+					
+					account_type1_summary[matched_record.player1_account_id] ||= {}
+					account_type1_summary[matched_record.player1_account_id][t.player2_type1_id] ||= {}
+					account_type1_summary[matched_record.player1_account_id][t.player2_type1_id][:matched_count] ||= 0
+					account_type1_summary[matched_record.player1_account_id][t.player2_type1_id][:wins] ||= 0
+					account_type1_summary[matched_record.player1_account_id][t.player2_type1_id][:loses] ||= 0
+					account_type1_summary[matched_record.player1_account_id][t.player2_type1_id][:matched_count] += 1
+					account_type1_summary[matched_record.player1_account_id][t.player2_type1_id][:wins]  += ((t.player2_points.to_i <=> t.player1_points.to_i) + 1) / 2
+					account_type1_summary[matched_record.player1_account_id][t.player2_type1_id][:loses] += ((t.player1_points.to_i <=> t.player2_points.to_i) + 1) / 2
+					
+					account_player_name_summary[t.player1_account_id] ||= {}
+					account_player_name_summary[t.player1_account_id][t.player1_name] ||= {}
+					account_player_name_summary[t.player1_account_id][t.player1_name][:matched_count] ||= 0
+					account_player_name_summary[t.player1_account_id][t.player1_name][:matched_count] += 1
+					
+					account_player_name_summary[matched_record.player1_account_id] ||= {}
+					account_player_name_summary[matched_record.player1_account_id][t.player2_name] ||= {}
+					account_player_name_summary[matched_record.player1_account_id][t.player2_name][:matched_count] ||= 0
+					account_player_name_summary[matched_record.player1_account_id][t.player2_name][:matched_count] += 1
+	
 					# マッチ済み対戦結果トランザクションデータ追加
 					matched_track_records_str << "#{rep_timestamp.to_i},#{t.player1_account_id},#{matched_record.player1_account_id},#{t.player1_type1_id},#{t.player2_type1_id},#{t.player1_points},#{t.player2_points}\n"
 				end
@@ -417,6 +528,408 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		
 		res_body << "matched records search finish...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
 		
+		# ゲーム日次統計テーブルに書き込み
+		begin
+		
+			# 更新または作成
+			res_update = db.exec(<<-"SQL")
+			  UPDATE
+			    game_daily_stats
+			  SET
+			    track_records_count = track_records_count + #{records_count.to_i},
+			    matched_track_records_count = matched_track_records_count + #{(matched_records_count * 2).to_i},
+				updated_at = now(),
+				lock_version = lock_version + 1
+			  WHERE
+			        game_id = #{game_id.to_i}
+			    AND date_time = date_trunc('day', CURRENT_TIMESTAMP)
+			  RETURNING id;
+			SQL
+							
+			# UPDATE 失敗時は INSERT
+			if res_update.num_tuples != 1 then
+				res_update.clear
+				res_insert = db.exec(<<-"SQL")
+				  INSERT INTO
+					game_daily_stats
+					(
+					  game_id,
+					  date_time,
+					  track_records_count,
+					  matched_track_records_count
+					)
+				  VALUES
+					(
+					  #{game_id.to_i},
+					  date_trunc('day', CURRENT_TIMESTAMP),
+					  #{records_count.to_i},
+					  #{(matched_records_count * 2).to_i}
+					)
+				  RETURNING id;
+				SQL
+				
+				if res_insert.num_tuples != 1 then
+					res_insert.clear
+					raise "UPDATE 失敗後の INSERT に失敗しました。"
+				end
+				
+				res_insert.clear
+			else
+				res_update.clear
+			end
+		
+		rescue => ex
+			res_status = "Status: 400 Bad Request\n"
+			res_body << "ゲーム日次統計テーブルの登録・更新時にエラーが発生しました\n"
+			raise ex
+		end
+		
+		res_body << "game_daily_stats udpate/insert finish...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
+		
+		# ゲームキャラ別日次統計テーブルに書き込み
+		begin
+			type1_summary.each do |type1_id, summary|
+			
+				# 更新または作成
+				res_update = db.exec(<<-"SQL")
+				  UPDATE
+					game_type1_daily_stats
+				  SET
+					track_records_count = track_records_count + #{summary[:matched_count].to_i},
+					wins = wins + #{summary[:wins].to_i},
+					loses = loses + #{summary[:loses].to_i},
+					updated_at = now(),
+					lock_version = lock_version + 1
+				  WHERE
+						game_id = #{game_id.to_i}
+					AND type1_id = #{type1_id.to_i}
+					AND date_time = date_trunc('day', CURRENT_TIMESTAMP)
+				  RETURNING id;
+				SQL
+								
+				# UPDATE 失敗時は INSERT
+				if res_update.num_tuples != 1 then
+					res_update.clear
+					res_insert = db.exec(<<-"SQL")
+					  INSERT INTO
+						game_type1_daily_stats
+						(
+						  game_id,
+						  type1_id,
+						  date_time,
+						  track_records_count,
+						  wins,
+						  loses
+						)
+					  VALUES
+						(
+						  #{game_id.to_i},
+						  #{type1_id.to_i},
+						  date_trunc('day', CURRENT_TIMESTAMP),
+						  #{summary[:matched_count].to_i},
+						  #{summary[:wins].to_i},
+						  #{summary[:loses].to_i}
+						)
+					  RETURNING id;
+					SQL
+					
+					if res_insert.num_tuples != 1 then
+						res_insert.clear
+						raise "UPDATE 失敗後の INSERT に失敗しました。"
+					end
+					
+					res_insert.clear
+				else
+					res_update.clear
+				end
+				
+			end
+		
+		rescue => ex
+			res_status = "Status: 400 Bad Request\n"
+			res_body << "ゲームキャラ別日次統計テーブルの登録・更新時にエラーが発生しました\n"
+			raise ex
+		end
+		
+		res_body << "game_type1_daily_stats udpate/insert finish...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
+		
+		# ゲームキャラ対キャラ別日次統計テーブルに書き込み
+		begin
+			type1_vs_type1_summary.each do |type1_id, matched_type1_summary|
+				matched_type1_summary.each do |matched_type1_id, summary|
+				
+					# 更新または作成
+					res_update = db.exec(<<-"SQL")
+					  UPDATE
+						game_type1_vs_type1_daily_stats
+					  SET
+						track_records_count = track_records_count + #{summary[:matched_count].to_i},
+						wins = wins + #{summary[:wins].to_i},
+						loses = loses + #{summary[:loses].to_i},
+						updated_at = now(),
+						lock_version = lock_version + 1
+					  WHERE
+							game_id = #{game_id.to_i}
+						AND type1_id = #{type1_id.to_i}
+						AND matched_type1_id = #{matched_type1_id.to_i}
+						AND date_time = date_trunc('day', CURRENT_TIMESTAMP)
+					  RETURNING id;
+					SQL
+									
+					# UPDATE 失敗時は INSERT
+					if res_update.num_tuples != 1 then
+						res_update.clear
+						res_insert = db.exec(<<-"SQL")
+						  INSERT INTO
+							game_type1_vs_type1_daily_stats
+							(
+							  game_id,
+							  type1_id,
+							  matched_type1_id,
+							  date_time,
+							  track_records_count,
+							  wins,
+							  loses
+							)
+						  VALUES
+							(
+							  #{game_id.to_i},
+							  #{type1_id.to_i},
+							  #{matched_type1_id.to_i},
+							  date_trunc('day', CURRENT_TIMESTAMP),
+							  #{summary[:matched_count].to_i},
+							  #{summary[:wins].to_i},
+							  #{summary[:loses].to_i}
+							)
+						  RETURNING id;
+						SQL
+						
+						if res_insert.num_tuples != 1 then
+							res_insert.clear
+							raise "UPDATE 失敗後の INSERT に失敗しました。"
+						end
+						
+						res_insert.clear
+					else
+						res_update.clear
+					end
+					
+
+				end
+			end
+		
+		rescue => ex
+			res_status = "Status: 400 Bad Request\n"
+			res_body << "ゲームキャラ対キャラ別日次統計テーブルの登録・更新時にエラーが発生しました\n"
+			raise ex
+		end
+		
+		res_body << "game_type1_vs_type1_daily_stats udpate/insert finish...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
+		
+		# ゲームアカウント日次統計テーブルに書き込み
+		begin
+			account_summary.each do |account_id, summary|
+			
+				# 更新または作成
+				res_update = db.exec(<<-"SQL")
+				  UPDATE
+					game_account_daily_stats
+				  SET
+					track_records_count = track_records_count + #{summary[:matched_count].to_i},
+					wins = wins + #{summary[:wins].to_i},
+					loses = loses + #{summary[:loses].to_i},
+					updated_at = now(),
+					lock_version = lock_version + 1
+				  WHERE
+						game_id = #{game_id.to_i}
+					AND account_id = #{account_id.to_i}
+					AND date_time = date_trunc('day', CURRENT_TIMESTAMP)
+				  RETURNING id;
+				SQL
+								
+				# UPDATE 失敗時は INSERT
+				if res_update.num_tuples != 1 then
+					res_update.clear
+					res_insert = db.exec(<<-"SQL")
+					  INSERT INTO
+						game_account_daily_stats
+						(
+						  game_id,
+						  account_id,
+						  date_time,
+						  track_records_count,
+						  wins,
+						  loses
+						)
+					  VALUES
+						(
+						  #{game_id.to_i},
+						  #{account_id.to_i},
+						  date_trunc('day', CURRENT_TIMESTAMP),
+						  #{summary[:matched_count].to_i},
+						  #{summary[:wins].to_i},
+						  #{summary[:loses].to_i}
+						)
+					  RETURNING id;
+					SQL
+					
+					if res_insert.num_tuples != 1 then
+						res_insert.clear
+						raise "UPDATE 失敗後の INSERT に失敗しました。"
+					end
+					
+					res_insert.clear
+				else
+					res_update.clear
+				end
+				
+			end
+		
+		rescue => ex
+			res_status = "Status: 400 Bad Request\n"
+			res_body << "ゲームアカウント日次統計テーブルの登録・更新時にエラーが発生しました\n"
+			raise ex
+		end
+		
+		res_body << "game_account_daily_stats udpate/insert finish...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
+		
+		# ゲームアカウントキャラ別日次統計テーブルに書き込み
+		begin
+			account_type1_summary.each do |account_id, t1_summary|
+				t1_summary.each do |type1_id, summary|
+					# 更新または作成
+					res_update = db.exec(<<-"SQL")
+					  UPDATE
+						game_account_type1_daily_stats
+					  SET
+						track_records_count = track_records_count + #{summary[:matched_count].to_i},
+						wins = wins + #{summary[:wins].to_i},
+						loses = loses + #{summary[:loses].to_i},
+						updated_at = now(),
+						lock_version = lock_version + 1
+					  WHERE
+							game_id = #{game_id.to_i}
+						AND account_id = #{account_id.to_i}
+						AND type1_id = #{type1_id.to_i}
+						AND date_time = date_trunc('day', CURRENT_TIMESTAMP)
+					  RETURNING id;
+					SQL
+									
+					# UPDATE 失敗時は INSERT
+					if res_update.num_tuples != 1 then
+						res_update.clear
+						res_insert = db.exec(<<-"SQL")
+						  INSERT INTO
+							game_account_type1_daily_stats
+							(
+							  game_id,
+							  account_id,
+							  type1_id,
+							  date_time,
+							  track_records_count,
+							  wins,
+							  loses
+							)
+						  VALUES
+							(
+							  #{game_id.to_i},
+							  #{account_id.to_i},
+							  #{type1_id.to_i},
+							  date_trunc('day', CURRENT_TIMESTAMP),
+							  #{summary[:matched_count].to_i},
+							  #{summary[:wins].to_i},
+							  #{summary[:loses].to_i}
+							)
+						  RETURNING id;
+						SQL
+						
+						if res_insert.num_tuples != 1 then
+							res_insert.clear
+							raise "UPDATE 失敗後の INSERT に失敗しました。"
+						end
+						
+						res_insert.clear
+					else
+						res_update.clear
+					end
+					
+				end
+			end
+		
+		rescue => ex
+			res_status = "Status: 400 Bad Request\n"
+			res_body << "ゲームアカウントキャラ別日次統計テーブルの登録・更新時にエラーが発生しました\n"
+			raise ex
+		end
+		
+		res_body << "game_account_daily_stats udpate/insert finish...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
+				
+		# ゲームアカウントプレイヤー名日次統計テーブルに書き込み
+		begin
+			account_player_name_summary.each do |account_id, pn_summary|
+				pn_summary.each do |player_name, summary|
+					# 更新または作成
+					res_update = db.exec(<<-"SQL")
+					  UPDATE
+						game_account_player_name_daily_stats
+					  SET
+						matched_track_records_count = matched_track_records_count + #{summary[:matched_count].to_i},
+						updated_at = now(),
+						lock_version = lock_version + 1
+					  WHERE
+							game_id = #{game_id.to_i}
+						AND account_id = #{account_id.to_i}
+						AND player_name = #{s player_name}
+						AND date_time = date_trunc('day', CURRENT_TIMESTAMP)
+					  RETURNING id;
+					SQL
+									
+					# UPDATE 失敗時は INSERT
+					if res_update.num_tuples != 1 then
+						res_update.clear
+						res_insert = db.exec(<<-"SQL")
+						  INSERT INTO
+							game_account_player_name_daily_stats
+							(
+							  game_id,
+							  account_id,
+							  player_name,
+							  date_time,
+							  matched_track_records_count
+							)
+						  VALUES
+							(
+							  #{game_id.to_i},
+							  #{account_id.to_i},
+							  #{s player_name},
+							  date_trunc('day', CURRENT_TIMESTAMP),
+							  #{summary[:matched_count].to_i}
+							)
+						  RETURNING id;
+						SQL
+						
+						if res_insert.num_tuples != 1 then
+							res_insert.clear
+							raise "UPDATE 失敗後の INSERT に失敗しました。"
+						end
+						
+						res_insert.clear
+					else
+						res_update.clear
+					end
+					
+				end
+			end
+		
+		rescue => ex
+			res_status = "Status: 400 Bad Request\n"
+			res_body << "ゲームアカウントプレイヤー名日次統計テーブルの登録・更新時にエラーが発生しました\n"
+			raise ex
+		end
+		
+		res_body << "game_account_player_name_daily_stats udpate/insert finish...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
+		
+
 		# マッチ済み対戦結果トランザクションデータ追加書き込み
 		matched_track_records_trn_file = "#{TRN_DATA_DIR}/#{game_id}_#{now.to_i}_#{$$}.dat"
 		matched_track_records_trn_temp_file = "#{matched_track_records_trn_file}.temp"
@@ -437,13 +950,30 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		# トランザクション終了
 		db.exec("COMMIT;")
 		res_body << "transaction finished...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
-						
-		# DB ANALYZE
-		#if (insert_records_count + matched_records_count * 4) / 500.0 > rand() then
-		#	db.exec("VACUUM ANALYZE track_records;")
-		#	res_body << "DB analyzed...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
-		#	log_msg << "\t#{Time.now - now}"
-		#end
+		
+		# キャッシュ更新
+		if track_records.length > 0 then
+			begin
+				cache_key = "tr#{game_id.to_i.to_s(36)}_#{account.id.to_i.to_s(36)}"
+				cache_val = (track_records.map { |t| t.id.to_i }).pack('I*')
+				cache.append(cache_key, cache_val)
+			rescue Memcached::NotStored 
+				res = db.exec(<<-"SQL")
+					SELECT
+					  id
+					FROM
+					  track_records
+					WHERE
+					  game_id = #{game_id.to_i}
+					  AND player1_account_id = #{account.id.to_i}
+					ORDER BY
+					  id DESC
+				SQL
+				
+				cache_val = (res.map { |r| r[0].to_i }).pack('I*')
+				cache.add(cache_key, cache_val)
+			end
+		end
 		
 	rescue => ex
 		res_status = "Status: 400 Bad Request\n" unless res_status
