@@ -5,7 +5,7 @@ begin
 	now = Time.now
 
 	### 登録済み最終対戦結果時刻出力 API ###
-	REVISION = 'R0.09'
+	REVISION = 'R0.10'
 
 	$LOAD_PATH.unshift '../common'
 	$LOAD_PATH.unshift '../model'
@@ -54,6 +54,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 	begin
 		query = {} # クエリストリング
 		db = nil   # DB接続 
+		last_track_record_timestamp = nil # 最終対戦時刻
 		
 		# バリデーション用定数
 		ID_REGEX = /\A[0-9]+\z/
@@ -79,18 +80,22 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 				# 登録された対戦記録のうち、play_timestamp が最終のものを取得	
 				res = db.exec(<<-"SQL")
 					SELECT
-						MAX(t.play_timestamp)
+						last_play_timestamp
 					FROM
-						accounts a, track_records t
+						game_accounts ga, accounts a
 					WHERE
 					      a.name = #{s account_name}
-					  AND t.game_id = #{game_id.to_i}
-					  AND a.id = t.player1_account_id
+					  AND ga.game_id = #{game_id.to_i}
+					  AND ga.account_id = a.id
 					  AND a.del_flag = 0
 				SQL
 				
-				last_track_record_timestamp = res[0][0]
-				
+				if res.num_tuples >= 1 then
+					last_track_record_timestamp = res[0][0].to_s
+				else
+					last_track_record_timestamp = nil
+				end
+					
 			rescue => ex
 				res_status = "Status: 500 Server Error\n"
 				res_body = "サーバーエラーです。\n"

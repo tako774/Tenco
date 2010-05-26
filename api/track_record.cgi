@@ -5,7 +5,7 @@ begin
 	now = Time.now
 
 	### 対戦結果I/F API ###
-	REVISION = 'R0.31'
+	REVISION = 'R0.32'
 	DEBUG = false
 
 	$LOAD_PATH.unshift '../common'
@@ -78,6 +78,7 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		source_length = ENV['CONTENT_LENGTH'].to_i # 受信バイト数
 		track_records = []         # 今回DBにインサートした対戦記録
 		source_track_records = []  # 受信対戦記録
+		last_play_timestamp = nil # 最終対戦時刻
 		is_force_insert = false      # 強制インサートモード設定（同一アカウントからの重複時にエラー終了せず続行する）
 		PLEASE_RETRY_FORCE_INSERT = "<Please Retry in Force-Insert Mode>"  # 強制インサートリトライのお願い文字列
 		matched_track_records_str = "" # マッチ済み対戦結果トランザクションデータ
@@ -329,6 +330,58 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		
 		res_body << "multiple insert finished...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
 		
+		# 最終対戦時刻を作成or更新
+		if track_records.length > 0 then
+			last_play_timestamp = (track_records.map { |t| t.play_timestamp }).max
+
+			begin
+				res_update = db.exec(<<-"SQL")
+				  UPDATE
+					game_accounts
+				  SET
+					last_play_timestamp = to_timestamp(#{s last_play_timestamp.to_s}, \'YYYY-MM-DD HH24:MI:SS\')
+				  WHERE
+					game_id = #{game_id.to_i}
+					AND account_id = #{account.id.to_i}
+					AND (
+					  last_play_timestamp < to_timestamp(#{s last_play_timestamp.to_s}, \'YYYY-MM-DD HH24:MI:SS\')
+					  OR (last_play_timestamp IS NULL)
+					)
+				  RETURNING id
+				SQL
+				
+				if res_update.num_tuples != 1 then
+					res = db.exec(<<-"SQL")
+					  INSERT INTO
+						game_accounts
+						(
+						  account_id,
+						  game_id,
+						  rep_name,
+						  last_play_timestamp
+						)
+					  VALUES
+						(
+						  #{account.id.to_i},
+						  #{game_id.to_i},
+						  #{s account.name},
+						  to_timestamp(#{s last_play_timestamp.to_s}, \'YYYY-MM-DD HH24:MI:SS\')
+						)
+					SQL
+					res.clear
+				end
+				res_update.clear
+			
+			rescue => ex
+				res_status = "Status: 400 Bad Request\n"
+				res_body << "最終対戦時刻登録時にエラーが発生しました。\n"
+				raise ex
+			else
+				res_body << "最終対戦時刻登録時を正常に実行しました。\n" if DEBUG
+			end
+		end
+			
+		
 		# キャラ別対戦数記録
 		track_records.each do |t|
 			type1_summary[t.player1_type1_id] ||= {}
@@ -336,7 +389,7 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 			type1_summary[t.player1_type1_id][:count] += 1
 		end
 		
-		## インサートした対戦結果のマッチング
+		### インサートした対戦結果のマッチング
 		
 		# 試合タイムスタンプの昇順にソートして実施
 		track_records.sort! { |a, b| a.play_timestamp <=> b.play_timestamp }
@@ -953,6 +1006,7 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		
 		# キャッシュ更新
 		if track_records.length > 0 then
+			# ゲームアカウントごとの対戦結果idキャッシュ更新
 			begin
 				cache_key = "tr#{game_id.to_i.to_s(36)}_#{account.id.to_i.to_s(36)}"
 				cache_val = (track_records.map { |t| t.id.to_i }).pack('I*')
@@ -974,6 +1028,7 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 				cache.add(cache_key, cache_val)
 			end
 		end
+		
 		
 	rescue => ex
 		res_status = "Status: 400 Bad Request\n" unless res_status
