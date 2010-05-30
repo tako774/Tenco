@@ -9,6 +9,7 @@ begin
 	DEBUG = false
 
 	$LOAD_PATH.unshift './common'
+	$LOAD_PATH.unshift './dao'
 	$LOAD_PATH.unshift './entity'
 
 	require 'kconv'
@@ -259,6 +260,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		File.open(ERROR_LOG_PATH, 'a') do |log|
 			log.puts "#{now.to_s} #{File::basename(__FILE__)} Rev.#{REVISION}"
 			log.puts source
+			log.puts ex.class.to_s
 			log.puts ex.to_s
 			log.puts ex.backtrace.join("\n").to_s
 			log.puts

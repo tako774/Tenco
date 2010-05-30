@@ -5,7 +5,7 @@ begin
 	# 開始時刻
 	now = Time.now
 	# リビジョン
-	REVISION = 'R0.08'
+	REVISION = 'R0.09'
 	DEBUG = false
 
 	$LOAD_PATH.unshift './common'
@@ -176,7 +176,8 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							FROM
 							(
 								SELECT
-									gt1.type1_id AS type1_id, gt2.type1_id AS matched_type1_id
+									gt1.type1_id AS type1_id,
+									gt2.type1_id AS matched_type1_id
 								FROM
 									game_type1s gt1,
 									game_type1s gt2
@@ -185,27 +186,10 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 									AND gt2.game_id = #{game_id.to_i}
 							) AS tt
 							LEFT OUTER JOIN
-								(
-								SELECT
-									gtvts1.*
-								FROM
-									game_type1_vs_type1_stats gtvts1,
-									(
-										SELECT 
-											game_id,
-											MAX(date_time) AS max_date_time
-										FROM
-											game_type1_vs_type1_stats
-										GROUP BY
-											game_id
-									) AS gtvts2
-								WHERE
-									gtvts1.game_id = #{game_id.to_i}
-									AND gtvts2.game_id = #{game_id.to_i}
-									AND gtvts1.date_time = gtvts2.max_date_time
-								) AS gtvts
+								game_type1_vs_type1_stats gtvts
 							ON	(
-								tt.type1_id = gtvts.type1_id
+								    gtvts.game_id = #{game_id.to_i}
+								AND tt.type1_id = gtvts.type1_id
 								AND tt.matched_type1_id = gtvts.matched_type1_id
 							)	
 

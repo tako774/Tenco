@@ -5,10 +5,10 @@
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<meta http-equiv="content-style-type" content="text/css" />
 	<meta http-equiv="content-script-type" content="text/javascript" />
-	<link rel="stylesheet" type="text/css" href="<%= TOP_URL %>css/main.css" />
-	<link rel="stylesheet" type="text/css" href="<%= TOP_URL %>css/2cols_side-width-fixed.css" />
-	<link rel="stylesheet" type="text/css" href="<%= TOP_URL %>css/stats.css" />
-	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/jquery.js"></script>
+	<link rel="stylesheet" type="text/css" href="<%= CFG[:static_url] %>css/main.css" />
+	<link rel="stylesheet" type="text/css" href="<%= CFG[:static_url] %>css/2cols_side-width-fixed.css" />
+	<link rel="stylesheet" type="text/css" href="<%= CFG[:static_url] %>css/stats.css" />
+	<script type="text/javascript" charset="utf-8" src="<%= CFG[:static_url] %>js/jquery.js"></script>
 	<title><%= h game.name %> のキャラ対キャラ統計 - Tenco!</title>
 	<script type="text/javascript">
 //<![CDATA[ 
@@ -81,7 +81,7 @@ $(document).ready(
 <div id="container">
 
 <div id="header">
-	<h1><a href="<%= TOP_URL %>"><img alt="Tenco!" src='<%= TOP_URL %>images/Tenco.gif' width='<%= 366/3 %>' height='<%= 126/3 %>' /></a></h1>
+	<h1><a href="<%= CFG[:top_url] %>"><img alt="Tenco!" src='<%= CFG[:static_url] %>images/Tenco.gif' width='<%= 366/3 %>' height='<%= 126/3 %>' /></a></h1>
 	<p>キャラ対キャラ統計ページ Rev.3 (2009/09/20)</p>
 	<p id="meta_info">
 		<%= now.strftime('%m/%d %H:%M') %> に作成（毎時0分以降に再生成）<br />
@@ -176,9 +176,9 @@ $(document).ready(
 <div id="side" class="tools tools_right">
 	<h2>プライズページ</h2>
 	<ul>
-		<li><a href="<%= "#{TOP_URL}game/#{u game_id}/pov/1/" %>">レートランキング</a></li>
-		<li><a href="<%= "#{TOP_URL}game/#{u game_id}/pov/1/type1/" %>">レートランキング（キャラ別）</a></li>
-		<li><a href="<%= "#{TOP_URL}game/#{u game_id}/pov/2/" %>">マッチ数ランキング</a></li>
+		<li><a href="<%= "#{CFG[:top_url]}game/#{u game_id}/pov/1/" %>">レートランキング</a></li>
+		<li><a href="<%= "#{CFG[:top_url]}game/#{u game_id}/pov/1/type1/" %>">レートランキング（キャラ別）</a></li>
+		<li><a href="<%= "#{CFG[:top_url]}game/#{u game_id}/pov/2/" %>">マッチ数ランキング</a></li>
 	</ul>
 	<h2>リンク</h2>
 	<%= link_html %>

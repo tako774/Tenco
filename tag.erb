@@ -5,13 +5,13 @@
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<meta http-equiv="content-style-type" content="text/css" />
 	<meta http-equiv="content-script-type" content="text/javascript" />
-	<link rel="stylesheet" type="text/css" href="<%= TOP_URL %>css/main.css" />
-	<link rel="stylesheet" type="text/css" href="<%= TOP_URL %>css/3cols_sides-width-fixed.css" />
-	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/jquery.js"></script>
-	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/jsdeferred.jquery.js"></script>
-	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/utils.js"></script>
-	<script type="text/javascript" charset="utf-8" src="<%= TOP_URL %>js/account_tag.js"></script>
-	<%# <!--[if IE]><script type="text/javascript" src="<％TOP_URL％>js/excanvas.js"></script><![endif]--> %>
+	<link rel="stylesheet" type="text/css" href="<%= CFG[:static_url] %>css/main.css" />
+	<link rel="stylesheet" type="text/css" href="<%= CFG[:static_url] %>css/3cols_sides-width-fixed.css" />
+	<script type="text/javascript" charset="utf-8" src="<%= CFG[:static_url] %>js/jquery.js"></script>
+	<script type="text/javascript" charset="utf-8" src="<%= CFG[:static_url] %>js/jsdeferred.jquery.js"></script>
+	<script type="text/javascript" charset="utf-8" src="<%= CFG[:static_url] %>js/utils.js"></script>
+	<script type="text/javascript" charset="utf-8" src="<%= CFG[:static_url] %>js/account_tag.js"></script>
+	<%# <!--[if IE]><script type="text/javascript" src="<％CFG[:static_url]％>js/excanvas.js"></script><![endif]--> %>
 	<title><%= h tag_name %> タグ - Tenco!</title>
 	<script type="text/javascript">
 //<![CDATA[ 
@@ -31,7 +31,7 @@ $(document).ready(
 <div id="container">
 
 <div id="header">
-<h1><a href="<%= TOP_URL %>"><img alt="Tenco!" src='<%= TOP_URL %>images/Tenco.gif' width='<%= 366/3 %>' height='<%= 126/3 %>' /></a></h1>
+<h1><a href="<%= CFG[:top_url] %>"><img alt="Tenco!" src='<%= CFG[:static_url] %>images/Tenco.gif' width='<%= 366/3 %>' height='<%= 126/3 %>' /></a></h1>
 タグページ（開発中）α1（2009/10/11）
 <p id="meta_info">
 <%= now.strftime('%m/%d %H:%M') %> に作成（毎時0分以降に再生成）<br />
@@ -69,9 +69,29 @@ $(document).ready(
 			<%- ga = game_accounts[game_id.to_i][account_id.to_i] -%>
 			<tr>
 				<td class="suppli num"><%= ga.account_id.to_i %></td>
-				<td><a href="<%= "#{TOP_URL}game/#{game_id.to_i}/account/#{accounts[ga.account_id.to_i].name}/" %>"><%= h ga.rep_name %></a></td>
+				<td><a href="<%= "#{CFG[:top_url]}game/#{game_id.to_i}/account/#{accounts[ga.account_id.to_i].name}/" %>"><%= h ga.rep_name %></a></td>
 				<td class="suppli"><%= h ga.cluster_name %></td>
 			</tr>
+			<%- end -%>
+			</tbody>
+			</table>
+		<%- end -%>
+		<%- if game_not_played_account_ids.length > 0 then -%>
+			<h3 class="suppli">全ゲーム未報告のアカウント</h3>
+			<table>
+			<thead>
+				<tr>
+					<th class="suppli">ID</th>
+					<th class="suppli">アカウント名</th>
+				</tr>
+			</thead>
+			<tbody>			
+			<%- game_not_played_account_ids.sort.each do |account_id| -%>
+			<%- a = accounts[account_id] -%>
+				<tr>
+					<td class="suppli num"><%= a.id.to_i %></td>
+					<td><%= h a.name %></td>
+				</tr>
 			<%- end -%>
 			</tbody>
 			</table>

@@ -4,7 +4,7 @@ require 'kakasi'
 include Kakasi
 require 'nkf'
 
-NG_WORDS = File.read("#{File::dirname(__FILE__)}/../../../config/ng_words.txt").split("\n")
+NG_WORDS = File.read("#{File::dirname(__FILE__)}/../../../config/ng_words_list.txt").split("\n")
 NG_WORDS_REGEXP = Regexp.new(NG_WORDS.join("|"))
 
 module Utils

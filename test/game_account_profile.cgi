@@ -5,7 +5,7 @@
 # 開始時刻
 now = Time.now
 # リビジョン
-REVISION = 'R0.04'
+REVISION = 'R0.05'
 
 DEBUG = 1
 
@@ -66,16 +66,18 @@ begin
 		# ゲーム・アカウント・使用名称ごとに、使用回数の降順で取得
 		res = db.exec(<<-"SQL")
 		  SELECT
-			game_id AS game_id, player1_account_id AS account_id, player1_name AS rep_name, count(*) AS count
+			game_id AS game_id,
+			account_id AS account_id,
+			player_name AS rep_name,
+			SUM(matched_track_records_count) AS count
 		  FROM
-			track_records
+			game_account_player_name_daily_stats
 		  WHERE
-			matched_track_record_id IS NOT NULL
-			AND game_id = #{game_id.to_i}
+			game_id = #{game_id.to_i}
 		  GROUP BY
-			game_id, player1_account_id, player1_name
+			game_id, account_id, player_name
 		  ORDER BY
-			game_id, player1_account_id, count DESC
+			game_id, account_id, count DESC
 		SQL
 		
 		res_body << "#{res.num_tuples} 件のゲーム・アカウント・使用名称のデータをDBから取得しました\n"

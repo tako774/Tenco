@@ -5,14 +5,15 @@ begin
 	# 開始時刻
 	now = Time.now
 	# リビジョン
-	REVISION = 'R0.11'
+	REVISION = 'R0.12'
 	DEBUG = false
 
+	# TOP ディレクトリパス
 	TOP_DIR = '.'
 	
 	$LOAD_PATH.unshift "#{TOP_DIR}/common"
 	$LOAD_PATH.unshift "#{TOP_DIR}/entity"
-
+	
 	require 'time'
 	require 'logger'
 	require 'utils'
@@ -22,8 +23,6 @@ begin
 	CFG = Setting.new
 	# TOP ページ URL
 	TOP_URL = CFG['top_url']
-	# TOP ディレクトリパス
-	TOP_DIR = '.'
 	# ログファイルパス
 	LOG_PATH = "#{TOP_DIR}/log/log_#{now.strftime('%Y%m%d')}.log"
 	ACCESS_LOG_PATH = "#{TOP_DIR}/log/access_#{now.strftime('%Y%m%d')}.log"
@@ -85,7 +84,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		# クエリストリング分解・取得
 		query = parse_query_str(ENV['QUERY_STRING'])
 		
-		output = query['output'] ||= 'html'    # 出力形式
+		output = query['output'] || 'html'    # 出力形式
 		
 		# キャッシュフォルダがなければ生成
 		Dir.mkdir(CACHE_BASE, 0700) unless File.exist?(CACHE_BASE)
@@ -94,7 +93,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 
 		# キャッシュパス設定・プロセスロックファイルパス設定
 		cache_html_path = "#{CACHE_DIR}/#{File::basename(__FILE__)}.html"
-		cache_html_header_path  = "#{cache_html_path}.h"	
+		cache_html_header_path = "#{cache_html_path}.h"	
 		cache_lock_path = "#{CACHE_LOCK_DIR}/#{File::basename(__FILE__)}.lock"
 		
 		# キャッシュパスのバリデーション
@@ -161,27 +160,10 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 								COALESCE(gs.matched_track_records_count, 0) AS matched_track_records_count
 							FROM
 								games g
-									LEFT OUTER JOIN
-										(
-										SELECT
-											gst1.*
-										FROM
-											game_stats gst1,
-											(
-												SELECT 
-													game_id,
-													MAX(date_time) AS max_date_time
-												FROM
-													game_stats
-												GROUP BY
-													game_id
-											) AS gst2
-										WHERE
-											gst1.game_id = gst2.game_id
-											AND gst1.date_time = gst2.max_date_time
-										) AS gs
-									ON
-										g.id = gs.game_id
+								LEFT OUTER JOIN
+									game_stats gs
+								ON
+									g.id = gs.game_id
 						SQL
 						
 						res.each do |r|
@@ -216,29 +198,13 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 										g.id = gt.game_id
 								) AS gt2
 								LEFT OUTER JOIN
-									(
-									SELECT
-										gtst1.*
-									FROM
-										game_type1_stats gtst1,
-										(
-											SELECT 
-												game_id,
-												MAX(date_time) AS max_date_time
-											FROM
-												game_type1_stats
-											GROUP BY
-												game_id
-										) AS gtst2
-									WHERE
-										gtst1.game_id = gtst2.game_id
-										AND gtst1.date_time = gtst2.max_date_time
-									) AS gts
+									game_type1_stats gts
 								ON
-									gt2.game_id = gts.game_id
+									    gt2.game_id = gts.game_id
 									AND gt2.type1_id = gts.type1_id
 							ORDER BY
-								gt2.game_id, gt2.type1_id
+								gt2.game_id,
+								gt2.type1_id
 							SQL
 							
 						res.each do |r|

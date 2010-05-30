@@ -33,7 +33,7 @@
 		<td class="num"><%= h gts.accounts_count %></td>
 		<td class="num"><%= h gts.track_records_count %></td>
 		<%- if gts.track_records_count.to_f != 0 -%>
-		<td class="num"><%= h "#{((gts.wins.to_f / gts.track_records_count.to_f) * 1000.0).round / 10.0} %" %></td>
+		<td class="num"><%= h "#{((gts.wins.to_f / gts.track_records_count.to_f) * 1000.0).round / 10.0}%" %></td>
 		<%- else -%>
 		<td class="num">-</td>
 		<%- end -%>

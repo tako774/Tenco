@@ -88,6 +88,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		tag = {} # タグ情報
 		games = {} # ゲーム情報、キー：ゲームID、値：ゲーム情報
 		accounts = {} # タグ付けされているアカウントの情報 キー：アカウントID、値：アカウント情報
+		game_not_played_account_ids = []
 		game_accounts = {} # タグ付けされているゲームアカウント情報　キー：ゲームID、値：ゲームアカウント情報
 		type1 = {} # Type1区分値、キー1：ゲームID、キー2：Type1ID、値：名前
 				
@@ -197,6 +198,10 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 						end
 						
 						# 該当アカウントのゲームごとの情報を取得
+						# タイミングによっては、タグをつけられたアカウントが
+						# どのゲームも報告していないケースがある
+						game_not_played_account_ids = accounts.keys
+						
 						require 'GameAccount'
 						res = db.exec(<<-"SQL")
 							SELECT
@@ -223,29 +228,33 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							ga.cluster_name ||= "（新参加）"
 							game_accounts[ga.game_id.to_i] ||= {}
 							game_accounts[ga.game_id.to_i][ga.account_id.to_i] ||= ga
+							
+							game_not_played_account_ids.delete ga.account_id.to_i
 						end
 						res.clear	
 						
 						# ゲーム情報を取得
 						require 'Game'
-						res = db.exec(<<-"SQL")
-							SELECT
-								*
-							FROM
-								games
-							WHERE
-								id IN (#{game_accounts.keys.join(",")})
-						SQL
-						
-						res.each do |r|
-							g = Game.new
-							res.num_fields.times do |i|
-								g.instance_variable_set("@#{res.fields[i]}", r[i])
+						if game_accounts.keys.length > 0 then
+							res = db.exec(<<-"SQL")
+								SELECT
+									*
+								FROM
+									games
+								WHERE
+									id IN (#{game_accounts.keys.join(",")})
+							SQL
+							
+							res.each do |r|
+								g = Game.new
+								res.num_fields.times do |i|
+									g.instance_variable_set("@#{res.fields[i]}", r[i])
+								end
+								games[g.id.to_i] = g
 							end
-							games[g.id.to_i] = g
+							res.clear
 						end
-						res.clear
-
+						
 =begin						
 						# アカウントのレーティング情報を取得
 						require 'GameAccountRating'
@@ -273,20 +282,22 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 =end	
 
 						# Type1 区分値取得
-						res = db.exec(<<-"SQL")
-							SELECT
-								game_id, type1_id, name
-							FROM
-								game_type1s
-							WHERE
-								id IN (#{game_accounts.keys.join(",")})
-						SQL
-						
-						res.each do |r|
-							type1[r[0].to_i] ||= {}
-							type1[r[0].to_i][r[1].to_i] = h(r[2])
+						if game_accounts.keys.length > 0 then
+							res = db.exec(<<-"SQL")
+								SELECT
+									game_id, type1_id, name
+								FROM
+									game_type1s
+								WHERE
+									id IN (#{game_accounts.keys.join(",")})
+							SQL
+							
+							res.each do |r|
+								type1[r[0].to_i] ||= {}
+								type1[r[0].to_i][r[1].to_i] = h(r[2])
+							end
+							res.clear
 						end
-						res.clear
 						
 						# 仮想 Type1 区分値取得
 						SEG_V[:virtual_type1].each_value do |seg|

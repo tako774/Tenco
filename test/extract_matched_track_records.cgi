@@ -8,6 +8,7 @@ REVISION = '0.01'
 DEBUG = 1
 
 $LOAD_PATH.unshift '../common'
+$LOAD_PATH.unshift '../entity'
 $LOAD_PATH.unshift '../dao'
 
 require 'kconv'
@@ -54,7 +55,6 @@ begin
 
 	# ゲームIDごとに実行
 	game_ids.each do |game_id|
-		str = "" # ファイル出力文字列
 		data_file = "#{DATA_DIR}/#{game_id}" # 出力先パス
 		
 		res_body << "★GAME_ID:#{game_id} の処理\n"
@@ -80,15 +80,11 @@ begin
 			
 		res_body << "matched trackrecords selected...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
 
-		# 出力文字列生成
-		res.each do |r|
-			str << r.join(CSV_SEPARATOR)
-			str << "\n"
-		end
-				
-		# ファイル書き出し
+		# 出力文字列生成・ファイル書き出し
 		File.open(data_file, 'wb') do |w|
-			w.print str
+			res.each do |r|
+				w.puts r.join(CSV_SEPARATOR)
+			end
 		end
 
 		res_body << "#{res.num_tuples} 件の対戦結果をファイル出力\n" if DEBUG

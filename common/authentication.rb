@@ -18,7 +18,7 @@ class Authentication
 		# DB検索
 		res = db.exec(<<-"SQL")
 		  SELECT
-		    id, name, data_password, del_flag, encrypted_mail_address, show_ratings_flag, lock_version
+		    id, name, data_password, del_flag, encrypted_mail_address, show_ratings_flag, allow_edit_profile, lock_version
 		  FROM
 		    accounts
 		  WHERE
@@ -90,7 +90,7 @@ class Authentication
 	
 	# アカウント情報更新
 	# なければエラー
-	def self.update (name, password, new_mail_address, new_password, show_ratings_flag, lock_version)
+	def self.update (name, password, new_mail_address, new_password, show_ratings_flag, allow_edit_profile, lock_version)
 		require 'cryption'
 		
 		# DB接続取得
@@ -105,6 +105,7 @@ class Authentication
 			#{"encrypted_password = " + s(Cryption.encrypt(new_password)) + "," if new_password}
 			#{"encrypted_mail_address = " + s(Cryption.encrypt(new_mail_address)) + ","  if new_mail_address}
 			#{"show_ratings_flag = " + show_ratings_flag.to_i.to_s + ","  if show_ratings_flag}
+			#{"allow_edit_profile = " + allow_edit_profile.to_i.to_s + ","  if allow_edit_profile}
 			lock_version = lock_version + 1,
 			updated_at = CURRENT_TIMESTAMP
 		  WHERE

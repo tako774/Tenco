@@ -1,10 +1,11 @@
 #!/usr/bin/ruby
+# -*- coding: utf-8 -*-
 
 # 開始時刻
 now = Time.now
 
 ### Glicko Ratings 計算 (ファイル入力) ###
-REVISION = '0.19'
+REVISION = '0.20'
 DEBUG = 1
 
 $LOAD_PATH.unshift '../common'
@@ -49,8 +50,7 @@ begin
 	B = 10.0 ** (1.0/400.0) # 定数 
 	INV_B = 10.0 ** (-1.0/400.0)  # 定数 
 	
-	now_timestamp = now.to_i # 現在時刻（UNIX Time）
-	track_records_num = 0 # 取得対戦結果数
+	games = nil # レート計算対象ゲーム情報
 	
 	CSV_SEPARATOR = ','
 	CSV_SEPARATOR_REGEX = /,/o
@@ -64,16 +64,31 @@ begin
 	# 処理対象のゲームID取得
 	require 'GameDao'
 	game_dao = GameDao.new
-	game_ids = game_dao.get_batch_target_ids
+	games = game_dao.get_rating_targets
 	
-	res_body << "batch target game_ids selected...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
+	res_body << "batch target games selected...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
 	
 	# ゲームIDごとにレート計算実行
-	game_ids.each do |game_id|
-		res_body << "★GAME_ID:#{game_id} の処理\n"
+	games.each do |game|
+		res_body << "★GAME_ID:#{game.id} の処理\n"
+		GC.start
+		res_body << "garbage collected...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
 		
-		data_file = "#{DATA_DIR}/#{game_id}"
+		track_records_num = 0 # 取得対戦結果数
+		match_end_at = nil # レート計算終了時刻
+		data_file = "#{DATA_DIR}/#{game.id}"
 		account_type1_rate = {} # アカウント・キャラごとのレート情報
+		end_timestamp = nil  # 現在時刻（UNIX Time）
+		
+		if game.match_end_at then
+			end_timestamp = pgsql_timestamp_str_to_time(game.match_end_at).to_i 
+		else
+			end_timestamp = now.to_i
+		end
+		
+		if game.match_end_at then
+			match_end_at = pgsql_timestamp_str_to_time(game.match_end_at).to_i 
+		end
 		
 		# 以下ループで使いまわすインスタンス
 		t = TrackRecord.new
@@ -88,10 +103,15 @@ begin
 				t.player1_points,
 				t.player2_points = line.chop!.split(CSV_SEPARATOR_REGEX)
 				
-				t.rep_timestamp = t.rep_timestamp.to_i
+				t.rep_timestamp = t.rep_timestamp.to_i	
 				t.player1_points = t.player1_points.to_i
 				t.player2_points = t.player2_points.to_i
-			
+				
+				# 計算対象時刻を過ぎていたら終了
+				if match_end_at && t.rep_timestamp >= match_end_at then
+					break
+				end
+
 				### 発生時間順にレート計算
 				
 				# アカウント・タイプ別レート情報初期化
@@ -196,8 +216,8 @@ begin
 		# 現在のRDを算出
 		account_type1_rate.each do |account_id, type1_rate|
 			type1_rate.each do |type1_id, rate_info|
-				rate_info[:rd_sq] = rate_info[:rd_sq] + RD_DEC * (now_timestamp - rate_info[:last_timestamp])
-				rate_info[:rd_sq] = MAX_RD_SQ if rate_info[:rd_sq] > MAX_RD_SQ
+				rate_info[:rd_sq] += RD_DEC * (end_timestamp - rate_info[:last_timestamp])
+				rate_info[:rd_sq]  = MAX_RD_SQ if rate_info[:rd_sq] > MAX_RD_SQ
 				rate_info[:rd] = rate_info[:rd_sq] ** 0.5
 			end
 		end
@@ -252,7 +272,7 @@ SET
   updated_at = CURRENT_TIMESTAMP,
   lock_version = lock_version + 1
 WHERE
-  game_id = #{game_id.to_i}
+  game_id = #{game.id.to_i}
   AND account_id = #{account_id.to_i}
   AND type1_id = #{type1_id.to_i}
 					SQL
@@ -275,7 +295,7 @@ WHERE
 						  )
 						  VALUES
 						  (
-							#{game_id.to_i},
+							#{game.id.to_i},
 							#{account_id.to_i},
 							#{type1_id.to_i},
 							#{rate_info[:rate].to_f},
@@ -291,7 +311,9 @@ WHERE
 					res_update.clear
 				end
 			end
-			
+		
+		account_type1_rate = nil
+		
 		rescue => ex
 			res_status = "Status: 500 Server Error\n"
 			res_body << "レーティング計算時にエラーが発生しました。\n#{update_sql}\n#{insert_sql}"

@@ -24,13 +24,14 @@ function get_account_settings(account_name, account_password) {
 }
 
 // アカウントデータ更新
-function update_account_settings(account_name, account_password, new_mail_address, new_account_password, new_show_ratings_flag, lock_version) {
-	var account_name          = account_name;
-	var account_password      = account_password;
-	var new_mail_address      = new_mail_address;
-	var new_account_password  = new_account_password;
-	var new_show_ratings_flag = new_show_ratings_flag;
-	var lock_version          = lock_version;
+function update_account_settings(account_name, account_password, new_mail_address, new_account_password, new_show_ratings_flag, new_allow_edit_profile, lock_version) {
+	var account_name           = account_name;
+	var account_password       = account_password;
+	var new_mail_address       = new_mail_address;
+	var new_account_password   = new_account_password;
+	var new_show_ratings_flag  = new_show_ratings_flag;
+	var new_allow_edit_profile = new_allow_edit_profile;
+	var lock_version           = lock_version;
 	
 	if (lock_account_process == 0) {
 		// 実行ロック
@@ -41,7 +42,7 @@ function update_account_settings(account_name, account_password, new_mail_addres
 		$("#message").text("アカウント情報更新中...");		
 
 		// アカウント情報更新
-		update_account_settings(account_name, account_password, new_mail_address, new_account_password, new_show_ratings_flag, lock_version);
+		update_account_settings(account_name, account_password, new_mail_address, new_account_password, new_show_ratings_flag, new_allow_edit_profile, lock_version);
 		
 		// 実行ロック解除
 		lock_account_process = 0;
@@ -69,6 +70,7 @@ function show_account_settings(account_name, account_password) {
 			// 取得データ表示
 			var mail_address = $("mail_address", $("account", data)).text();
 			var show_ratings_flag = $("show_ratings_flag", $("account", data)).text();
+			var allow_edit_profile = $("allow_edit_profile", $("account", data)).text();
 			var lock_version = $("lock_version", $("account", data)).text();
 			
 			if (mail_address) {
@@ -81,13 +83,24 @@ function show_account_settings(account_name, account_password) {
 			
 			if (show_ratings_flag == 0) {
 				$("#show_ratings").text("あいまい表示");
-				$("input[@name='new_show_ratings_flag'][value='0']").attr("checked", "checked");
-				$("input[@name='new_show_ratings_flag'][value='1']").removeAttr("checked");
+				$("input[name='new_show_ratings_flag'][value='0']").attr("checked", "checked");
+				$("input[name='new_show_ratings_flag'][value='1']").removeAttr("checked");
 			}
 			else {
 				$("#show_ratings").text("表示する");
-				$("input[@name='new_show_ratings_flag'][value='0']").removeAttr("checked");
-				$("input[@name='new_show_ratings_flag'][value='1']").attr("checked", "checked");
+				$("input[name='new_show_ratings_flag'][value='0']").removeAttr("checked");
+				$("input[name='new_show_ratings_flag'][value='1']").attr("checked", "checked");
+			}
+			
+			if (allow_edit_profile == 0) {
+				$("#allow_edit_profile").text("編集不可（自分も不可）");
+				$("input[name='new_allow_edit_profile'][value='0']").attr("checked", "checked");
+				$("input[name='new_allow_edit_profile'][value='1']").removeAttr("checked");
+			}
+			else {
+				$("#allow_edit_profile").text("編集できる");
+				$("input[name='new_allow_edit_profile'][value='0']").removeAttr("checked");
+				$("input[name='new_allow_edit_profile'][value='1']").attr("checked", "checked");
 			}
 			
 			$("#lock_version").val(lock_version);
@@ -112,12 +125,13 @@ function show_account_settings(account_name, account_password) {
 }
 
 // アカウント情報更新
-function update_account_settings(account_name, account_password, new_mail_address, new_account_password, new_show_ratings_flag, lock_version) {
-	var account_name          = account_name;
-	var account_password      = account_password;
-	var new_mail_address      = new_mail_address;
-	var new_account_password  = new_account_password;
-	var new_show_ratings_flag = new_show_ratings_flag;
+function update_account_settings(account_name, account_password, new_mail_address, new_account_password, new_show_ratings_flag, new_allow_edit_profile, lock_version) {
+	var account_name           = account_name;
+	var account_password       = account_password;
+	var new_mail_address       = new_mail_address;
+	var new_account_password   = new_account_password;
+	var new_show_ratings_flag  = new_show_ratings_flag;
+	var new_allow_edit_profile = new_allow_edit_profile;
 	var lock_version          = lock_version;	
 	
 	$.ajax({
@@ -129,6 +143,7 @@ function update_account_settings(account_name, account_password, new_mail_addres
 			new_mail_address: new_mail_address,
 			new_account_password: new_account_password,
 			new_show_ratings_flag: new_show_ratings_flag,
+			new_allow_edit_profile: new_allow_edit_profile,
 			lock_version: lock_version
 		},
 		cache: false,
@@ -136,6 +151,7 @@ function update_account_settings(account_name, account_password, new_mail_addres
 			// 取得データ表示
 			var mail_address = $("mail_address", $("account", data)).text();
 			var show_ratings_flag = $("show_ratings_flag", $("account", data)).text();
+			var allow_edit_profile = $("allow_edit_profile", $("account", data)).text();
 			var lock_version = $("lock_version", $("account", data)).text();
 			
 			if (mail_address) {
@@ -148,14 +164,26 @@ function update_account_settings(account_name, account_password, new_mail_addres
 			
 			if (show_ratings_flag == 0) {
 				$("#show_ratings").text("あいまい表示");
-				$("input[@name='new_show_ratings_flag'][value='0']").attr("checked", "checked");
-				$("input[@name='new_show_ratings_flag'][value='1']").removeAttr("checked");
+				$("input[name='new_show_ratings_flag'][value='0']").attr("checked", "checked");
+				$("input[name='new_show_ratings_flag'][value='1']").removeAttr("checked");
 			}
 			else {
 				$("#show_ratings").text("表示する");
-				$("input[@name='new_show_ratings_flag'][value='0']").removeAttr("checked");
-				$("input[@name='new_show_ratings_flag'][value='1']").attr("checked", "checked");
+				$("input[name='new_show_ratings_flag'][value='0']").removeAttr("checked");
+				$("input[name='new_show_ratings_flag'][value='1']").attr("checked", "checked");
 			}
+			
+			if (allow_edit_profile == 0) {
+				$("#allow_edit_profile").text("編集不可（自分も不可）");
+				$("input[name='new_allow_edit_profile'][value='0']").attr("checked", "checked");
+				$("input[name='new_allow_edit_profile'][value='1']").removeAttr("checked");
+			}
+			else {
+				$("#allow_edit_profile").text("編集できる");
+				$("input[name='new_allow_edit_profile'][value='0']").removeAttr("checked");
+				$("input[name='new_allow_edit_profile'][value='1']").attr("checked", "checked");
+			}
+			
 			$("#lock_version").val(lock_version);
 			
 			// パスワード更新

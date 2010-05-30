@@ -1,6 +1,7 @@
 ### DB接続シングルトン
-# require 'rubygems' # XREA サーバーでは不要
-require 'postgres'
+# require 'rubygems'
+require 'pg'
+require 'pg-util'
 require 'yaml'
 
 CONFIG = YAML.load_file("#{File::dirname(__FILE__)}/../../../config/db.yaml")
@@ -39,6 +40,7 @@ class DB
 	
 	def close
 		@con.close if @con
+		@@db = nil
 	end
 	
 	def reset

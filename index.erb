@@ -5,15 +5,15 @@
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<meta http-equiv="content-style-type" content="text/css" />
 	<meta http-equiv="content-script-type" content="text/javascript" />
-	<link rel="stylesheet" type="text/css" href="./css/main.css" />	
-	<link rel="stylesheet" type="text/css" href="<%= TOP_URL %>css/2cols_side-width-fixed.css" />
+	<link rel="stylesheet" type="text/css" href="<%= CFG[:static_url] %>css/main.css" />	
+	<link rel="stylesheet" type="text/css" href="<%= CFG[:static_url] %>css/2cols_side-width-fixed.css" />
 	<title>Tenco! 東方非想天則／東方緋想天レーティング</title>
 </head>
 <body>
 <div id="container">
 
 <div id="header">
-	<a href="<%= TOP_URL %>"><img alt="Tenco!" src='./images/Tenco.gif' width='366' height='126' /></a>
+	<a href="<%= CFG[:top_url] %>"><img alt="Tenco!" src='<%= CFG[:static_url] %>images/Tenco.gif' width='366' height='126' /></a>
 	<h1>Tenco! 東方非想天則／東方緋想天レーティング</h1>
 </div>
 
@@ -24,11 +24,14 @@
 	<h2>天則観報告ツール</h2>
 
 	<p>
-	<img alt="" src="./client/images/suwako.ico" width="32" height="32" /> <a href="./client/tsk_report_v002.zip" style="font-weight:bold;font-size:110%;">天則観報告ツール Ver.0.02</a>（2009/10/15 <a href="./client/tsk_report_history.txt">更新履歴</a> <a href="./client/tsk_report_readme.txt">Readme.txt</a>）
+		<img alt="" src="<%= CFG[:static_url] %>client/images/suwako.ico" width="32" height="32" />
+		<a href="<%= CFG[:static_url] %>client/tsk_report_v002.zip" style="font-weight:bold;font-size:110%;">天則観報告ツール Ver.0.02</a>
+		（2009/10/15 <a href="<%= CFG[:static_url] %>client/tsk_report_history.txt">更新履歴</a>
+		<a href="<%= CFG[:static_url] %>client/tsk_report_readme.txt">Readme.txt</a>）
 	</p>
 	<p>
 	<a href="http://mint.s150.xrea.com/?%E5%A4%A9%E5%89%87%E8%A6%B3" target="_blank" style="font-weight:bold">天則観</a>の対戦結果を、Tenco! サーバーに報告するアプリです。<br />
-	対戦結果を報告すると、非想天則の<a href="<%= TOP_URL %>game/2/account/nanashi/" style="font-weight:bold">マイページ</a>が見られるようになります。<br />
+	対戦結果を報告すると、非想天則の<a href="<%= CFG[:top_url] %>game/2/account/nanashi/" style="font-weight:bold">マイページ</a>が見られるようになります。<br />
 	すでに緋行跡報告ツールを使っている方は、一度でもマッチングすれば、そのあと既存のマイページからリンクが貼られます。<br />
 	<span class="suppli">（上記のリンク先は、nanashi@Tenco!企画・制作・運用担当のページです）</span>
 	</p>
@@ -37,13 +40,13 @@
 	<ol>
 	<li>天則観のフォルダに、解凍してできたフォルダを<strong>フォルダごと</strong>移動します。<br />
 		エクスプローラーで、下記画像のように見えていればOK<br />
-		<a href="./images/tsk_report_install_01.png"><img alt="tsk.exe や Default.db と、天則観報告ツールフォルダは同じ階層におきます" src="./images/tsk_report_install_01.png"/></a></li>
+		<a href="<%= CFG[:static_url] %>images/tsk_report_install_01.png"><img alt="tsk.exe や Default.db と、天則観報告ツールフォルダは同じ階層におきます" src="<%= CFG[:static_url] %>images/tsk_report_install_01.png"/></a></li>
 	<li>あとは、tsk_report.exe を実行するだけです。黒窓が立ち上がります。<br />
 	初回起動時のみ、サーバーへのアカウント登録またはアカウント設定が必要です。</li>
 	</ol>
 	<p>
 	アップデートは、圧縮ファイルの中身をそのまま上書きしてしまえば完了です。<br />
-	より詳しい情報は、<a href="./client/tsk_report_readme.txt">Readme.txt</a> や東方 Tools Wiki の <a href="http://mint.s150.xrea.com/?%E5%A4%A9%E5%89%87%E8%A6%B3%E5%A0%B1%E5%91%8A%E3%83%84%E3%83%BC%E3%83%AB" target="_blank">天則観報告ツールのページ</a>に書いてありますので、ご一読願います。
+	より詳しい情報は、<a href="<%= CFG[:static_url] %>client/tsk_report_readme.txt">Readme.txt</a> や東方 Tools Wiki の <a href="http://mint.s150.xrea.com/?%E5%A4%A9%E5%89%87%E8%A6%B3%E5%A0%B1%E5%91%8A%E3%83%84%E3%83%BC%E3%83%AB" target="_blank">天則観報告ツールのページ</a>に書いてありますので、ご一読願います。
 	</p>
 </div>
 
@@ -51,24 +54,24 @@
 	<h2>緋行跡報告ツール</h2>
 
 	<p>
-	<img alt="" src="./client/images/tenco.ico" width="32" height="32" /> <a href="./client/hks_report_v008.zip" style="font-weight:bold;font-size:110%;">緋行跡報告ツール Ver.0.08</a>（2009/10/15 <a href="./client/hks_report_history.txt">更新履歴</a> <a href="./client/hks_report_readme.txt">Readme.txt</a>）
+	<img alt="" src="<%= CFG[:static_url] %>client/images/tenco.ico" width="32" height="32" /> <a href="<%= CFG[:static_url] %>client/hks_report_v008.zip" style="font-weight:bold;font-size:110%;">緋行跡報告ツール Ver.0.08</a>（2009/10/15 <a href="<%= CFG[:static_url] %>client/hks_report_history.txt">更新履歴</a> <a href="<%= CFG[:static_url] %>client/hks_report_readme.txt">Readme.txt</a>）
 	</p>
 	<p>
 	<a href="http://mint.s150.xrea.com/?%E7%B7%8B%E8%A1%8C%E8%B7%A1" target="_blank" style="font-weight:bold">緋行跡 (Rev.10** 系列)</a>の対戦結果を、Tenco! サーバーに報告するアプリです。<br />
-	対戦結果を報告すると、緋想天の<a href="<%= TOP_URL %>game/1/account/nanashi/" style="font-weight:bold">マイページ</a>が見られるようになります。<br />
+	対戦結果を報告すると、緋想天の<a href="<%= CFG[:top_url] %>game/1/account/nanashi/" style="font-weight:bold">マイページ</a>が見られるようになります。<br />
 	<span class="suppli">（上記のリンク先は、nanashi@Tenco!企画・制作・運用担当のページです）</span>
 	</p>
 
 	<h2>インストール方法・使い方 - 緋行跡報告ツール</h2>
 	<ol>
 	<li>緋行跡のフォルダに、解凍してできたフォルダを<strong>フォルダごと</strong>移動します。<br />
-	エクスプローラーで、<a href="./images/hks_report_install_01.png">この画像</a>のように見えていればOK。</li>
+	エクスプローラーで、<a href="<%= CFG[:static_url] %>images/hks_report_install_01.png">この画像</a>のように見えていればOK。</li>
 	<li>あとは、hks_report.exe を実行するだけです。黒窓が立ち上がります。<br />
 	初回起動時のみ、サーバーへのアカウント登録が必要です。</li>
 	</ol>
 	<p>
 	アップデートは、圧縮ファイルの中身をそのまま上書きしてしまえば完了です。<br />
-	より詳しい情報は、<a href="./client/hks_report_readme.txt">Readme.txt</a> や東方 Tools Wiki の <a href="http://mint.s150.xrea.com/?%E7%B7%8B%E8%A1%8C%E8%B7%A1%E5%A0%B1%E5%91%8A%E3%83%84%E3%83%BC%E3%83%AB%20Tenco%21" target="_blank">緋行跡報告ツールのページ</a>に書いてありますので、ご一読願います。
+	より詳しい情報は、<a href="<%= CFG[:static_url] %>client/hks_report_readme.txt">Readme.txt</a> や東方 Tools Wiki の <a href="http://mint.s150.xrea.com/?%E7%B7%8B%E8%A1%8C%E8%B7%A1%E5%A0%B1%E5%91%8A%E3%83%84%E3%83%BC%E3%83%AB%20Tenco%21" target="_blank">緋行跡報告ツールのページ</a>に書いてありますので、ご一読願います。
 	</p>
 
 	<h3>以前のバージョンをお使いの方へ</h3>
@@ -80,7 +83,7 @@
 
 	<h3>緋行跡のダウンロードミラー</h3>
 	<p class="suppli">
-	<a href="./misc/th3_6493.zip" style="font-weight:bold">緋行跡 Rev.1008 Test</a><br />
+	<a href="<%= CFG[:static_url] %>misc/th3_6493.zip" style="font-weight:bold">緋行跡 Rev.1008 Test</a><br />
 	Coolier の <a href="http://coolier.sytes.net:8080/th_up3/file/th3_6493.zip">http://coolier.sytes.net:8080/th_up3/file/th3_6493.zip</a> と同一のファイルです。<br />
 	上記の Coolier アップローダーから緋行跡が取得できない場合は、こちらからダウンロードできます。
 	</p>
@@ -112,7 +115,7 @@
 <ul>
 <li>報告：<strong>非想天則について対応済み！</strong></li>
 <li>計算：<strong>'08/12/16レーティング計算Rev.3リリース！「グリコレーティング」になり、レート信頼度・適正レートへの収束速度が大幅改善！</strong>毎時0分ちょっと前に更新。</li>
-<li>表示：<a href="<%= TOP_URL %>game/2/account/nanashi/">開発版ページ</a>。マイページ開発中！</li>
+<li>表示：<a href="<%= CFG[:top_url] %>game/2/account/nanashi/">開発版ページ</a>。マイページ開発中！</li>
 <li>ドキュメント作成・QA：<a href="http://mint.s150.xrea.com/?%E7%B7%8B%E8%A1%8C%E8%B7%A1%E5%A0%B1%E5%91%8A%E3%83%84%E3%83%BC%E3%83%AB%20Tenco%21" target="_blank">東方 Tools Wiki</a> や <a href="http://jbbs.livedoor.jp/game/48698/">萃磨選堆の東方非想天則掲示板</a> のツールスレに多少の説明書きがあります</li>
 </ul>
 <p id="info_20091006">
@@ -152,7 +155,7 @@
 <p>
 2009/03/16 04:50<br />
 久しぶりに大型の更新です（書いていない細かいチューニングはかなりやってたのですが）。<br />
-<a href="<%= TOP_URL %>game/1/pov/2/" style="font-weight:bold">マッチングアカウント数のランキング</a>を追加しました<br />
+<a href="<%= CFG[:top_url] %>game/1/pov/2/" style="font-weight:bold">マッチングアカウント数のランキング</a>を追加しました<br />
 １位の人が自分の倍近いです。すごい。
 </p>
 <p>
@@ -221,7 +224,7 @@ IE7以下でもそうなのであれば、さすがに対策が必要そうで�
 </p>
 <p>
 2008/12/08 0:05<br />
-<a href="<%= TOP_URL %>game/1/account/nanashi/" style="font-weight:bold">マイページ</a> を更新しました。
+<a href="<%= CFG[:top_url] %>game/1/account/nanashi/" style="font-weight:bold">マイページ</a> を更新しました。
 </p>
 <ul>
 	<li>右カラムのリンクをつけました。</li>
@@ -260,7 +263,7 @@ ActiveRecord や rubygems を使わないで素の postgres モジュールで D
 </p>
 <p>
 2008/12/03 21:50<br />
-<a href="./images/20081202_workload.gif">各CGIの総実行時間EXCEL表画像</a><br />
+<a href="<%= CFG[:static_url] %>images/20081202_workload.gif">各CGIの総実行時間EXCEL表画像</a><br />
 負荷調査の結果、一番トータルで実行時間をとっているのはマイページ表示のようです。<br />
 次に報告を受けるCGIの順でした。そーなのかー。
 </p>
@@ -281,8 +284,8 @@ DBアクセス頻度を下げるため、マイページのキャッシュ化・
 	<%= index_game_stats_html %>
 	<h2>アカウントネットワーク図</h2>
 	<p style="margin-left:10px;">
-		<a href="./misc/viz/20090807_network_whole.png"><img height="120" src="./misc/viz/20090807_network_whole_mini.png" alt="アカウントネットワーク図" /></a>
-		<a href="./misc/viz/20090807_network_main.png"><img height="120" src="./misc/viz/20090807_network_main_mini.png" alt="アカウントネットワーク図（拡大）" /></a>
+		<a href="<%= CFG[:static_url] %>misc/viz/20090807_network_whole.png"><img height="120" src="<%= CFG[:static_url] %>misc/viz/20090807_network_whole_mini.png" alt="アカウントネットワーク図" /></a>
+		<a href="<%= CFG[:static_url] %>misc/viz/20090807_network_main.png"><img height="120" src="<%= CFG[:static_url] %>misc/viz/20090807_network_main_mini.png" alt="アカウントネットワーク図（拡大）" /></a>
 	</p>
 	<p class="suppli">
 		左：全体図　右：中央拡大図<br />
