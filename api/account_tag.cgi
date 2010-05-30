@@ -148,7 +148,7 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		require 'Account'
 		res = db.exec(<<-"SQL")
 			SELECT
-				id, name, data_password, show_ratings_flag
+				id, name, data_password, show_ratings_flag, allow_edit_profile
 			FROM
 				accounts
 			WHERE
@@ -167,6 +167,12 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 				account.instance_variable_set("@#{res.fields[i]}", res[0][i])
 			end
 			res.clear	
+		end
+		
+		if account.allow_edit_profile.to_i == 0 then
+			res_status = "Status: 400 Bad Request\n"
+			res_body = "プロファイル編集は不許可設定です\n"
+			raise "プロファイル編集は不許可"
 		end
 		
 		# タグの保有数をチェック

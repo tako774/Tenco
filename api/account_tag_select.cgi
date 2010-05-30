@@ -23,7 +23,7 @@ begin
 	# 設定読み込み
 	CFG = Setting.new
 	# TOP ページ URL
-	TOP_URL = CFG['top_url']
+	TOP_URL = CFG[:top_url]
 	# ログファイルパス
 	LOG_PATH = "#{TOP_DIR}/log/log_#{now.strftime('%Y%m%d')}.log"
 	ACCESS_LOG_PATH = "../log/access_#{now.strftime('%Y%m%d')}.log"
@@ -107,7 +107,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		require 'Account'
 		res = db.exec(<<-"SQL")
 			SELECT
-				id, name, data_password, show_ratings_flag
+				id, name, data_password, show_ratings_flag, allow_edit_profile
 			FROM
 				accounts
 			WHERE
@@ -199,7 +199,7 @@ end
 
 begin
 # HTTP レスポンス送信
-res_status "Status: 500 Internal Server Error\n" unless res_status
+res_status = "Status: 500 Internal Server Error\n" unless res_status
 res_header = "content-type:text/plain; charset=utf-8\n" unless res_header
 print res_status
 print res_header
