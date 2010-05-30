@@ -5,21 +5,26 @@ begin
 	now = Time.now
 
 	### 対戦結果I/F API ###
-	REVISION = 'R0.32'
+	REVISION = 'R0.34'
 	DEBUG = false
 
 	$LOAD_PATH.unshift '../common'
 	$LOAD_PATH.unshift '../entity'
+	$LOAD_PATH.unshift '../dao'
 
 	require 'rexml/document'
 	require 'kconv'
 	require 'yaml'
 	require 'time'
 	require 'logger'
+	require 'base64'
+	
 	require 'utils'
 	require 'cryption'
 	require 'cache'
 
+	require 'TrackRecordDao'
+	
 	# ログファイルパス
 	LOG_PATH = "../log/log_#{now.strftime('%Y%m%d')}.log"
 	ACCESS_LOG_PATH = "../log/access_#{now.strftime('%Y%m%d')}.log"
@@ -87,6 +92,8 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		
 		records_count = 0   # 登録件数
 		matched_records_count = 0   # マッチング成功件数
+		matched_track_record_ids = []   # マッチングした対戦結果レコードid
+		
 		type1_summary = {}  # キャラ別サマリ
 		                    # キー1：キャラID
 		                    # キー2：:matched_count マッチした対戦数 :wins マッチ済勝利数 :loses マッチ済敗北数
@@ -438,6 +445,10 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 					res.num_fields.times do |i|
 						matched_record.instance_variable_set("@#{res.fields[i]}", res[0][i])
 					end
+					
+					# マッチしたレコードのidを記録
+					matched_track_record_ids << t.id
+					matched_track_record_ids << matched_record.id
 					
 					# お互いのカラムを書き換え
 					t_time = Time.parse(t.play_timestamp)
@@ -1025,11 +1036,42 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 				SQL
 				
 				cache_val = (res.map { |r| r[0].to_i }).pack('I*')
-				cache.add(cache_key, cache_val)
+				
+				begin
+					cache.add(cache_key, cache_val)
+				rescue Memcached::NotStored
+					cache.delete cache_key
+				end
 			end
+			
+			# マッチした対戦結果レコードのキャッシュ削除
+			trd = TrackRecordDao.new
+			trd.delete_by_ids matched_track_record_ids
 		end
 		
-		
+=begin
+		if track_records.length > 0 then
+			# 対戦相手名・キャラごとの対戦結果idキャッシュ更新
+			track_records_by_p2name_p2type1 = {}
+			
+			track_records.each do |t|
+				track_records_by_p2name_p2type1[[t.player2_name, t.player2_type1_id]] ||= []
+				track_records_by_p2name_p2type1[[t.player2_name, t.player2_type1_id]]  << t
+			end
+			
+			track_records_by_p2name_p2type1.each do |p2name_p2type1, trs|
+				
+				begin
+					cache.append(
+						["trgnt", game_id.to_s(36), Base64.encode64(p2name_p2type1[0]).gsub(/[=\n]/, ''), p2name_p2type1[1].to_i.to_s(36)].join("_"),
+						(trs.map { |t| t.id.to_i }).pack('I*')
+					)
+				rescue Memcached::NotStored 
+				end
+			end
+		end
+=end
+
 	rescue => ex
 		res_status = "Status: 400 Bad Request\n" unless res_status
 		res_body << "対戦結果の登録・マッチング時にエラーが発生しました。ごめんなさい。（#{now.strftime('%Y/%m/%d %H:%M:%S')}）\n"

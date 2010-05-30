@@ -4,7 +4,7 @@ begin
 	# 開始時刻
 	now = Time.now
 	# リビジョン
-	REVISION = 'R0.55'
+	REVISION = 'R0.56'
 	DEBUG = false
 
 	$LOAD_PATH.unshift './common'
@@ -308,64 +308,12 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							
 							# 対戦結果ID一覧取得
 							trd = TrackRecordDao.new
-							track_record_ids = trd.get_track_record_ids(game_id, account.id)
+							track_record_ids = trd.get_ids_by_game_account(game_id, account.id)
 							
 							# 対戦結果取得
 							if track_record_ids.length > 0 then
-								res = db.exec(<<-"SQL")
-									SELECT
-										t.play_timestamp,
-										t.player1_name,
-										t.player1_type1_id,
-										t.player1_points,
-										case
-											when a2.name IS NULL then t.encrypted_base64_player2_name
-											else t.player2_name
-										end AS player2_name,
-										t.player2_type1_id,
-										t.player2_points,
-										a2.name AS player2_account_name,
-										ga.rep_name AS player2_rep_name,
-										a2.del_flag AS player2_account_del_flag
-									FROM
-										track_records t
-										LEFT OUTER JOIN
-										(
-										  accounts a2
-											LEFT OUTER JOIN
-											  game_accounts ga
-											ON
-											  ga.account_id = a2.id
-											  AND ga.game_id = #{game_id.to_i}
-										)
-										ON
-										  t.player2_account_id = a2.id
-										  AND a2.del_flag = 0
-									WHERE
-										t.id in (#{(track_record_ids[0..MAX_TRACK_RECORDS - 1].map { |i| "'#{i.to_i}'" }).join(", ")})
-									ORDER BY
-										t.play_timestamp DESC
-									SQL
-								
-								res.each do |r|
-									t = TrackRecord.new
-									# 高速化のため変数名直接指定
-									t.play_timestamp = r[0]
-									t.player1_name = r[1]
-									t.player1_type1_id = r[2]
-									t.player1_points = r[3]
-									t.player2_name = r[4]
-									t.player2_type1_id = r[5]
-									t.player2_points = r[6]
-									t.player2_account_name = r[7]
-									t.player2_rep_name = r[8]
-									t.player2_account_del_flag = r[9]								
-									#res.num_fields.times do |i|
-									#	t.instance_variable_set("@#{res.fields[i]}", r[i])
-									#end
-									track_records << t
-								end
-								res.clear
+								track_records = trd.get_track_records_by_ids(track_record_ids[0..MAX_TRACK_RECORDS - 1])
+								track_records.sort! { |a,b| b.play_timestamp <=> a.play_timestamp }
 							end
 
 							# 推定レートの値を取得
@@ -420,23 +368,47 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							
 							# 対戦相手一覧作成
 							require 'GameAccount'
-							matched_game_accounts_names = {}
-							track_records.each do |t|
-								if (
-									t.player2_account_name and
-									t.player2_rep_name and
-									!matched_game_accounts_names.key?(t.player2_account_name) and
-									t.player2_account_del_flag.to_i == 0
-								) then
-									matched_game_account = GameAccount.new
-									matched_game_account.account_name = t.player2_account_name.to_s
-									matched_game_account.rep_name = t.player2_rep_name.to_s
-									matched_game_accounts << matched_game_account
-									matched_game_accounts_names[t.player2_account_name] = "1"
-								end
-							end
-							matched_game_accounts_names = nil
+							matched_game_account_hash = {}
 							
+							# 対戦相手のアカウントリスト作成
+							player2_account_ids = []
+							if track_records.length > 0 then
+								player2_account_ids = track_records.map { |tr| tr.player2_account_id.to_s }
+								player2_account_ids.compact!
+								player2_account_ids.uniq!
+							end
+							
+							# 対戦アカウントリストに対応するプレイヤー情報取得
+							if player2_account_ids.length > 0 then
+								res = db.exec(<<-"SQL")
+									SELECT
+									  ga.account_id,
+									  a.name,
+									  ga.rep_name
+									FROM
+									  game_accounts ga,
+									  accounts a
+									WHERE
+									  ga.game_id = #{game_id.to_i}
+									  AND ga.account_id IN (#{(player2_account_ids.map { |i| "'#{i.to_i}'" } ).join(", ")})
+									  AND a.id = ga.account_id
+								SQL
+								
+								res.each do |r|
+									ga = GameAccount.new
+									ga.account_id = r[0]
+									ga.account_name = r[1]
+									ga.rep_name = r[2] || r[1]
+									matched_game_account_hash[ga.account_id] = ga
+								end
+								
+								player2_account_ids.each do |account_id|
+									matched_game_accounts << matched_game_account_hash[account_id]
+								end
+								matched_game_accounts.compact!
+								
+								matched_game_account_hash = nil
+							end
 
 							# Type1 区分値取得
 							res = db.exec(<<-"SQL")
@@ -598,6 +570,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 			err_log.puts "#{now.to_s} #{File::basename(__FILE__)} #{REVISION}" 
 			err_log.puts ENV['QUERY_STRING']
 			err_log.puts ENV['HTTP_IF_MODIFIED_SINCE']
+			err_log.puts ex.class.to_s
 			err_log.puts ex.to_s
 			err_log.puts ex.backtrace.join("\n").to_s
 			err_log.puts
