@@ -5,7 +5,7 @@ begin
 	now = Time.now
 
 	### アカウント情報取得 API ###
-	REVISION = 'R0.01'
+	REVISION = 'R0.02'
 	DEBUG = false
 
 	# TOP ディレクトリ
@@ -131,6 +131,7 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		root.add_element('name').add_text(account.name.to_s)
 		root.add_element('mail_address').add_text(Cryption.decrypt(account.encrypted_mail_address.to_s))
 		root.add_element('show_ratings_flag').add_text(account.show_ratings_flag.to_s)
+		root.add_element('allow_edit_profile').add_text(account.allow_edit_profile.to_s)
 		root.add_element('lock_version').add_text(account.lock_version.to_s)
 							
 		### 結果をセット

@@ -103,10 +103,12 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		new_mail_address = query['new_mail_address']
 		new_account_password = query['new_account_password']
 		new_show_ratings_flag = query['new_show_ratings_flag']
+		new_allow_edit_profile = query['new_allow_edit_profile']
 		lock_version = query['lock_version']
 		
 		new_account_password = nil if new_account_password == ''
 		new_show_ratings_flag = nil if new_show_ratings_flag == ''
+		new_allow_edit_profile = nil if new_allow_edit_profile == ''
 		
 		# バリデーション
 		unless (
@@ -146,6 +148,16 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 			res_body << "・レート表示設定の値が不正です\n"
 			raise "アカウントの新規登録に失敗しました。入力値バリデーションエラー"
 		end
+					
+		unless (
+			!new_allow_edit_profile or
+			new_allow_edit_profile == '0' or
+			new_allow_edit_profile == '1'
+		) then
+			res_status = "Status: 400 Bad Request\n"
+			res_body << "・プロファイル編集許可の値が不正です\n"
+			raise "アカウントの新規登録に失敗しました。入力値バリデーションエラー"
+		end
 		
 		# DB接続
 		require 'db'
@@ -154,7 +166,15 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		# アカウント更新
 		require 'authentication'
 		begin
-			account = Authentication.update(account_name, account_password, new_mail_address, new_account_password, new_show_ratings_flag, lock_version)
+			account = Authentication.update(
+				account_name,
+				account_password,
+				new_mail_address,
+				new_account_password,
+				new_show_ratings_flag,
+				new_allow_edit_profile,
+				lock_version
+			)
 		rescue => ex
 			res_status = "Status: 400 Bad Request\n"
 			res_body = "アカウント更新に失敗しました。ページを読み込みなおして、再度実行してください。\n"
@@ -173,6 +193,7 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		root.add_element('name').add_text(account.name.to_s)
 		root.add_element('mail_address').add_text(Cryption.decrypt(account.encrypted_mail_address.to_s))
 		root.add_element('show_ratings_flag').add_text(account.show_ratings_flag.to_s)
+		root.add_element('allow_edit_profile').add_text(account.allow_edit_profile.to_s)
 		root.add_element('lock_version').add_text(account.lock_version.to_s)
 							
 		### 結果をセット
