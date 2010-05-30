@@ -5,15 +5,15 @@ require 'yaml'
 class Cache
   include Singleton
   
-  def initialize(config_file = "#{File.basename(__FILE__, '.*')}.yaml")
+  def initialize(config_file = "#{File.dirname(__FILE__)}/#{File.basename(__FILE__, '.*')}.yaml")
     config = YAML.load_file(config_file)
 	
-	server = config.delete(:server) 
+	servers = config.delete(:servers) 
 	@marshal = config.delete(:marshal)
 	
 	options = config
 	
-	@cache = Memcached.new(server, options)
+	@cache = Memcached.new(servers, options)
   end
   
   def add(key, val, marshal = @marshal)
