@@ -26,15 +26,23 @@ A:hover {
   text-decoration: underline;
   background-color: #330000;
 }
+
+.visual A { text-decoration: none; }
+.visual A:link { text-decoration: none; }
+.visual A:visited { text-decoration: none; }
+.visual A:hover {
+  text-decoration: none;
+  background-color: transparent;
+}
+.visual A:active {
+  text-decoration: none;
+  background-color: transparent;
+}
+
 img {
   border-width: 0;
   vertical-align: middle;
 }
-img A { text-decoration: none; }
-img A:link { text-decoration: none; }
-img A:visited { text-decoration: none; }
-img A:hover { text-decoration: none; }
-img A:active { text-decoration: none; }
 button {
   vertical-align: middle;
   color: #666666;

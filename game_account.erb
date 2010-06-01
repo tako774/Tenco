@@ -224,17 +224,14 @@ $(document).ready(
 		}
 		
 		// ビジュアル部分表示
-		$("#side_visual").hide();
-		$("#TOHO_CLOCK").html('\
-		<a href="http://boxell.jp/clock/" title="TOHO CLOCK" target="_blank">\
-		<object classid="clsid:d27cdb6e-ae6d-11cf-96b8-444553540000" width="160" height="120" codebase="http://fpdownload.adobe.com/pub/shockwave/cabs/flash/swflash.cab#version=10,0,0,0">\
+		$("#side_visual").html('\
+		<object id="toho_clock" title="TOHO CLOCK" classid="clsid:d27cdb6e-ae6d-11cf-96b8-444553540000" width="160" height="120" codebase="http://fpdownload.adobe.com/pub/shockwave/cabs/flash/swflash.cab#version=10,0,0,0">\
 		<param name="allowScriptAccess" value="always" />\
 		<param name="movie" value="http://boxell.jp/clock/miniclock.swf" />\
 		<param name="quality" value="high" />\
 		<param name="wmode" value="transparent" />\
 		<embed src="http://boxell.jp/clock/miniclock.swf" width="160" height="120" allowScriptAccess="always" quality="high" wmode="transparent" pluginspage="http://www.adobe.com/shockwave/download/index.cgi?P1_Prod_Version=ShockwaveFlash" />\
 		</object>\
-		</a>\
 		');
 
 	}
@@ -383,10 +380,11 @@ $(document).ready(
 	</div>
 	
 	<div id="profile">
+	<p>
 	<%= xhtml_sp2nbsp(h(game_account.rep_name)) %> さん
-<p id="TOHO_CLOCK">
-</p>
-<pre class="AA" id="side_visual" >##ビジュアル表現を予定##
+	</p>
+<div class="visual" id="side_visual">
+<pre class="AA">##ビジュアル表現を予定##
 
 　　　　 ,.ｨrｰr 、
 　　　y' "´￣｀'ヽ
@@ -398,6 +396,7 @@ $(document).ready(
 
 ##ビジュアル表現を予定##
 </pre>
+</div>
 <h3>プロフィールあれこれ</h3>
 <p>
 <%- if game_account.cluster_name -%><%= "#{h game_account.cluster_name}クラスタ所属" %><%- end -%>
