@@ -1,7 +1,11 @@
 require 'db'
 
 class GameProfileUtil
-	VERSION = 'v0.01'
+	VERSION = 'v0.02'
+	ESTIMATE_MIN  = 900.0
+	ESTIMATE_MAX  = 3000.0
+	ESTIMATE_DIFF = 50.0
+	
 
 	# ゲーム内プロファイルごとのレート推定算出
 	# <引数>
@@ -15,27 +19,8 @@ class GameProfileUtil
 		estimations = {} 
 		
 		# レート候補
-		rates = [
-			 900.0,  950.0,
-			1000.0,	1050.0,
-			1100.0, 1150.0,
-			1200.0,	1250.0,
-			1300.0, 1350.0,
-			1400.0, 1450.0,
-			1500.0, 1550.0,
-			1600.0, 1650.0,
-			1700.0, 1750.0,
-			1800.0, 1850.0,
-			1900.0, 1950.0,
-			2000.0, 2050.0,
-			2100.0, 2150.0,
-			2200.0, 2250.0,
-			2300.0, 2350.0,
-			2400.0, 2450.0,
-			2500.0, 2550.0,
-			2600.0, 2650.0,
-			2700.0
-		]
+		rates = []
+		ESTIMATE_MIN.step(ESTIMATE_MAX, ESTIMATE_DIFF) { |i| rates << i.to_f }
 		# 対戦結果
 		track_records = []
 	
