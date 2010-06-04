@@ -4,7 +4,7 @@ begin
 	# 開始時刻
 	now = Time.now
 	# リビジョン
-	REVISION = 'R0.56'
+	REVISION = 'R0.58'
 	DEBUG = false
 
 	$LOAD_PATH.unshift './common'
@@ -41,6 +41,8 @@ begin
 	
 	# 件数制限
 	MAX_TRACK_RECORDS = 100
+	# 推定レート表示対象レート
+	ESTIMATION_LIMIT_RATE = 2000
 
 	# HTTP/HTTPSレスポンス文字列
 	res_status = "Status: 500 Server Error\n"
@@ -347,7 +349,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 								if (
 								  r.ratings_deviation.to_f < 150 &&
 								  r.matched_accounts.to_i >= 5 &&
-								  r.rating.to_f.round >= 1800
+								  r.rating.to_f.round >= ESTIMATION_LIMIT_RATE
 								) then
 									est_type1_ids << r.type1_id.to_i
 								end
@@ -461,6 +463,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 						game_element = account_element.add_element('game')
 						game_element.add_element('id').add_text(game_id.to_s)
 						game_element.add_element('name').add_text(game.name)
+						game_element.add_element('representative_account_name').add_text(game_account.rep_name)
 						
 						if account.show_ratings_flag.to_i != 0 then
 							# type1 要素生成
