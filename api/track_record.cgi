@@ -5,7 +5,7 @@ begin
 	now = Time.now
 
 	### 対戦結果I/F API ###
-	REVISION = 'R0.34'
+	REVISION = 'R0.35'
 	DEBUG = false
 
 	$LOAD_PATH.unshift '../common'
@@ -1010,11 +1010,7 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 			end
 			File.rename(matched_track_records_trn_temp_file, matched_track_records_trn_file)
 		end
-		
-		# トランザクション終了
-		db.exec("COMMIT;")
-		res_body << "transaction finished...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
-		
+			
 		# キャッシュ更新
 		if track_records.length > 0 then
 			# ゲームアカウントごとの対戦結果idキャッシュ更新
@@ -1048,6 +1044,10 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 			trd = TrackRecordDao.new
 			trd.delete_by_ids matched_track_record_ids
 		end
+	
+		# トランザクション終了
+		db.exec("COMMIT;")
+		res_body << "transaction finished...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
 		
 =begin
 		if track_records.length > 0 then
