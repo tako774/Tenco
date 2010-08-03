@@ -13,7 +13,7 @@ begin
 	
 	$LOAD_PATH.unshift "#{TOP_DIR}/common"
 	$LOAD_PATH.unshift "#{TOP_DIR}/entity"
-	
+
 	require 'time'
 	require 'logger'
 	require 'utils'
