@@ -4,7 +4,7 @@ begin
 	# 開始時刻
 	now = Time.now
 	# リビジョン
-	REVISION = 'R0.58'
+	REVISION = 'R0.60'
 	DEBUG = false
 
 	$LOAD_PATH.unshift './common'
@@ -42,7 +42,7 @@ begin
 	# 件数制限
 	MAX_TRACK_RECORDS = 100
 	# 推定レート表示対象レート
-	ESTIMATION_LIMIT_RATE = 2000
+	ESTIMATION_LIMIT_RATE = Float::MAX
 
 	# HTTP/HTTPSレスポンス文字列
 	res_status = "Status: 500 Server Error\n"
@@ -87,6 +87,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		ratings = []         # プレイヤーのレーティング 
 		estimate_ratings = {} # プレイヤーのレート推定値
 		account_tags = [] # アカウントタグ情報
+		player2_account_ids = [] # 対戦相手アカウントID一覧
 		matched_game_accounts = [] # 対戦相手情報
 		account = nil # 対象アカウントの情報
 		other_games = [] # 対象アカウントのマッチ済み他ゲームID
@@ -368,19 +369,17 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							end
 							
 							
+							# 対戦相手一覧取得
+							require 'GameAccountDao'
+							gad = GameAccountDao.new
+							player2_account_ids = gad.get_matched_account_ids(game_id, account.id)
+
+							# 対戦アカウントリストに対応するプレイヤー情報取得
+							
 							# 対戦相手一覧作成
 							require 'GameAccount'
 							matched_game_account_hash = {}
 							
-							# 対戦相手のアカウントリスト作成
-							player2_account_ids = []
-							if track_records.length > 0 then
-								player2_account_ids = track_records.map { |tr| tr.player2_account_id.to_s }
-								player2_account_ids.compact!
-								player2_account_ids.uniq!
-							end
-							
-							# 対戦アカウントリストに対応するプレイヤー情報取得
 							if player2_account_ids.length > 0 then
 								res = db.exec(<<-"SQL")
 									SELECT
@@ -401,7 +400,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 									ga.account_id = r[0]
 									ga.account_name = r[1]
 									ga.rep_name = r[2] || r[1]
-									matched_game_account_hash[ga.account_id] = ga
+									matched_game_account_hash[ga.account_id.to_i] = ga
 								end
 								
 								player2_account_ids.each do |account_id|
