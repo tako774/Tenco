@@ -5,7 +5,7 @@ begin
 	now = Time.now
 
 	### 対戦結果I/F API ###
-	REVISION = 'R0.35'
+	REVISION = 'R0.36'
 	DEBUG = false
 
 	$LOAD_PATH.unshift '../common'
@@ -112,7 +112,11 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		                           # キー1：アカウントID
 		                           # キー2：プレイヤー名
 		                           # キー3： :matched_count マッチした対戦数
-		
+								   
+		account_vs_accounts = {} # アカウント対アカウント情報
+		                         # キー1:アカウントID
+		                         # キー2:マッチしたアカウントID
+		                         # キー3: :last_play_timestamp 最終対戦時刻 :matched_count マッチした対戦数 :wins 勝利数 :loses 敗北数
 		
 		# コンテント長のバリデーション
 		if source_length > MAX_CONTENT_LENGTH then
@@ -571,7 +575,37 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 					account_player_name_summary[matched_record.player1_account_id][t.player2_name] ||= {}
 					account_player_name_summary[matched_record.player1_account_id][t.player2_name][:matched_count] ||= 0
 					account_player_name_summary[matched_record.player1_account_id][t.player2_name][:matched_count] += 1
+					
+					account_vs_accounts[t.player1_account_id] ||= {}
+					account_vs_accounts[t.player1_account_id][matched_record.player1_account_id] ||= {}
+					account_vs_accounts[t.player1_account_id][matched_record.player1_account_id][:matched_count] ||= 0
+					account_vs_accounts[t.player1_account_id][matched_record.player1_account_id][:wins] ||= 0
+					account_vs_accounts[t.player1_account_id][matched_record.player1_account_id][:loses] ||= 0
+					if (
+						account_vs_accounts[t.player1_account_id][matched_record.player1_account_id][:last_play_timestamp].nil? or
+						account_vs_accounts[t.player1_account_id][matched_record.player1_account_id][:last_play_timestamp] < t.play_timestamp
+					) then
+						account_vs_accounts[t.player1_account_id][matched_record.player1_account_id][:last_play_timestamp] = t.play_timestamp
+					end
+					account_vs_accounts[t.player1_account_id][matched_record.player1_account_id][:matched_count] += 1
+					account_vs_accounts[t.player1_account_id][matched_record.player1_account_id][:wins]  += ((t.player1_points.to_i <=> t.player2_points.to_i) + 1) / 2
+					account_vs_accounts[t.player1_account_id][matched_record.player1_account_id][:loses] += ((t.player2_points.to_i <=> t.player1_points.to_i) + 1) / 2
 	
+					account_vs_accounts[matched_record.player1_account_id] ||= {}
+					account_vs_accounts[matched_record.player1_account_id][t.player1_account_id] ||= {}
+					account_vs_accounts[matched_record.player1_account_id][t.player1_account_id][:matched_count] ||= 0
+					account_vs_accounts[matched_record.player1_account_id][t.player1_account_id][:wins] ||= 0
+					account_vs_accounts[matched_record.player1_account_id][t.player1_account_id][:loses] ||= 0
+					if (
+						account_vs_accounts[matched_record.player1_account_id][t.player1_account_id][:last_play_timestamp].nil? or
+						account_vs_accounts[matched_record.player1_account_id][t.player1_account_id][:last_play_timestamp] < matched_record.play_timestamp
+					) then
+						account_vs_accounts[matched_record.player1_account_id][t.player1_account_id][:last_play_timestamp] = matched_record.play_timestamp
+					end
+					account_vs_accounts[matched_record.player1_account_id][t.player1_account_id][:matched_count] += 1
+					account_vs_accounts[matched_record.player1_account_id][t.player1_account_id][:wins]  += ((t.player2_points.to_i <=> t.player1_points.to_i) + 1) / 2
+					account_vs_accounts[matched_record.player1_account_id][t.player1_account_id][:loses] += ((t.player1_points.to_i <=> t.player2_points.to_i) + 1) / 2
+					
 					# マッチ済み対戦結果トランザクションデータ追加
 					matched_track_records_str << "#{rep_timestamp.to_i},#{t.player1_account_id},#{matched_record.player1_account_id},#{t.player1_type1_id},#{t.player2_type1_id},#{t.player1_points},#{t.player2_points}\n"
 				end
@@ -994,6 +1028,83 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		res_body << "game_account_player_name_daily_stats udpate/insert finish...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
 		
 
+		# ゲームアカウント対アカウントテーブルに書き込み
+		begin
+			account_vs_accounts.each do |account_id, matched_account|
+				matched_account.each do |matched_account_id, match_data|
+					# 更新または作成
+					res_update = db.exec(<<-"SQL")
+					  UPDATE
+						game_account_vs_accounts
+					  SET
+						last_play_timestamp = 
+						  CASE
+						  WHEN last_play_timestamp < to_timestamp(#{s match_data[:last_play_timestamp].to_s}, \'YYYY-MM-DD HH24:MI:SS\') THEN
+						    to_timestamp(#{s match_data[:last_play_timestamp].to_s}, \'YYYY-MM-DD HH24:MI:SS\')
+						  ELSE
+						    last_play_timestamp
+						  END,
+						matched_track_records_count = matched_track_records_count + #{match_data[:matched_count].to_i},
+						wins = wins + #{match_data[:wins].to_i},
+						loses = loses + #{match_data[:loses].to_i},
+						updated_at = now(),
+						lock_version = lock_version + 1
+					  WHERE
+							game_id = #{game_id.to_i}
+						AND account_id = #{account_id.to_i}
+						AND matched_account_id = #{matched_account_id.to_i}
+					  RETURNING id;
+					SQL
+									
+					# UPDATE 失敗時は INSERT
+					if res_update.num_tuples != 1 then
+						res_update.clear
+						res_insert = db.exec(<<-"SQL")
+						  INSERT INTO
+							game_account_vs_accounts
+							(
+							  game_id,
+							  account_id,
+							  matched_account_id,
+							  last_play_timestamp,
+							  matched_track_records_count,
+							  wins,
+							  loses
+							)
+						  VALUES
+							(
+							  #{game_id.to_i},
+							  #{account_id.to_i},
+							  #{matched_account_id.to_i},
+							  to_timestamp(#{s match_data[:last_play_timestamp].to_s}, \'YYYY-MM-DD HH24:MI:SS\'),
+							  #{match_data[:matched_count].to_i},
+							  #{match_data[:wins].to_i},
+							  #{match_data[:loses].to_i}
+							)
+						  RETURNING id;
+						SQL
+						
+						if res_insert.num_tuples != 1 then
+							res_insert.clear
+							raise "UPDATE 失敗後の INSERT に失敗しました。"
+						end
+						
+						res_insert.clear
+					else
+						res_update.clear
+					end
+					
+				end
+			end
+		
+		rescue => ex
+			res_status = "Status: 400 Bad Request\n"
+			res_body << "ゲームアカウント対アカウントテーブルの登録・更新時にエラーが発生しました\n"
+			raise ex
+		end
+		
+		res_body << "game_account_vs_accounts udpate/insert finish...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
+		
 		# マッチ済み対戦結果トランザクションデータ追加書き込み
 		matched_track_records_trn_file = "#{TRN_DATA_DIR}/#{game_id}_#{now.to_i}_#{$$}.dat"
 		matched_track_records_trn_temp_file = "#{matched_track_records_trn_file}.temp"
