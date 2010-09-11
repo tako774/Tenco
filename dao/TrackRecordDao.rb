@@ -3,7 +3,7 @@ require 'base64'
 require 'TrackRecord'
 
 class TrackRecordDao < DaoBase
-	@@version = 0.03
+	@@version = 0.04
 	# 指定されたゲームID・アカウントIDの対戦結果レコードIDリストを取得
 	# 結果のIDの降順でソートされる
 	def get_ids_by_game_account(game_id, account_id)
@@ -52,7 +52,9 @@ class TrackRecordDao < DaoBase
 		ids = ids.map! { |i| i.to_s }
 		
 		cache_keys = ids.map { |i| id_to_key(i) }
-		track_record_hash.merge! @cache.get(cache_keys, true)
+		@cache.get(cache_keys, true).each do |key, data|
+			track_record_hash[key_to_id(key).to_s] = data
+		end
 		missed_ids = ids - track_record_hash.keys.map { |k| key_to_id(k) }
 		
 		if missed_ids.length > 0 then
