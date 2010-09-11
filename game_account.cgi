@@ -372,44 +372,12 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							# 対戦相手一覧取得
 							require 'GameAccountDao'
 							gad = GameAccountDao.new
+							
+							# 対戦相手のアカウントID一覧取得
 							player2_account_ids = gad.get_matched_account_ids(game_id, account.id)
-
-							# 対戦アカウントリストに対応するプレイヤー情報取得
 							
-							# 対戦相手一覧作成
-							require 'GameAccount'
-							matched_game_account_hash = {}
-							
-							if player2_account_ids.length > 0 then
-								res = db.exec(<<-"SQL")
-									SELECT
-									  ga.account_id,
-									  a.name,
-									  ga.rep_name
-									FROM
-									  game_accounts ga,
-									  accounts a
-									WHERE
-									  ga.game_id = #{game_id.to_i}
-									  AND ga.account_id IN (#{(player2_account_ids.map { |i| "'#{i.to_i}'" } ).join(", ")})
-									  AND a.id = ga.account_id
-								SQL
-								
-								res.each do |r|
-									ga = GameAccount.new
-									ga.account_id = r[0]
-									ga.account_name = r[1]
-									ga.rep_name = r[2] || r[1]
-									matched_game_account_hash[ga.account_id.to_i] = ga
-								end
-								
-								player2_account_ids.each do |account_id|
-									matched_game_accounts << matched_game_account_hash[account_id]
-								end
-								matched_game_accounts.compact!
-								
-								matched_game_account_hash = nil
-							end
+							# 対戦相手一覧の情報取得
+							matched_game_accounts = gad.get_game_accounts(game_id, player2_account_ids)
 
 							# Type1 区分値取得
 							res = db.exec(<<-"SQL")
