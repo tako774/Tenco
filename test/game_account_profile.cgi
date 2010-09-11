@@ -5,7 +5,7 @@
 # 開始時刻
 now = Time.now
 # リビジョン
-REVISION = 'R0.05'
+REVISION = 'R0.06'
 
 DEBUG = 1
 
@@ -21,6 +21,9 @@ require 'logger'
 require 'utils'
 include Utils
 require 'db'
+
+require 'GameDao'
+require 'GameAccountDao'
 
 # TOP ページ URL
 TOP_URL = 'http://tenco.xrea.jp/'
@@ -38,8 +41,10 @@ logger = Logger.new(LOG_PATH)
 logger.level = Logger::DEBUG
 
 begin
-	db = nil   # DB接続 
-						
+	db = nil   # DB接続
+	gad = GameAccountDao.new
+	updated_account_ids = [] # UPDATEされたアカウントID
+
 	# DB接続
 	db = DB.getInstance
 	# トランザクション開始
@@ -48,7 +53,6 @@ begin
 	res_body << "DB connected...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
 
 	# 処理対象のゲームID取得
-	require 'GameDao'
 	game_dao = GameDao.new
 	game_ids = game_dao.get_batch_target_ids
 		
@@ -109,21 +113,43 @@ begin
 		inserted_counts = 0
 		game_accounts.each do |a|
 			# GameAccounts テーブルに Update or Insert
-			res_update = db.exec(<<-"SQL")
-			  UPDATE
+			res_select = db.exec(<<-"SQL")
+			  SELECT
+			    id
+			  FROM
 				game_accounts g
-			  SET
-				rep_name = #{s a.rep_name},
-				updated_at = now(),
-				lock_version = g.lock_version + 1
 			  WHERE
 				g.account_id = #{a.account_id.to_i}
 				AND g.game_id = #{a.game_id.to_i}
-			  RETURNING *;
+			  ;
 			SQL
 			
-			# UPDATE 失敗時は INSERT
-			if res_update.num_tuples != 1 then
+			# すでにデータがあれば update
+			if res_select.num_tuples == 1 then
+			
+				res_update = db.exec(<<-"SQL")
+				  UPDATE
+					game_accounts g
+				  SET
+					rep_name = #{s a.rep_name},
+					updated_at = now(),
+					lock_version = g.lock_version + 1
+				  WHERE
+					g.account_id = #{a.account_id.to_i}
+					AND g.game_id = #{a.game_id.to_i}
+					AND g.rep_name != #{s a.rep_name}
+				  RETURNING *;
+				SQL
+			
+				if res_update.num_tuples != 0 then
+					updated_counts += 1
+					updated_account_ids << a.account_id
+				end
+				
+				res_update.clear
+			
+			# データがまだないときは INSERT
+			elsif res_select.num_tuples == 0 then
 				res_insert = db.exec(<<-"SQL")
 				  INSERT INTO
 					game_accounts
@@ -142,19 +168,18 @@ begin
 				SQL
 				
 				if res_insert.num_tuples != 1 then
-					raise "UPDATE 失敗後の INSERT に失敗しました。"
+					raise "INSERT に失敗しました。"
 				else
 					inserted_counts += 1
 				end
 				res_insert.clear
-			
-			else
-				updated_counts += 1
+				
 			end
-			 
-			res_update.clear
 		end
 		
+		# キャッシュ削除
+		gad.delete_by_ids(game_id, updated_account_ids)
+					
 		res_body << "#{inserted_counts} 件のデータを登録、#{updated_counts} 件のデータを更新しました\n"
 		
 		res_body << "game_accounts updated or inserted...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
@@ -175,6 +200,7 @@ rescue => ex
 	File.open(ERROR_LOG_PATH, 'a') do |err_log|
 		err_log.puts "#{now.to_s} #{File::basename(__FILE__)} #{REVISION}" 
 		err_log.puts ENV['QUERY_STRING']
+		err_log.puts ex.class
 		err_log.puts ex.to_s
 		err_log.puts ex.backtrace.join("\n").to_s
 		err_log.puts
