@@ -55,7 +55,7 @@ class TrackRecordDao < DaoBase
 		@cache.get(cache_keys, true).each do |key, data|
 			track_record_hash[key_to_id(key).to_s] = data
 		end
-		missed_ids = ids - track_record_hash.keys.map { |k| key_to_id(k) }
+		missed_ids = ids - track_record_hash.keys
 		
 		if missed_ids.length > 0 then
 		
