@@ -21,21 +21,55 @@ double gettimeofday_sec() {
     return tv.tv_sec + (double)tv.tv_usec*1e-6;
 }
 
-int main(void) {
+int main(int argc, char* argv[]) {
+
+	/* 引数処理 */
+	if (argc != 5) {
+		printf("Error!: 引数エラーです。\n%s <game_id> <input_dir> <output_dir> <output_process_file_flg>\n", argv[0]);
+		exit(EXIT_FAILURE);
+	}
+
 	/* 変数定義 */
 	const double start_time = gettimeofday_sec();
-	const char *REVISION = "0.01";
+	const char *REVISION = "0.02";
 	
+	printf("glicko_ratings_from_file_to_file Rev.%s\n", REVISION);
+	printf("\n");
+
 	time_t timer;
 	time_t now = time(&timer);
 	
 	FILE *input_fp = NULL;
 	FILE *output_fp = NULL;
+	FILE *process_fp = NULL;
 	char line[256];
 
-	const char *input_file = "../dat/matched_track_records/2";
-	const char *output_file = "../dat/ratings/2";
-	const char *output_temp_file = "../dat/ratings/2.temp";
+	char *game_id;               /* ゲームID */
+	char input_file[256];        /* 入力対戦結果情報ファイルパス */
+	char output_file[256];       /* 出力レート情報ファイルパス */
+	char output_temp_file[256];  /* 出力一時ファイルパス */
+	char process_file[256];      /* レート経過ファイルパス */
+	char process_temp_file[256]; /* レート経過ファイル一時ファイルパス */
+	int output_process_file_flg; /* レート経過ファイルを出力するかどうか */
+	
+	game_id = argv[1];
+	sprintf(input_file, "%s/%s", argv[2], game_id);
+	sprintf(output_file, "%s/%s", argv[3], game_id);
+	sprintf(output_temp_file, "%s.temp", output_file);
+	sprintf(process_file, "%s/%s.process", argv[3], game_id);
+	sprintf(process_temp_file, "%s.temp", process_file);
+	output_process_file_flg = !strcmp(argv[4], "true") ? 1 : 0; 
+	
+	printf("Game ID     : %s\n", game_id);
+	printf("Input File  : %s\n", input_file);
+	printf("Output File : %s\n", output_file);
+	printf("Output Temp File : %s\n", output_temp_file);
+	if (output_process_file_flg) {
+		printf("Process File: %s\n", process_file);
+		printf("Process Temp File : %s\n", process_temp_file);
+	}
+	printf("\n");
+	
 	const char *fmt = "%d,%d,%d,%d,%d,%d,%d\n";
 	const int TYPE1_SIZE = 256;
 	
@@ -96,7 +130,6 @@ int main(void) {
 	
 	unsigned int track_record_counts = 0;
 	
-	printf("glicko_ratings_from_file_to_file Rev.%s\n", REVISION);
 	
 	/* APR準備 */
 	apr_initialize();
@@ -108,14 +141,22 @@ int main(void) {
 	/* ファイルオープン */
 	input_fp = fopen(input_file, "rb");
 	if (input_fp == NULL) {
-		printf("Error!: input file open error!!(%s)\n");
+		printf("Error!: input file open error!!(%s)\n", input_file);
 		exit(EXIT_FAILURE);
 	}
 	
 	output_fp = fopen(output_temp_file, "wb");
 	if (output_fp == NULL) {
-		printf("Error!: output temp file open error!!(%s)\n");
+		printf("Error!: output temp file open error!!(%s)\n", output_temp_file);
 		exit(EXIT_FAILURE);
+	}
+	
+	if (output_process_file_flg) {
+		process_fp = fopen(process_temp_file, "wb");
+		if (process_fp == NULL) {
+			printf("Error!: process temp file open error!!(%s)\n", process_temp_file);
+			exit(EXIT_FAILURE);
+		}
 	}
 	
 	while (fgets(line, 256, input_fp) != NULL) {
@@ -129,7 +170,7 @@ int main(void) {
 			&p1_type1_id,
 			&p2_type1_id,
 			&p1_points,
-			&p2_points			
+			&p2_points
 		);
 		
 		// レート情報キーを計算
@@ -177,6 +218,19 @@ int main(void) {
 		rd2_sq        = p2_rate_info->rd_sq;
 		elapsed_time2 = rep_timestamp - p2_rate_info->last_timestamp;
 
+		// レート経過情報出力
+		if (output_process_file_flg) {
+			fprintf(
+				process_fp,
+				"%d,%.0f,%.0f,%.0f,%.0f\n",
+				rep_timestamp,
+				rate1,
+				rd1_sq,
+				rate2,
+				rd2_sq
+			);
+		}
+		
 		// 対戦結果取得
 		if (p1_points > p2_points) {
 			point1 = 1.0;
@@ -301,6 +355,9 @@ int main(void) {
 	/* リソース解放 */
 	fclose(input_fp);
 	fclose(output_fp);
+	if (output_process_file_flg) {
+		fclose(process_fp);
+	}
 	apr_pool_destroy(pool);
 	apr_terminate();
 	
@@ -309,9 +366,15 @@ int main(void) {
 		printf("Error!: ファイルのリネームに失敗しました(%s -> %s)", output_temp_file, output_file);
 		exit(EXIT_FAILURE);
 	}
+	if (output_process_file_flg) {
+		if(rename(process_temp_file, process_file) != 0) {
+			printf("Error!: ファイルのリネームに失敗しました(%s -> %s)", process_temp_file, process_file);
+			exit(EXIT_FAILURE);
+		}
+	}
 	
 	printf("Elapsed Time: %f sec.\n", gettimeofday_sec() - start_time);
 	
-	return 0;
+	return EXIT_SUCCESS;
 }
 
