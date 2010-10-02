@@ -27,7 +27,7 @@ class GameAccountDao < DaoBase
 		res.each do |r|
 			matched_account_ids << r[0].to_i
 		end
-		res.clear	
+		res.clear
 		
 		return matched_account_ids
 	end
