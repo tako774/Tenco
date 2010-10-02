@@ -4,7 +4,7 @@ begin
 	# 開始時刻
 	now = Time.now
 	# リビジョン
-	REVISION = 'R0.60'
+	REVISION = 'R0.61'
 	DEBUG = false
 
 	$LOAD_PATH.unshift './common'
@@ -304,8 +304,8 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							end
 							res.clear
 		
-							# アカウントの対戦記録を取得			
-							# 未マッチの場合、player2 の名前は暗号化
+							# アカウントの対戦記録を取得
+							# 未マッチの場合、player2 の名前は暗号化させるため、パスワードを渡す
 							require 'TrackRecordDao'
 							require 'TrackRecord'
 							
@@ -315,7 +315,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							
 							# 対戦結果取得
 							if track_record_ids.length > 0 then
-								track_records = trd.get_track_records_by_ids(track_record_ids[0..MAX_TRACK_RECORDS - 1])
+								track_records = trd.get_track_records_by_ids(track_record_ids[0..MAX_TRACK_RECORDS - 1], account.data_password)
 								track_records.sort! { |a,b| b.play_timestamp <=> a.play_timestamp }
 							end
 

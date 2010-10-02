@@ -5,7 +5,7 @@ begin
 	now = Time.now
 
 	### 対戦結果I/F API ###
-	REVISION = 'R0.36'
+	REVISION = 'R0.37'
 	DEBUG = false
 
 	$LOAD_PATH.unshift '../common'
@@ -257,8 +257,7 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 						player1_points,
 						player2_name,
 						player2_type1_id,
-						player2_points,
-						encrypted_base64_player2_name
+						player2_points
 					)
 					VALUES
 				SQL
@@ -284,8 +283,7 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 							#{t_hash['p1point'].to_i},
 							#{s t_hash['p2name'].to_s},
 							#{t_hash['p2type'].to_i},
-							#{t_hash['p2point'].to_i},
-							#{s Cryption.encrypt_base64(t_hash['p2name'].to_s, account.data_password)}
+							#{t_hash['p2point'].to_i}
 						)
 					SQL
 				end

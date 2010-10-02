@@ -1,6 +1,7 @@
 require 'DaoBase'
 require 'base64'
 require 'TrackRecord'
+require 'cryption'
 
 class TrackRecordDao < DaoBase
 	@@version = 0.04
@@ -44,7 +45,7 @@ class TrackRecordDao < DaoBase
 	end
 
 	# 対戦結果idのリストから、対戦結果データを取得
-	def get_track_records_by_ids(ids)
+	def get_track_records_by_ids(ids, password = nil)
 		track_records = []
 		track_record_hash = {} # key => データ形式の対戦結果データ
 		missed_ids = []
@@ -66,11 +67,7 @@ class TrackRecordDao < DaoBase
 					t.player1_name,
 					t.player1_type1_id,
 					t.player1_points,
-					CASE
-						WHEN a2.name IS NULL
-						THEN t.encrypted_base64_player2_name
-						ELSE t.player2_name
-					END AS player2_name,
+					t.player2_name,
 					t.player2_type1_id,
 					t.player2_points,
 					a2.id AS player2_account_id,
@@ -98,6 +95,12 @@ class TrackRecordDao < DaoBase
 				r[6] = r[6].to_i if r[6]
 				r[7] = r[7].to_i if r[7]
 				r[9] = r[9].to_i if r[9]
+				
+				# 引数にパスワードがあれば、未マッチの場合に対戦相手名を暗号化
+				if !password.nil? && (r[8].nil? || r[8] == "") then
+					r[4] = Cryption.encrypt_base64(r[4], password)
+				end
+				
 				track_record_hash[track_record_id] = r
 				
 				begin
@@ -117,7 +120,7 @@ class TrackRecordDao < DaoBase
 			t.play_timestamp = Time.at(r[0])
 			t.player1_name = r[1]
 			t.player1_type1_id = r[2]
-			t.player1_points = r[3]
+			t.player1_points = r[3] 
 			t.player2_name = r[4]
 			t.player2_type1_id = r[5]
 			t.player2_points = r[6]
