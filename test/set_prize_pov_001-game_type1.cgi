@@ -91,6 +91,7 @@ begin
 		
 		# 変数
 		prizes = {} # キャラ別プライズ情報
+		prize_ids = []
 		game_account_ratings = [] # キャラ別レーティング情報
 		class1_rank_limit = 1 # クラス１の順位下限
 		class2_rank_limit = 5 # クラス２の順位下限
@@ -120,6 +121,7 @@ begin
 					prize.instance_variable_set("@#{res.fields[i]}", r[i])
 				end
 				prizes[r[0].to_i] = prize
+				prize_ids << r[1]
 			end
 			res.clear	
 		end
@@ -184,8 +186,37 @@ begin
 		
 		res_body << "レートランク対象キャラ数から、クラスごとのアカウント数を決定しました\n"
 		
-		# 結果をDBに保存"
 		res_body << "ratings rank counts selected...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
+		
+		# 結果をDBに保存"
+		
+		# 既存のプライズアカウント情報を取得
+		prize_accounts = {}
+		
+		res = db.exec(<<-"SQL")
+			SELECT 
+			  prize_id,
+			  account_id,
+			  type1_id,
+			  game_pov_class_id
+			FROM 
+			  prize_accounts pa
+			WHERE
+			  pa.prize_id IN (#{(prize_ids.map { |p| p }).join(",")})
+		SQL
+		
+		res.each do |r|
+			prize_accounts[r[0]] ||= {}
+			prize_accounts[r[0]][r[1]] ||= {}
+			prize_accounts[r[0]][r[1]][r[2]] = r[3]
+		end
+		
+		res_body << "#{res.num_tuples} 件のプライズアカウント情報を取得。\n"
+		
+		res.clear
+		
+		res_body << "existing prize_accounts selected...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
+		
 		begin
 			res_update = db.exec(<<-"SQL")
 				PREPARE
@@ -209,6 +240,9 @@ begin
 				  RETURNING id
 			SQL
 			
+			inserted_count = 0
+			updated_count = 0
+			skip_count = 0
 			game_account_ratings.each do |gar|
 				
 				# 更新後のクラスを算出
@@ -228,15 +262,11 @@ begin
 					game_pov_class_id = 4
 				end
 				
-				# 更新または作成。クラスが変わらない場合、時刻は更新しない。
-				res_update = db.exec(<<-"SQL")
-				  EXECUTE update_prize_accounts(#{game_pov_class_id.to_i}, #{prizes[gar.type1_id.to_i].id}, #{gar.account_id}, #{gar.type1_id})
-				SQL
-								
-				# UPDATE 失敗時は INSERT
-				if res_update.num_tuples != 1 then
-					res_update.clear
-					res_insert = db.exec(<<-"SQL")
+				# まだプライズアカウント情報レコードがなければ作成
+				if !(prize_accounts[prizes[gar.type1_id.to_i].id] &&
+				      prize_accounts[prizes[gar.type1_id.to_i].id][gar.account_id] &&
+					  prize_accounts[prizes[gar.type1_id.to_i].id][gar.account_id][gar.type1_id]) then
+					db.exec(<<-"SQL")
 					  INSERT INTO
 						prize_accounts
 						(
@@ -246,29 +276,47 @@ begin
 						  date_time,
 						  game_pov_class_id
 						)
-					  VALUES
-						(
-						  #{prizes[gar.type1_id.to_i].id.to_i},
-						  #{gar.account_id.to_i},
-						  #{gar.type1_id.to_i},
-						  CURRENT_TIMESTAMP,
-						  #{game_pov_class_id.to_i}
+					  SELECT
+						#{prizes[gar.type1_id.to_i].id.to_i},
+						#{gar.account_id.to_i},
+						#{gar.type1_id.to_i},
+						CURRENT_TIMESTAMP,
+						#{game_pov_class_id.to_i}
+					  WHERE
+						NOT EXISTS (
+						  SELECT
+							*
+						  FROM
+							prize_accounts
+						  WHERE
+							prize_id = #{prizes[gar.type1_id.to_i].id.to_i}
+							AND account_id = #{gar.account_id.to_i}
+							AND type1_id = #{gar.type1_id.to_i}
 						)
-					  RETURNING id;
+					SQL
+					inserted_count += 1
+				
+				# クラスが変わっていれば更新
+				elsif prize_accounts[prizes[gar.type1_id.to_i].id][gar.account_id][gar.type1_id].to_i != game_pov_class_id.to_i then
+					res_update = db.exec(<<-"SQL")
+					  EXECUTE update_prize_accounts(#{game_pov_class_id.to_i}, #{prizes[gar.type1_id.to_i].id.to_i}, #{gar.account_id}, #{gar.type1_id})
 					SQL
 					
-					if res_insert.num_tuples != 1 then
-						res_insert.clear
-						raise "UPDATE 失敗後の INSERT に失敗しました。"
+					if res_update.num_tuples != 1 then
+						raise "PrizeAccount テーブルのアップデート対象がありませんでした：#{prizes[gar.type1_id.to_i].id.to_i}, #{gar.account_id}, #{gar.type1_id}"
+					else
+						updated_count += 1
 					end
 					
-					res_insert.clear
-				else
 					res_update.clear
+					
+				else
+					skip_count += 1
 				end
 				
 			end
 			
+			res_body << "更新 #{updated_count}件：登録 #{inserted_count}件:スキップ #{skip_count}件\n"
 			
 		rescue => ex
 			res_status = "Status: 500 Server Error\n"
