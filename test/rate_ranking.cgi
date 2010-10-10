@@ -137,10 +137,10 @@ begin
 					  lock_version = lock_version + 1
 					WHERE
 					  id = #{gar.id.to_i}
-					  -- AND (
-					  --  game_type1_ratings_rank != #{gar.game_type1_ratings_rank}
-					  --  OR game_each_type1_ratings_rank != #{gar.game_each_type1_ratings_rank}
-					  -- )
+					  AND (
+					    game_type1_ratings_rank != #{gar.game_type1_ratings_rank}
+					    OR game_each_type1_ratings_rank != #{gar.game_each_type1_ratings_rank}
+					  )
 				SQL
 			end
 			
