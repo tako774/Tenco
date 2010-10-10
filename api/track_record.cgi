@@ -5,7 +5,7 @@ begin
 	now = Time.now
 
 	### 対戦結果I/F API ###
-	REVISION = 'R0.37'
+	REVISION = 'R0.38'
 	DEBUG = false
 
 	$LOAD_PATH.unshift '../common'
@@ -21,9 +21,11 @@ begin
 	
 	require 'utils'
 	require 'cryption'
+	require 'db'
 	require 'cache'
 
 	require 'TrackRecordDao'
+	require 'GameDao'
 	
 	# ログファイルパス
 	LOG_PATH = "../log/log_#{now.strftime('%Y%m%d')}.log"
@@ -38,6 +40,9 @@ begin
 
 	# 受け入れ最大受信バイト数
 	MAX_CONTENT_LENGTH = 1024 * TRACK_RECORD_MAX_SIZE
+	
+	# プレイヤー名最大バイト数
+	MAX_PLAYER_NAME_LENGTH = 96
 
 	# 対戦のマッチング時にどれだけ離れた時間のタイムスタンプをマッチングOKとみなすか
 	MATCHING_TIME_LIMIT_SECONDS = 300
@@ -90,6 +95,8 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		matched_track_records_trn_file = nil # マッチ済み対戦結果トランザクションファイルパス
 		matched_track_records_trn_ok_file = nil # マッチ済み対戦結果トランザクションOKファイルパス
 		
+		game = nil # ゲーム情報
+		
 		records_count = 0   # 登録件数
 		matched_records_count = 0   # マッチング成功件数
 		matched_track_record_ids = []   # マッチングした対戦結果レコードid
@@ -140,15 +147,18 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		game_id = game_data.elements['id'].text.to_i
 		account_name = data.elements['account/name'].text
 		account_password = data.elements['account/password'].text
-		source_track_records = game_data.elements.each('trackrecord') do end
+		game_data.elements.each('trackrecord') do |tr_xml|
+			tr_hash = {}
+			tr_xml.each_child do |c|
+				tr_hash[c.name] = c.text
+			end
+			source_track_records << tr_hash
+		end
 		
-		# バリデーション
+		# ヘッダバリデーション
 		unless (
-			account_name and
 			account_name =~ ACCOUNT_NAME_REGEX and
-			account_password and
 			account_password =~ ACCOUNT_PASSWORD_REGEX and
-			game_id and
 			game_id.to_s =~ ID_REGEX
 		) then
 			res_status = "Status: 400 Bad Request\n"
@@ -156,6 +166,7 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 			raise "input data validation error."
 		end
 		
+		# 明細件数バリデーション
 		if (source_track_records.size > TRACK_RECORD_MAX_SIZE) then
 			res_status = "Status: 400 Bad Request\n"
 			res_body = "一度に受信できる対戦結果データ数は#{TRACK_RECORD_MAX_SIZE}件までです。\n"
@@ -166,8 +177,12 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 			raise "受信報告データなし。"
 		end
 		
+		# 明細内容バリデーション
+		## TODO
+		#source_track_records.each do |tr_hash|
+		#end
+		
 		# DB 接続
-		require 'db'
 		db = DB.getInstance
 		# キャッシュ接続
 		cache = Cache.instance
@@ -182,7 +197,16 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 			res_body = "アカウント認証エラーです。\n"
 			raise ex
 		end
-				
+		
+		# ゲームID存在確認
+		game_dao = GameDao.new
+		game = game_dao.get_games(game_id.to_s)
+		if game.length == 0 then
+			res_status = "Status: 400 Bad Request\n"
+			res_body = "登録されていないゲームIDのデータが送信されています。\n"
+			raise "受信ゲームIDがDBに存在しません（#{game_id.to_s}）"
+		end
+		
 		# インサートモード設定
 		if (data.elements['is_force_insert'] && data.elements['is_force_insert'].text && data.elements['is_force_insert'].text.to_s == 'true')
 			is_force_insert = true
@@ -191,7 +215,7 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		end
 		
 		# ログ記録
-		log_msg = "#{source_track_records.length} rcv.\t#{is_force_insert.to_s}\t#{data.elements['account/name'].text}" if data.elements['account/name'].text and source_track_records
+		log_msg = "#{source_track_records.length} rcv.\t#{is_force_insert.to_s}\t#{data.elements['account/name'].text}" if data.elements['account/name'].text
 		log_msg << "\t#{Time.now - now}"
 				
 		# トランザクション開始
@@ -223,9 +247,9 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 				end
 				
 				res_body << "受信対戦結果データ件数：#{source_track_records.length.to_s}件\n"
-				source_track_records.delete_if do |t|
+				source_track_records.delete_if do |tr_hash|
 					# タイムスタンプの文字列形式は、postgres モジュール以下レベルの実装依存
-					existing_timestamps.index(Time.iso8601(t.elements['timestamp'].text.to_s).localtime.strftime('%Y-%m-%d %H:%M:%S'))
+					existing_timestamps.index(Time.iso8601(tr_hash['timestamp'].to_s).localtime.strftime('%Y-%m-%d %H:%M:%S'))
 				end
 				res_body << "重複削除後対戦結果データ件数：#{source_track_records.length.to_s}件\n"
 				
@@ -266,24 +290,19 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 				# VALUE 句生成
 				source_track_records_values = []
 				
-				source_track_records.each do |t|
-					# REXMLでXPATH使うと重いので、ハッシュに変換
-					t_hash = {}
-					t.each_child do |c|
-						t_hash[c.name] = c.text
-					end
+				source_track_records.each do |tr_hash|
 					
 					source_track_records_values << <<-"SQL"
 						(
 							#{game_id.to_i},
-							to_timestamp('#{Time.iso8601(t_hash['timestamp'].to_s).localtime.strftime("%Y-%m-%d %H-%M-%S")}', 'YYYY-MM-DD HH24-MI-SS'),
+							to_timestamp('#{Time.iso8601(tr_hash['timestamp'].to_s).localtime.strftime("%Y-%m-%d %H-%M-%S")}', 'YYYY-MM-DD HH24-MI-SS'),
 							#{account.id.to_i},
-							#{s t_hash['p1name'].to_s},
-							#{t_hash['p1type'].to_i},
-							#{t_hash['p1point'].to_i},
-							#{s t_hash['p2name'].to_s},
-							#{t_hash['p2type'].to_i},
-							#{t_hash['p2point'].to_i}
+							#{s tr_hash['p1name'].to_s},
+							#{tr_hash['p1type'].to_i},
+							#{tr_hash['p1point'].to_i},
+							#{s tr_hash['p2name'].to_s},
+							#{tr_hash['p2type'].to_i},
+							#{tr_hash['p2point'].to_i}
 						)
 					SQL
 				end
