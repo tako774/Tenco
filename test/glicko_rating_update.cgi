@@ -5,7 +5,7 @@
 now = Time.now
 
 ### Glicko Ratings 更新 (ファイル入力) ###
-REVISION = '0.01'
+REVISION = '0.03'
 DEBUG = 1
 
 $LOAD_PATH.unshift '../common'
@@ -22,12 +22,20 @@ include Utils
 
 source = ""
 
+# DB設定
+DB_USER = 'pgsql'
+DB_NAME = 'tenco'
+PSQL = '/usr/local/pgsql/bin/psql'
+
 # ログファイルパス
 LOG_PATH = "../log/rating_#{now.strftime('%Y%m%d')}.log"
 ERROR_LOG_PATH = "../log/error_#{now.strftime('%Y%m%d')}.log"
 
 # データファイルディレクトリ
 DATA_DIR = "../dat/ratings"
+
+# テンポラリファイルディレクトリ
+TMP_DIR = "./tmp"
 
 # HTTP/HTTPSレスポンス文字列
 res_status = ''
@@ -38,12 +46,9 @@ begin
 	# 設定
 	games = nil # レート計算対象ゲーム情報
 	
-	CSV_SEPARATOR = ','
-	CSV_SEPARATOR_REGEX = /,/o
-	
 	# DB接続
 	db = DB.getInstance()
-	db.exec("BEGIN TRANSACTION")
+	# db.exec("BEGIN TRANSACTION")
 	
 	res_body << "DB connected...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
 	
@@ -59,94 +64,127 @@ begin
 		res_body << "★GAME_ID:#{game.id} の処理\n"
 		
 		data_file = "#{DATA_DIR}/#{game.id}"
-		update_sql = ""
-		insert_sql = ""
+		script_file = "#{TMP_DIR}/#{File::basename(__FILE__)}_#{game.id}.sql"
 		
-		# レート情報をファイルから読み込みDBに保存
-		File.open(data_file, 'rb') do |io|
-			while (line = io.gets) do
-				account_id,
-				type1_id,
-				rate,
-				rd,
-				matched_accounts,
-				matched_counts = line.chop!.split(CSV_SEPARATOR_REGEX)
-				
-				begin
-					# UPDATE or INSERT
-					update_sql = <<-"SQL"
-						UPDATE
-						  game_account_ratings
-						SET
-						  rating = #{rate.to_f},
-						  ratings_deviation = #{rd.to_f},
-						  matched_accounts = #{matched_accounts.to_i},
-						  match_counts = #{matched_counts.to_i},
-						  updated_at = CURRENT_TIMESTAMP,
-						  lock_version = lock_version + 1
-						WHERE
-						  game_id = #{game.id.to_i}
-						  AND account_id = #{account_id.to_i}
-						  AND type1_id = #{type1_id.to_i}
-					SQL
-								
-					res_update = db.exec(update_sql)
-												
-					# UPDATE 失敗時は INSERT
-					if res_update.cmdstatus != 'UPDATE 1' then
-						insert_sql = <<-"SQL"
-						INSERT INTO
-						  game_account_ratings
-						  (
-							game_id,
-							account_id,
-							type1_id,
-							rating,
-							ratings_deviation,
-							matched_accounts,
-							match_counts
-						  )
-						  VALUES
-						  (
-							#{game.id.to_i},
-							#{account_id.to_i},
-							#{type1_id.to_i},
-							#{rate.to_f},
-							#{rd.to_f},
-							#{matched_accounts.to_i},
-							#{matched_counts.to_i}
-						  )
-						SQL
-						
-						db.exec(insert_sql)
-					end
-								
-					res_update.clear
-					
-				rescue => ex
-					res_status = "Status: 500 Server Error\n"
-					res_body << "レーティング情報保存時にエラーが発生しました。\n#{update_sql}\n#{insert_sql}"
-					raise ex
-				end
-					
-				
+		# データロード用SQLファイル作成
+		File.open(script_file, "w") do |io|
+			io.puts(<<-"SQL")
+/* 一時テーブル作成 */
+CREATE TEMP TABLE
+  temp_game_account_ratings
+(
+  account_id integer,
+  type1_id integer,
+  rating real,
+  ratings_deviation real,
+  matched_accounts integer,
+  match_counts integer
+)
+WITH (
+  OIDS=FALSE
+);
+
+/* レート情報をファイルからロード */
+COPY temp_game_account_ratings
+(
+  account_id,
+  type1_id,
+  rating,
+  ratings_deviation,
+  matched_accounts,
+  match_counts
+)
+FROM
+  '#{File.expand_path(data_file)}'
+WITH
+  (FORMAT 'csv')
+;
+
+/* UPDATE */  
+UPDATE
+  game_account_ratings gar
+SET
+  rating = tmp.rating,
+  ratings_deviation = tmp.ratings_deviation,
+  matched_accounts = tmp.matched_accounts,
+  match_counts = tmp.match_counts,
+  updated_at = CURRENT_TIMESTAMP,
+  lock_version = lock_version + 1
+FROM
+  temp_game_account_ratings tmp
+WHERE
+  gar.game_id = #{game.id}
+  AND gar.account_id = tmp.account_id
+  AND gar.type1_id = tmp.type1_id
+;
+
+/* INSERT */  
+INSERT INTO
+  game_account_ratings (
+  game_id,
+  account_id,
+  type1_id,
+  rating,
+  ratings_deviation,
+  matched_accounts,
+  match_counts
+)
+SELECT
+  #{game.id},
+  account_id,
+  type1_id,
+  rating,
+  ratings_deviation,
+  matched_accounts,
+  match_counts
+FROM
+  temp_game_account_ratings tmp
+WHERE
+  NOT EXISTS (
+    SELECT
+      1
+    FROM
+      game_account_ratings gar
+    WHERE
+	  gar.game_id = #{game.id}
+  AND gar.account_id = tmp.account_id
+  AND gar.type1_id = tmp.type1_id
+)
+;
+
+/* 一時テーブル削除 */
+DROP TABLE
+  temp_game_account_ratings
+;
+			SQL
+		end
+		
+		res_body << "SQL script generated...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
+		
+		begin
+			exec_command = "#{PSQL} -U #{DB_USER} -d #{DB_NAME} -f #{script_file}"
+			res_body << "> #{exec_command}\n"
+			res_body << `#{exec_command}`
+			unless $?.success? then
+				res_body << "レーティング情報保存時にエラーが発生しました。\n"
+				raise "レーティング情報保存コマンド実行時エラー\n#{exec_command}"
 			end
+		rescue => ex
+			res_status = "Status: 500 Server Error\n"
+			res_body << "レーティング情報保存コマンドが実行できませんでした。\n#{exec_command}\n"
+			raise ex
 		end
 		
 		res_body << "rating results stored...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
 	end
 	
 	# コミット
-	db.exec("COMMIT")
-	res_body << "transaction finished...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
-	
-	# DB ANALYZE
-	# GameAccountRating.connection.execute("VACUUM ANALYZE;")
-	# res_body << "DB analyzed...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
+	# db.exec("COMMIT")
+	# res_body << "transaction finished...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
 	
 rescue => ex
 	res_status = "Status: 500 Server Error\n" unless res_status
-	res_body << "レーティング計算時にエラーが発生しました。ごめんなさい。（#{now.to_s}）\n"
+	res_body << "レーティング保存時にエラーが発生しました。ごめんなさい。（#{now.to_s}）\n"
 	File.open(ERROR_LOG_PATH, 'a') do |log|
 		log.puts "#{now.to_s} #{File::basename(__FILE__)} Rev.#{REVISION}"
 		log.puts source
@@ -156,7 +194,7 @@ rescue => ex
 	end
 else
 	res_status = "Status: 200 OK\n" unless res_status
-	res_body << "レーティング計算正常終了。\n"
+	res_body << "レーティング情報保存正常終了。\n"
 ensure
 	# DB接続を閉じる
 	db.close if db
