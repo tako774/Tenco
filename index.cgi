@@ -5,7 +5,7 @@ begin
 	# 開始時刻
 	now = Time.now
 	# リビジョン
-	REVISION = 'R0.12'
+	REVISION = 'R0.13'
 	DEBUG = false
 
 	# TOP ディレクトリパス
@@ -13,11 +13,15 @@ begin
 	
 	$LOAD_PATH.unshift "#{TOP_DIR}/common"
 	$LOAD_PATH.unshift "#{TOP_DIR}/entity"
+	$LOAD_PATH.unshift "#{TOP_DIR}/dao"
 
 	require 'time'
 	require 'logger'
 	require 'utils'
 	require 'setting'
+	
+	require 'Game'
+	require 'GameDao'
 
 	# 設定読み込み
 	CFG = Setting.new
@@ -124,27 +128,9 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 						# DB接続
 						db = DB.getInstance
 
-						# ゲーム情報取得
-						require 'Game'
-						res = db.exec(<<-"SQL")
-							SELECT
-								*
-							FROM
-								games
-							-- WHERE
-							--	is_batch_target = 1
-							ORDER BY
-								id DESC
-						SQL
-						
-						res.each do |r|
-							g = Game.new
-							res.fields.length.times do |i|
-								g.instance_variable_set("@#{res.fields[i]}", r[i])
-							end
-							games[g.id.to_i] = g
-						end
-						res.clear
+						# 全ゲーム情報取得
+						game_dao = GameDao.new
+						games = game_dao.get_games
 						
 						# ゲーム統計情報を取得
 						require 'GameStat'
