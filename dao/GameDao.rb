@@ -29,6 +29,7 @@ class GameDao < DaoBase
 		return games
 	end
 	
+	# バッチ処理対象のゲーム情報を取得
 	def get_batch_target_games
 		games = {}
 		
