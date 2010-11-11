@@ -367,14 +367,16 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 				  UPDATE
 					game_accounts
 				  SET
-					last_play_timestamp = to_timestamp(#{s last_play_timestamp.to_s}, \'YYYY-MM-DD HH24:MI:SS\')
+					last_play_timestamp = 
+					  CASE
+					    WHEN (last_play_timestamp < to_timestamp(#{s last_play_timestamp.to_s}, \'YYYY-MM-DD HH24:MI:SS\')
+					      OR last_play_timestamp IS NULL)
+					    THEN to_timestamp(#{s last_play_timestamp.to_s}, \'YYYY-MM-DD HH24:MI:SS\')
+						ELSE last_play_timestamp
+					  END
 				  WHERE
 					game_id = #{game_id.to_i}
 					AND account_id = #{account.id.to_i}
-					AND (
-					  last_play_timestamp < to_timestamp(#{s last_play_timestamp.to_s}, \'YYYY-MM-DD HH24:MI:SS\')
-					  OR (last_play_timestamp IS NULL)
-					)
 				  RETURNING id
 				SQL
 				
