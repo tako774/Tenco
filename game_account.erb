@@ -224,17 +224,6 @@ $(document).ready(
 			change_tr_show_mode(tr_show_mode);
 		}
 		
-		// ビジュアル部分表示
-		$("#side_visual").html('\
-		<object id="toho_clock" title="TOHO CLOCK" classid="clsid:d27cdb6e-ae6d-11cf-96b8-444553540000" width="160" height="120" codebase="http://fpdownload.adobe.com/pub/shockwave/cabs/flash/swflash.cab#version=10,0,0,0">\
-		<param name="allowScriptAccess" value="always" />\
-		<param name="movie" value="http://boxell.jp/clock/miniclock.swf" />\
-		<param name="quality" value="high" />\
-		<param name="wmode" value="transparent" />\
-		<embed src="http://boxell.jp/clock/miniclock.swf" width="160" height="120" allowScriptAccess="always" quality="high" wmode="transparent" pluginspage="http://www.adobe.com/shockwave/download/index.cgi?P1_Prod_Version=ShockwaveFlash" />\
-		</object>\
-		');
-
 	}
 );
 
@@ -246,12 +235,13 @@ $(document).ready(
 <div id="container">
 
 <div id="header">
-<h1><a href="<%= CFG[:top_url] %>"><img alt="Tenco!" src='<%= CFG[:static_url] %>images/Tenco.gif' width='<%= 366/3 %>' height='<%= 126/3 %>' /></a></h1> マイページ 開発中バージョンα10.2（2009/11/08）
+<h1><a href="<%= CFG[:top_url] %>"><img alt="Tenco!" src='<%= CFG[:static_url] %>images/Tenco.gif' width='<%= 366/3 %>' height='<%= 126/3 %>' /></a></h1> マイページ 開発中バージョンα11（2011/01/13）
 <p id="meta_info">
 λ＜レートなんて飾りなんです。偉い人にはそれがわからんのです<br />
-<%= now.strftime('%m/%d %H:%M') %> に作成（毎時0分以降に再生成）<br />
-<strong>現在、対戦履歴表示を直近報告の最大100件のみにしています。現在対応中です。（10/05/26 04:07）</strong><br />
-<img alt="" src="<%= CFG[:static_url] %>client/images/suwako.ico" width="16" height="16" /> <a href="<%= CFG[:top_url] %>">天則観報告ツール</a>を更新しました（10/11/11）<br />
+<%= now.strftime("%m/%d %H:%M") %> に作成（毎時0分以降に再生成）<br />
+Tenco! の情報を <a href="http://twitter.com/" target="_blank">twitter</a> 上のハッシュタグ <del>#Tenco</del> <a href="http://twitter.com/#search?q=%23tenco_info" target="_blank">#tenco_info</a> で流す運用を始めています (11/1/4)<br />
+<%# 現在、対戦履歴表示を直近報告の最大100件のみにしています。現在対応中です。（10/05/26 04:07）<br /> %>
+天則観つけ忘れ防止用の<a href="<%= CFG[:static_url] %>misc/auto_launch.bat.txt">バッチファイル</a>をおいておきます（11/1/20）<br />
 </p>
 </div>
 
@@ -280,7 +270,8 @@ $(document).ready(
 			<thead>
 				<tr>
 					<th>キャラクター</th>
-					<th>レート<sub>±RD</sub>（対戦人数/対戦数）</th>
+					<th>対戦人数/対戦数</th>
+					<th>レート<sub>±RD</sub></th>
 					<%- if estimate_ratings.length > 0 -%>
 					<%= "<th class=\"suppli\">推定レート</th>" %>
 					<%- end -%>
@@ -290,10 +281,11 @@ $(document).ready(
 				<%- ratings.each do |r| -%>
 				<tr>
 					<td title="<%= r.type1_id.to_i %>"><%= "#{type1_h[r.type1_id.to_i]}" %></td>
+					<td title="<%= "#{sprintf('%05d', r.matched_accounts.to_i)}" %>"><%= "#{r.matched_accounts.to_i}人/#{r.match_counts.to_i}戦" %></td>
 					<%- if account.show_ratings_flag.to_i != 0 then -%>
-					<td><%= "#{r.rating.to_f.round}<sub>±#{r.ratings_deviation.to_f.floor}</sub>（#{r.matched_accounts.to_i}人/#{r.match_counts.to_i}戦）" %></td>
+					<td title="<%= "#{sprintf('%04d', r.rating.to_f.round)}" %>"><%= "#{r.rating.to_f.round}<sub>±#{r.ratings_deviation.to_f.floor}</sub>" %></td>
 					<%- else -%>
-					<td><%= "#{(r.rating.to_f.round / 100.0).floor}XX<sub>±#{r.ratings_deviation.to_f.floor}</sub>（#{r.matched_accounts.to_i}人/#{r.match_counts.to_i}戦）" %></td>
+					<td title="<%= "#{sprintf('%02d',(r.rating.to_f.round / 100.0).floor)}XX" %>"><%= "#{(r.rating.to_f.round / 100.0).floor}XX<sub>±#{r.ratings_deviation.to_f.floor}</sub>" %></td>
 					<%- end -%>
 					<%- if estimate_ratings.length > 0 -%>
 					<td class="num suppli">
@@ -351,7 +343,7 @@ $(document).ready(
 				<tr>
 					<%- end -%>
 					<%- if t.player1_points > t.player2_points -%>
-					<td class="time suppli"><%= t.play_timestamp.strftime('%y/%m/%d %H:%M') %></td>
+					<td class="time suppli"><%= t.play_timestamp.strftime("%y/%m/%d %H:%M") %></td>
 					<td><%= "#{z2h_long_str(xhtml_sp2nbsp(h(t.player1_name)))} (#{type1_h[t.player1_type1_id.to_i]})" %></td>
 					<td class="vs"><%= "#{t.player1_points.to_i} - #{t.player2_points.to_i}" %></td>
 						<%- unless t.player2_account_name.nil? -%>
@@ -360,7 +352,7 @@ $(document).ready(
 					<td><span class="enc_alt"><%= "◇#{t.player2_name[11..14]}" %></span><span class="enc"><%= u(h(t.player2_name)) %></span> <%= "(#{type1_h[t.player2_type1_id.to_i]})" %></td>
 						<%- end -%>
 					<%- else -%>
-					<td class="time suppli"><%= t.play_timestamp.strftime('%y/%m/%d %H:%M')  %></td>
+					<td class="time suppli"><%= t.play_timestamp.strftime("%y/%m/%d %H:%M")  %></td>
 						<%- unless t.player2_account_name.nil? -%>
 					<td><a href="<%= "#{CFG[:top_url]}game/#{game_id.to_i}/account/#{u t.player2_account_name.to_s}/" %>"><%= z2h_long_str(xhtml_sp2nbsp(h(t.player2_name))) %></a><%= " (#{type1_h[t.player2_type1_id.to_i]})" %></td>
 						<%- else -%>
@@ -384,8 +376,7 @@ $(document).ready(
 	<%= xhtml_sp2nbsp(h(game_account.rep_name)) %> さん
 	</p>
 <div class="visual" id="side_visual">
-<pre class="AA">##ビジュアル表現を予定##
-
+<pre class="AA">### 節電中 ###
 　　　　 ,.ｨrｰr 、
 　　　y' "´￣｀'ヽ
 .　　 ﾉ　　 くノﾉ))ゝ
@@ -393,8 +384,7 @@ $(document).ready(
 　　　　'k'_,i{X l}〈つ[|三＞
 　　　 ／'/_ハ.ゝ、
 　　　　 ｀'ﾄ_ﾉ'ﾄ,ﾉ"
-
-##ビジュアル表現を予定##
+### 節電中 ###
 </pre>
 </div>
 <h3>プロフィールあれこれ</h3>
