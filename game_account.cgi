@@ -5,7 +5,7 @@ begin
 	now = Time.now
 	# リビジョン
 	REVISION = 'R0.61'
-	DEBUG = false
+	DEBUG = true
 
 	$LOAD_PATH.unshift './common'
 	$LOAD_PATH.unshift './entity'
@@ -81,19 +81,22 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		db = nil   # DB接続 
 		
 		track_record_ids = [] # 対戦結果ID一覧
-		track_records = []  # 対戦結果
-		type1 = {}          # プレイヤー属性１区分値
-		type1_h = {}        # プレイヤー属性１区分値（HTML エスケープ済み）
-		ratings = []         # プレイヤーのレーティング 
+		track_records = []    # 対戦結果
+		type1 = {}            # プレイヤー属性１区分値
+		type1_h = {}          # プレイヤー属性１区分値（HTML エスケープ済み）
+		ratings = []          # プレイヤーのレーティング 
 		estimate_ratings = {} # プレイヤーのレート推定値
-		account_tags = [] # アカウントタグ情報
-		player2_account_ids = [] # 対戦相手アカウントID一覧
+		account_tags = []     # アカウントタグ情報
+		player2_account_ids = []   # 対戦相手アカウントID一覧
 		matched_game_accounts = [] # 対戦相手情報
-		account = nil # 対象アカウントの情報
+		account = nil    # 対象アカウントの情報
 		other_games = [] # 対象アカウントのマッチ済み他ゲームID
+		affiliates = nil # アフィリエイトデータ　店舗名 => { meta => メタデータハッシュ, item => { item_id => アイテムデータハッシュ } }
 		
 		LINK_ERB_PATH   = "./link.erb"   # リンクERBパス
 		FOOTER_ERB_PATH = "./footer.erb" # フッターERBパス
+		AFFILIATE_ERB_PATH = "./affiliate.erb" # アフィリエイトERBパス
+		AFFILIATE_YAML_PATH = "./affiliate.yaml" # アフィリエイトYAMLパス
 		
 		# クエリストリング分解
 		query = parse_query_str(ENV['QUERY_STRING'])
@@ -468,6 +471,10 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 						link_html = Erubis::Eruby.new(File.read(LINK_ERB_PATH)).result(binding)
 						# footer 部生成
 						footer_html = Erubis::Eruby.new(File.read(FOOTER_ERB_PATH)).result(binding)
+						
+						# アフィリエイト 部生成
+						affiliates = YAML.load_file(AFFILIATE_YAML_PATH)
+						affiliate_html = Erubis::Eruby.new(File.read(AFFILIATE_ERB_PATH)).result(binding)
 						
 						# キャッシュHTML/ヘッダ出力
 						File.open(cache_html_path, 'w') do |w|

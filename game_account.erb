@@ -20,6 +20,7 @@
 	<script type="text/javascript" charset="utf-8" src="<%= CFG[:static_url] %>js/show_user_data.js"></script>
 	<script type="text/javascript" charset="utf-8" src="<%= CFG[:static_url] %>js/search.js"></script>
 	<script type="text/javascript" charset="utf-8" src="<%= CFG[:static_url] %>js/account_tag.js"></script>
+	<script type="text/javascript" charset="utf-8" src="<%= CFG[:static_url] %>js/bsn.Crossfader.js"></script>
 	<%# <script type="text/javascript" charset="utf-8" src="<％CFG[:static_url]％>js/timechart.js"></script>
 	<!--[if IE]><script type="text/javascript" src="<％CFG[:static_url]％>js/excanvas.js"></script><![endif]--> %>
 	<title><%= h game_account.rep_name %> / <%= h game.name %> - Tenco!</title>
@@ -223,7 +224,6 @@ $(document).ready(
 		if (tr_show_mode == 'all') {
 			change_tr_show_mode(tr_show_mode);
 		}
-		
 	}
 );
 
@@ -234,14 +234,16 @@ $(document).ready(
 
 <div id="container">
 
-<div id="header">
-<h1><a href="<%= CFG[:top_url] %>"><img alt="Tenco!" src='<%= CFG[:static_url] %>images/Tenco.gif' width='<%= 366/3 %>' height='<%= 126/3 %>' /></a></h1> マイページ 開発中バージョンα11（2011/01/13）
+<div id="header" style="text-align:center;border:1px solid #EFEFEF;background-color:#EFEFEF">
+<!-- <h1><a href="<%= CFG[:top_url] %>"><img alt="Tenco!" src='<%= CFG[:static_url] %>images/Tenco.gif' width='<%= 366/3 %>' height='<%= 126/3 %>' /></a></h1> マイページ 開発中バージョンα12（2011/03/20）-->
+<a href="http://info.tenco.info/info/20110320.html">
+<img src="<%= CFG[:static_url] %>images/tenco_nanashi_message2.jpg" alt="Tenco! 創設者 nanashi からのメッセージをお読みください" width="1142" height="172" /></a>
+<br />
 <p id="meta_info">
-λ＜レートなんて飾りなんです。偉い人にはそれがわからんのです<br />
-<%= now.strftime("%m/%d %H:%M") %> に作成（毎時0分以降に再生成）<br />
-Tenco! の情報を <a href="http://twitter.com/" target="_blank">twitter</a> 上のハッシュタグ <del>#Tenco</del> <a href="http://twitter.com/#search?q=%23tenco_info" target="_blank">#tenco_info</a> で流す運用を始めています (11/1/4)<br />
+<!-- λ＜レートなんて飾りなんです。偉い人にはそれがわからんのです<br />
+<%= now.strftime("%m/%d %H:%M") %> に作成（毎時0分以降に再生成）<br />  
+Tenco! の情報を <a href="http://twitter.com/" target="_blank">twitter</a> 上のハッシュタグ <del>#Tenco</del> <a href="http://twitter.com/#search?q=%23tenco_info" target="_blank">#tenco_info</a> で流す運用を始めています (11/1/4)<br /> -->
 <%# 現在、対戦履歴表示を直近報告の最大100件のみにしています。現在対応中です。（10/05/26 04:07）<br /> %>
-天則観つけ忘れ防止用の<a href="<%= CFG[:static_url] %>misc/auto_launch.bat.txt">バッチファイル</a>をおいておきます（11/1/20）<br />
 </p>
 </div>
 
@@ -251,9 +253,9 @@ Tenco! の情報を <a href="http://twitter.com/" target="_blank">twitter</a> �
 	<li><a href=""></a></li>
 </ul>
 </div>
+<hr />
 -%>
 
-<hr />
 
 <div id="wrapper">
 	<div id="main_wrapper">
@@ -375,7 +377,8 @@ Tenco! の情報を <a href="http://twitter.com/" target="_blank">twitter</a> �
 	<p>
 	<%= xhtml_sp2nbsp(h(game_account.rep_name)) %> さん
 	</p>
-<div class="visual" id="side_visual">
+	<%#
+	<div class="visual" id="side_visual">
 <pre class="AA">### 節電中 ###
 　　　　 ,.ｨrｰr 、
 　　　y' "´￣｀'ヽ
@@ -386,7 +389,9 @@ Tenco! の情報を <a href="http://twitter.com/" target="_blank">twitter</a> �
 　　　　 ｀'ﾄ_ﾉ'ﾄ,ﾉ"
 ### 節電中 ###
 </pre>
-</div>
+	</div>
+	%>
+		<%= affiliate_html %>
 <h3>プロフィールあれこれ</h3>
 <p>
 <%- if game_account.cluster_name -%><%= "#{h game_account.cluster_name}クラスタ所属" %><%- end -%>
