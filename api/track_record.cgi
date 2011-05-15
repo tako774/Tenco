@@ -46,6 +46,9 @@ begin
 
 	# 対戦のマッチング時にどれだけ離れた時間のタイムスタンプをマッチングOKとみなすか
 	MATCHING_TIME_LIMIT_SECONDS = 300
+	
+	# 対戦時刻が現在よりどれだけ未来のデータを許容するか
+	PLAY_TIMESTAMP_ERROR_LIMIT_SECONDS = 900
 
 	# バリデーション用定数
 	ID_REGEX = /\A[0-9]+\z/
@@ -88,6 +91,7 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		source_length = ENV['CONTENT_LENGTH'].to_i # 受信バイト数
 		track_records = []         # 今回DBにインサートした対戦記録
 		source_track_records = []  # 受信対戦記録
+		time_over_track_records = [] # 対戦時刻が現在より大きく未来の対戦結果
 		last_play_timestamp = nil # 最終対戦時刻
 		is_force_insert = false      # 強制インサートモード設定（同一アカウントからの重複時にエラー終了せず続行する）
 		PLEASE_RETRY_FORCE_INSERT = "<Please Retry in Force-Insert Mode>"  # 強制インサートリトライのお願い文字列
@@ -265,6 +269,19 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		
 		res_body << "duplicated data delete finished...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
 
+		# 未来時間の対戦報告をはじく
+		source_track_records.each do |tr|
+			if Time.iso8601(tr['timestamp'].to_s).localtime > now + PLAY_TIMESTAMP_ERROR_LIMIT_SECONDS then
+				time_over_track_records << tr
+			end
+		end
+		source_track_records = source_track_records - time_over_track_records
+		
+		if time_over_track_records.length > 0 then
+			res_body << "！対戦時刻が現在より#{PLAY_TIMESTAMP_ERROR_LIMIT_SECONDS}秒以上未来の対戦データを無視しました\n"
+			res_body << "対戦時刻が未来のデータ件数：#{time_over_track_records.length}件\n"
+		end
+		
 		# 試合結果データをDBに登録する
 		begin
 			if source_track_records.length > 0 then
@@ -981,14 +998,14 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		
 		res_body << "game_account_daily_stats udpate/insert finish...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
 				
-		# ゲームアカウントプレイヤー名日次統計テーブルに書き込み
+		# ゲームアカウントプレイヤー名統計テーブルに書き込み
 		begin
 			account_player_name_summary.each do |account_id, pn_summary|
 				pn_summary.each do |player_name, summary|
 					# 更新または作成
 					res_update = db.exec(<<-"SQL")
 					  UPDATE
-						game_account_player_name_daily_stats
+						game_account_player_name_stats
 					  SET
 						matched_track_records_count = matched_track_records_count + #{summary[:matched_count].to_i},
 						updated_at = now(),
@@ -997,7 +1014,6 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 							game_id = #{game_id.to_i}
 						AND account_id = #{account_id.to_i}
 						AND player_name = #{s player_name}
-						AND date_time = date_trunc('day', CURRENT_TIMESTAMP)
 					  RETURNING id;
 					SQL
 									
@@ -1006,12 +1022,11 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 						res_update.clear
 						res_insert = db.exec(<<-"SQL")
 						  INSERT INTO
-							game_account_player_name_daily_stats
+							game_account_player_name_stats
 							(
 							  game_id,
 							  account_id,
 							  player_name,
-							  date_time,
 							  matched_track_records_count
 							)
 						  VALUES
@@ -1019,7 +1034,6 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 							  #{game_id.to_i},
 							  #{account_id.to_i},
 							  #{s player_name},
-							  date_trunc('day', CURRENT_TIMESTAMP),
 							  #{summary[:matched_count].to_i}
 							)
 						  RETURNING id;
@@ -1040,13 +1054,12 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		
 		rescue => ex
 			res_status = "Status: 400 Bad Request\n"
-			res_body << "ゲームアカウントプレイヤー名日次統計テーブルの登録・更新時にエラーが発生しました\n"
+			res_body << "ゲームアカウントプレイヤー名統計テーブルの登録・更新時にエラーが発生しました\n"
 			raise ex
 		end
 		
-		res_body << "game_account_player_name_daily_stats udpate/insert finish...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
+		res_body << "game_account_player_name_stats udpate/insert finish...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
 		
-
 		# ゲームアカウント対アカウントテーブルに書き込み
 		begin
 			account_vs_accounts.each do |account_id, matched_account|
