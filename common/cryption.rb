@@ -89,13 +89,18 @@ class Cryption
 	  	end
 	end 
 	
+	# SHA256ハッシュ化
 	def self.hash(source)
-		return (OpenSSL::Digest::SHA1.new(source)).to_s
+		return (OpenSSL::Digest::SHA256.new(source)).to_s
 	end 
 
-	def self.hash_trip(source, number, length = 4)
-		n = number % (SHA1_CHAR_LENGTH - length)
-		return ((OpenSSL::Digest::SHA1.new(source)).to_s)[n..(n + length -1)]
-	end 
+	# 保存用パスワード生成
+	def self.mk_stored_password(raw_password, salt)
+		return self.hash((OpenSSL::Digest::SHA1.new(raw_password)).to_s + salt)
+	end
 	
+	# SHA1済みパスワードを保存用パスワードに変換
+	def self.stored_password(password, salt)
+		return self.hash(password + salt)
+	end
 end
