@@ -3,6 +3,7 @@
 require 'kakasi'
 include Kakasi
 require 'nkf'
+require 'uri'
 
 NG_WORDS = File.read("#{File::dirname(__FILE__)}/../../../config/ng_words_list.txt").split("\n")
 NG_WORDS_REGEXP = Regexp.new(NG_WORDS.join("|"))
@@ -114,6 +115,11 @@ module Utils
 		else
 			return [nil, nil, nil]
 		end
+	end
+	
+	# HTTP/HTTPS URI 形式チェック
+	def validate_uri(str)
+		str =~ URI.regexp && $& == str ? true : false
 	end
 end
 
