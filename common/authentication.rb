@@ -1,11 +1,12 @@
-require 'db'
-require 'utils'
+require "#{File.dirname __FILE__}/db"
+require "#{File.dirname __FILE__}/utils"
+require "#{File.dirname __FILE__}/cryption"
 include Utils
-require 'Account'
+require "#{File.dirname __FILE__}/../entity/Account"
 
 # 認証クラス
 class Authentication
-	VERSION = 'v0.04'
+	VERSION = 'v0.05'
 
 	# salt を取得
 	# プライベートクラスメソッド 通常はパスワード無しで salt を公開しないこと
@@ -91,11 +92,10 @@ class Authentication
 			return account
 		end
 	end
-	
+
 	# アカウント新規登録
 	# なければ作成、あればエラー
-	def self.register (name, raw_password, mail_address)
-		require 'cryption'
+	def self.register(name, raw_password, mail_address)
 		
 		# データパスワード兼saltの生成
 		salt_length = 16  # データ出力時の暗号鍵のオクテット文字列長
@@ -109,14 +109,12 @@ class Authentication
 		  INSERT INTO accounts (
 			name,
 			password,
-			encrypted_password,
 			encrypted_mail_address,
 			data_password
 		  )
 		  VALUES (
 		    #{s name},
 			#{s Cryption.mk_stored_password(raw_password, salt)},
-			#{s Cryption.encrypt(raw_password)},
 			#{s Cryption.encrypt(mail_address)},
 			#{s salt}
 		  ) RETURNING *;
@@ -134,8 +132,7 @@ class Authentication
 	
 	# アカウント情報更新
 	# なければエラー
-	def self.update (name, password, new_mail_address, new_raw_password, show_ratings_flag, allow_edit_profile, lock_version)
-		require 'cryption'
+	def self.update(name, password, new_mail_address, new_raw_password, show_ratings_flag, allow_edit_profile, lock_version)
 		
 		# ソルト文字列取得
 		salt = get_salt(name)
@@ -150,7 +147,6 @@ class Authentication
 			accounts
 		  SET
 			#{"password = " + s(Cryption.mk_stored_password(new_raw_password, salt)) + "," if new_raw_password}
-			#{"encrypted_password = " + s(Cryption.encrypt(new_raw_password)) + "," if new_raw_password}
 			#{"encrypted_mail_address = " + s(Cryption.encrypt(new_mail_address)) + ","  if new_mail_address}
 			#{"show_ratings_flag = " + show_ratings_flag.to_i.to_s + ","  if show_ratings_flag}
 			#{"allow_edit_profile = " + allow_edit_profile.to_i.to_s + ","  if allow_edit_profile}
@@ -185,5 +181,65 @@ class Authentication
 			res.clear
 			return account
 		end
+	end
+	
+	# アカウント削除(パスワードありの場合)
+	# 成功するとDBアカウントレコードを返す
+	# 失敗すると例外を発生させる
+	def self.delete(name, password)
+		
+		# ソルト文字列取得
+		salt = get_salt(name)
+		raise "エラー：アカウント認証に失敗しました。salt が見つかりません（#{name}, #{host_name}）" unless salt
+
+		# DB接続取得
+		db = DB.getInstance
+		
+		# アカウント削除SQL実行
+		sql = <<-"SQL"
+		  UPDATE
+		    accounts
+		  SET
+		    del_flag = 1,
+		    password = NULL,
+		    encrypted_mail_address = NULL,
+		    lock_version = lock_version + 1,
+			updated_at = CURRENT_TIMESTAMP
+		  WHERE
+			name = #{s name}
+			AND password = #{s Cryption.stored_password(password, salt)}
+			AND del_flag = 0
+		  RETURNING *;
+		SQL
+		
+		res = db.exec(sql)
+		
+		# 更新がなければエラー
+		unless res.num_tuples == 1 then
+			res.clear
+			begin
+				require 'socket'
+				host_name = ""
+				host_name = Socket.gethostbyaddr((ENV['REMOTE_ADDR'].split('.').collect {|x| x.to_i}).pack('C4'))[0]
+			rescue
+				host_name = ENV['REMOTE_ADDR']
+			end
+			raise "エラー：アカウントの削除に失敗しました。（#{name}, #{host_name}）"
+		end
+		
+		account = Account.new
+		res.num_fields.times do |i|
+			account.instance_variable_set("@#{res.fields[i]}", res[0][i])
+		end
+		res.clear
+		return account
+		
+	end
+	
+	# アカウント削除(生パスワードの場合)
+	# 成功するとDBアカウントレコードを返す
+	# 失敗すると例外を発生させる
+	def self.delete_by_raw_password(name, raw_password)
+		delete name, Cryption.hash_as_client(raw_password)
 	end
 end

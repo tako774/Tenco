@@ -3,7 +3,7 @@ require 'openssl'
 PASSWORD = File.read("#{File::dirname(__FILE__)}/../../../config/password.txt")
 
 class Cryption
-	VERSION = 'V0.02'
+	VERSION = 'V0.03'
 	SHA1_CHAR_LENGTH = 40
 	SALT_BYTES = 8
 	KEYIVGEN_ITERATION_COUNT = 1
@@ -91,16 +91,22 @@ class Cryption
 	
 	# SHA256ハッシュ化
 	def self.hash(source)
-		return (OpenSSL::Digest::SHA256.new(source)).to_s
+		OpenSSL::Digest::SHA256.new(source).to_s
 	end 
 
-	# 保存用パスワード生成
-	def self.mk_stored_password(raw_password, salt)
-		return self.hash((OpenSSL::Digest::SHA1.new(raw_password)).to_s + salt)
+	# クライアントがサーバー送信するときののパスワードハッシュ方式（SHA1）でハッシュ変換
+	def self.hash_as_client(raw_password)
+		OpenSSL::Digest::SHA1.new(raw_password).to_s
 	end
 	
 	# SHA1済みパスワードを保存用パスワードに変換
 	def self.stored_password(password, salt)
 		return self.hash(password + salt)
 	end
+	
+	# 生パスワードから保存用パスワード生成
+	def self.mk_stored_password(raw_password, salt)
+		return self.hash(hash_as_client(raw_password) + salt)
+	end
+	
 end
