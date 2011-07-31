@@ -100,6 +100,7 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		
 		account_name = query['account_name']
 		account_password = query['account_password']
+		new_mail_address_flag = query['new_mail_address_flag']
 		new_mail_address = query['new_mail_address']
 		new_account_password = query['new_account_password']
 		new_show_ratings_flag = query['new_show_ratings_flag']
@@ -127,6 +128,15 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		end
 		
 		unless (
+			new_mail_address_flag == '0' or
+			new_mail_address_flag == '1'
+		) then
+			res_status = "Status: 400 Bad Request\n"
+			res_body << "・メールアドレス変更フラグの値が不正です\n"
+			raise "アカウントの新規登録に失敗しました。入力値バリデーションエラー"
+		end
+		
+		unless (
 			!new_mail_address or
 			new_mail_address == '' or (
 				new_mail_address =~ ACCOUNT_MAIL_ADDRESS_REGEX and
@@ -138,7 +148,7 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 			res_body << "・メールアドレスの長さは、#{ACCOUNT_MAIL_ADDRESS_BYTE_MAX}バイト以内に制限しています\n"
 			raise "アカウントの新規登録に失敗しました。入力値バリデーションエラー"
 		end
-					
+		
 		unless (
 			!new_show_ratings_flag or
 			new_show_ratings_flag == '0' or
@@ -148,7 +158,7 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 			res_body << "・レート表示設定の値が不正です\n"
 			raise "アカウントの新規登録に失敗しました。入力値バリデーションエラー"
 		end
-					
+		
 		unless (
 			!new_allow_edit_profile or
 			new_allow_edit_profile == '0' or
@@ -158,6 +168,10 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 			res_body << "・プロファイル編集許可の値が不正です\n"
 			raise "アカウントの新規登録に失敗しました。入力値バリデーションエラー"
 		end
+		
+		# メールアドレス変更フラグが立っていない場合は、新メールアドレスをnilにする
+		# nilにするとメールアドレス変更はされない
+		new_mail_address = nil if new_mail_address_flag == '0'
 		
 		# DB接続
 		require 'db'
@@ -191,11 +205,10 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		# account 要素生成
 		root = xml.add_element('account')
 		root.add_element('name').add_text(account.name.to_s)
-		root.add_element('mail_address').add_text(Cryption.decrypt(account.encrypted_mail_address.to_s))
 		root.add_element('show_ratings_flag').add_text(account.show_ratings_flag.to_s)
 		root.add_element('allow_edit_profile').add_text(account.allow_edit_profile.to_s)
 		root.add_element('lock_version').add_text(account.lock_version.to_s)
-							
+		
 		### 結果をセット
 		res_status = "Status: 200 OK\n"
 		res_header = "content-type:text/xml; charset=utf-8\n"

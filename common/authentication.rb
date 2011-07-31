@@ -1,12 +1,12 @@
 require "#{File.dirname __FILE__}/db"
 require "#{File.dirname __FILE__}/utils"
-require "#{File.dirname __FILE__}/cryption"
 include Utils
+require "#{File.dirname __FILE__}/cryption"
 require "#{File.dirname __FILE__}/../entity/Account"
 
 # 認証クラス
 class Authentication
-	VERSION = 'v0.05'
+	VERSION = 'v0.06'
 
 	# salt を取得
 	# プライベートクラスメソッド 通常はパスワード無しで salt を公開しないこと
@@ -58,7 +58,7 @@ class Authentication
 		    name,
 		    data_password,
 		    del_flag,
-		    encrypted_mail_address,
+		    mail_address,
 		    show_ratings_flag,
 		    allow_edit_profile,
 		    lock_version
@@ -109,13 +109,13 @@ class Authentication
 		  INSERT INTO accounts (
 			name,
 			password,
-			encrypted_mail_address,
+			mail_address,
 			data_password
 		  )
 		  VALUES (
 		    #{s name},
 			#{s Cryption.mk_stored_password(raw_password, salt)},
-			#{s Cryption.encrypt(mail_address)},
+			#{s Cryption.stored_mail_address(mail_address + salt)}
 			#{s salt}
 		  ) RETURNING *;
 		SQL
@@ -147,7 +147,7 @@ class Authentication
 			accounts
 		  SET
 			#{"password = " + s(Cryption.mk_stored_password(new_raw_password, salt)) + "," if new_raw_password}
-			#{"encrypted_mail_address = " + s(Cryption.encrypt(new_mail_address)) + ","  if new_mail_address}
+			#{"mail_address = " + s(Cryption.stored_mail_address(new_mail_address, salt)) + ","  if new_mail_address}
 			#{"show_ratings_flag = " + show_ratings_flag.to_i.to_s + ","  if show_ratings_flag}
 			#{"allow_edit_profile = " + allow_edit_profile.to_i.to_s + ","  if allow_edit_profile}
 			lock_version = lock_version + 1,
@@ -202,6 +202,7 @@ class Authentication
 		  SET
 		    del_flag = 1,
 		    password = NULL,
+		    mail_address = NULL,
 		    encrypted_mail_address = NULL,
 		    lock_version = lock_version + 1,
 			updated_at = CURRENT_TIMESTAMP

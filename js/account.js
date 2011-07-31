@@ -12,7 +12,7 @@ function get_account_settings(account_name, account_password) {
 		// 実行中表示
 		$("#account_password").attr("disabled", "disabled");
 		$("#get_settings").css("display", "none");
-		$("#message").text("アカウント情報取得中...");		
+		$("#message").text("アカウント情報取得中...");
 
 		// アカウント情報取得
 		show_account_settings(account_name, account_password);
@@ -24,9 +24,10 @@ function get_account_settings(account_name, account_password) {
 }
 
 // アカウントデータ更新
-function update_account_settings(account_name, account_password, new_mail_address, new_account_password, new_show_ratings_flag, new_allow_edit_profile, lock_version) {
+function update_account_settings(account_name, account_password, new_mail_address_flag, new_mail_address, new_account_password, new_show_ratings_flag, new_allow_edit_profile, lock_version) {
 	var account_name           = account_name;
 	var account_password       = account_password;
+	var new_mail_address_flag  = new_mail_address_flag;
 	var new_mail_address       = new_mail_address;
 	var new_account_password   = new_account_password;
 	var new_show_ratings_flag  = new_show_ratings_flag;
@@ -39,10 +40,10 @@ function update_account_settings(account_name, account_password, new_mail_addres
 		
 		// 実行中表示
 		$("#update_settings").css("display", "none");
-		$("#message").text("アカウント情報更新中...");		
+		$("#message").text("アカウント情報更新中...");
 
 		// アカウント情報更新
-		exec_update_account_settings(account_name, account_password, new_mail_address, new_account_password, new_show_ratings_flag, new_allow_edit_profile, lock_version);
+		exec_update_account_settings(account_name, account_password, new_mail_address_flag, new_mail_address, new_account_password, new_show_ratings_flag, new_allow_edit_profile, lock_version);
 		
 		// 実行ロック解除
 		lock_account_process = 0;
@@ -68,18 +69,9 @@ function show_account_settings(account_name, account_password) {
 		dataType: "xml",
 		success: function(data) {
 			// 取得データ表示
-			var mail_address = $("mail_address", $("account", data)).text();
 			var show_ratings_flag = $("show_ratings_flag", $("account", data)).text();
 			var allow_edit_profile = $("allow_edit_profile", $("account", data)).text();
 			var lock_version = $("lock_version", $("account", data)).text();
-			
-			if (mail_address) {
-				$("#mail_address").text(mail_address);
-				$("#new_mail_address").val(mail_address);
-			}
-			else {
-				$("#mail_address").text("＜未設定＞");
-			}
 			
 			if (show_ratings_flag == 0) {
 				$("#show_ratings").text("あいまい表示");
@@ -125,14 +117,15 @@ function show_account_settings(account_name, account_password) {
 }
 
 // アカウント情報更新
-function exec_update_account_settings(account_name, account_password, new_mail_address, new_account_password, new_show_ratings_flag, new_allow_edit_profile, lock_version) {
+function exec_update_account_settings(account_name, account_password, new_mail_address_flag, new_mail_address, new_account_password, new_show_ratings_flag, new_allow_edit_profile, lock_version) {
 	var account_name           = account_name;
 	var account_password       = account_password;
+	var new_mail_address_flag  = new_mail_address_flag;
 	var new_mail_address       = new_mail_address;
 	var new_account_password   = new_account_password;
 	var new_show_ratings_flag  = new_show_ratings_flag;
 	var new_allow_edit_profile = new_allow_edit_profile;
-	var lock_version          = lock_version;	
+	var lock_version           = lock_version;
 	
 	$.ajax({
 		type: "POST",
@@ -140,6 +133,7 @@ function exec_update_account_settings(account_name, account_password, new_mail_a
 		data: {
 			account_name: account_name,
 			account_password: account_password,
+			new_mail_address_flag: new_mail_address_flag,
 			new_mail_address: new_mail_address,
 			new_account_password: new_account_password,
 			new_show_ratings_flag: new_show_ratings_flag,
@@ -149,18 +143,9 @@ function exec_update_account_settings(account_name, account_password, new_mail_a
 		cache: false,
 		success: function(data) {
 			// 取得データ表示
-			var mail_address = $("mail_address", $("account", data)).text();
 			var show_ratings_flag = $("show_ratings_flag", $("account", data)).text();
 			var allow_edit_profile = $("allow_edit_profile", $("account", data)).text();
 			var lock_version = $("lock_version", $("account", data)).text();
-			
-			if (mail_address) {
-				$("#mail_address").text(mail_address);
-				$("#new_mail_address").val(mail_address);
-			}
-			else {
-				$("#mail_address").text("＜未設定＞");
-			}
 			
 			if (show_ratings_flag == 0) {
 				$("#show_ratings").text("あいまい表示");

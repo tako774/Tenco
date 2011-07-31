@@ -44,12 +44,14 @@ $(document).ready(
 		$("#update_settings").click(
 			function() {
 				var account_password       = $("#account_password").val();
+				var new_mail_address_flag  = $("input[name='new_mail_address_flag']:checked").val();
 				var new_mail_address       = $("#new_mail_address").val();
 				var new_account_password   = $("#new_account_password").val();
 				var new_show_ratings_flag  = $("input[name='new_show_ratings_flag']:checked").val();
 				var new_allow_edit_profile = $("input[name='new_allow_edit_profile']:checked").val();
 				var lock_version           = $("#lock_version").val();
-				update_account_settings('<%= h account.name %>', SHA1(account_password), new_mail_address, new_account_password, new_show_ratings_flag, new_allow_edit_profile, lock_version);
+				
+				update_account_settings('<%= h account.name %>', SHA1(account_password), new_mail_address_flag, new_mail_address, new_account_password, new_show_ratings_flag, new_allow_edit_profile, lock_version);
 			}
 		);
 		
@@ -57,7 +59,7 @@ $(document).ready(
 		$("input[type='text']").focus(function() { $(this).select();} );
 		$("input[type='password']").focus(function() { $(this).select();} );
 		
-		// テキスト入力欄に全テキスト選択
+		// 初期入力欄の書き込み開始を許可
 		$("#account_password").removeAttr("disabled");
 
 	}
@@ -71,7 +73,7 @@ $(document).ready(
 
 <div id="header">
 	<h1><a href="<%= CFG[:top_url] %>"><img alt="Tenco!" src='<%= CFG[:static_url] %>images/Tenco.gif' width='<%= 366/3 %>' height='<%= 126/3 %>' /></a></h1>
-	<p>アカウント設定ページα4 (2009/12/08)</p>
+	<p>アカウント設定ページα5 (2010/11/19)</p>
 </div>
 
 <hr />
@@ -92,33 +94,44 @@ $(document).ready(
 <div id="account_settings" style="display:none">
 	<h3>現在の設定</h3>
 	<table id="current_account_settings" class="column-wise">
-		<tr><th>メールアドレス</th><td><span id="mail_address"></span></td></tr>
 		<tr><th>自レート表示</th><td><span id="show_ratings"></span></td></tr>
 		<tr><th>プロファイル編集許可（タグ等）</th><td><span id="allow_edit_profile"></span></td></tr>
 	</table>
 
 	<h3>新しい設定</h3>
-	<p>メールアドレスは空欄にすると、登録を削除できます。<br />
+	<p>メールアドレスは空欄にして変更すると、登録を削除できます。<br />
 	また、パスワードは空欄のままにすると変更されません。<br />
 	注意：パスワード変更後は、すべての報告ツールの設定（config.yaml）の変更も忘れずに。</p>
 	<p><button id='update_settings' tabindex='10' style="display:none">設定更新</button></p>
 	<table id="new_account_settings" class="column-wise">
-		<tr><th>メールアドレス</th><td><input id='new_mail_address' tabindex='3' type='text' size='80' value="" /></td></tr>
 		<tr>
 			<th>自レート表示</th>
 			<td>
-				<label><input name='new_show_ratings_flag' tabindex='5' type='radio' value="1" />表示する</label>
-				<label><input name='new_show_ratings_flag' tabindex='6' type='radio' value="0" />あいまい表示</label>
+				<label><input name='new_show_ratings_flag' tabindex='8' type='radio' value="1" />表示する</label>
+				<label><input name='new_show_ratings_flag' tabindex='9' type='radio' value="0" />あいまい表示</label>
 			</td>
 		</tr>
 		<tr>
 			<th>プロファイル編集許可（タグ等）</th>
 			<td>
-				<label><input name='new_allow_edit_profile' tabindex='7' type='radio' value="1" />編集できる</label>
-				<label><input name='new_allow_edit_profile' tabindex='8' type='radio' value="0" />編集不可（自分も不可）</label>
+				<label><input name='new_allow_edit_profile' tabindex='10' type='radio' value="1" />編集できる</label>
+				<label><input name='new_allow_edit_profile' tabindex='11' type='radio' value="0" />編集不可（自分も不可）</label>
 			</td>
 		</tr>
-		<tr><th>パスワード</th><td><input id='new_account_password' tabindex='9' type='password' size='24' value="" /></td></tr>
+		<tr>
+			<th>メールアドレス</th>
+			<td>
+				<label><input name='new_mail_address_flag' tabindex='6' type='radio' value="1" />変更する</label>
+				<input id='new_mail_address' tabindex='7' type='text' size='40' value="" />
+				<label><input name='new_mail_address_flag' tabindex='5' type='radio' value="0" checked="checked" />変更しない</label>
+			</td>
+		</tr>
+		<tr>
+			<th>パスワード</th>
+			<td>
+				<input id='new_account_password' tabindex='12' type='password' size='24' value="" />
+			</td>
+		</tr>
 	</table>
 	<input id="lock_version" type="hidden" value="" />
 	<p class="suppli">
@@ -144,6 +157,7 @@ $(document).ready(
 	<%- game_accounts.each do |ga| -%>
 		<li><a href="<%= "#{CFG[:top_url]}game/#{ga.game_id.to_i}/account/#{u account_name}/" %>"><%= h ga.game_name %>のマイページ</a></li>
 	<%- end -%>
+		<li><a href="<%= "#{CFG[:top_url]}account/#{u account_name}/manage/profile/" %>"><%= h account_name %> さんのプロフィール設定</a></li>
 	</ul>
 	<h2>リンク</h2>
 	<%= link_html %>

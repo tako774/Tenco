@@ -3,7 +3,7 @@ require 'openssl'
 PASSWORD = File.read("#{File::dirname(__FILE__)}/../../../config/password.txt")
 
 class Cryption
-	VERSION = 'V0.03'
+	VERSION = 'v0.03'
 	SHA1_CHAR_LENGTH = 40
 	SALT_BYTES = 8
 	KEYIVGEN_ITERATION_COUNT = 1
@@ -109,4 +109,9 @@ class Cryption
 		return self.hash(hash_as_client(raw_password) + salt)
 	end
 	
+	# メールアドレスを保存用パスワードに変換
+	def self.stored_mail_address(mail_address, salt)
+		return self.hash(mail_address + salt) if mail_address != ''
+		return ''
+	end 
 end

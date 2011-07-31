@@ -129,7 +129,6 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		# account 要素生成
 		root = xml.add_element('account')
 		root.add_element('name').add_text(account.name.to_s)
-		root.add_element('mail_address').add_text(Cryption.decrypt(account.encrypted_mail_address.to_s))
 		root.add_element('show_ratings_flag').add_text(account.show_ratings_flag.to_s)
 		root.add_element('allow_edit_profile').add_text(account.allow_edit_profile.to_s)
 		root.add_element('lock_version').add_text(account.lock_version.to_s)
