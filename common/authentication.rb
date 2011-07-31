@@ -46,7 +46,7 @@ class Authentication
 		
 		# ソルト文字列取得
 		salt = get_salt(name)
-		raise "エラー：アカウント認証に失敗しました。salt が見つかりません（#{name}, #{host_name}）" unless salt
+		raise "エラー：アカウント認証に失敗しました。salt が見つかりません（#{name}）" unless salt
 		
 		# DB接続取得
 		db = DB.getInstance
@@ -136,7 +136,7 @@ class Authentication
 		
 		# ソルト文字列取得
 		salt = get_salt(name)
-		raise "エラー：アカウント認証に失敗しました。salt が見つかりません（#{name}, #{host_name}）" unless salt
+		raise "エラー：アカウント認証に失敗しました。salt が見つかりません（#{name}）" unless salt
 
 		# DB接続取得
 		db = DB.getInstance
