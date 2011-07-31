@@ -42,7 +42,7 @@ function update_account_settings(account_name, account_password, new_mail_addres
 		$("#message").text("アカウント情報更新中...");		
 
 		// アカウント情報更新
-		update_account_settings(account_name, account_password, new_mail_address, new_account_password, new_show_ratings_flag, new_allow_edit_profile, lock_version);
+		exec_update_account_settings(account_name, account_password, new_mail_address, new_account_password, new_show_ratings_flag, new_allow_edit_profile, lock_version);
 		
 		// 実行ロック解除
 		lock_account_process = 0;
@@ -125,7 +125,7 @@ function show_account_settings(account_name, account_password) {
 }
 
 // アカウント情報更新
-function update_account_settings(account_name, account_password, new_mail_address, new_account_password, new_show_ratings_flag, new_allow_edit_profile, lock_version) {
+function exec_update_account_settings(account_name, account_password, new_mail_address, new_account_password, new_show_ratings_flag, new_allow_edit_profile, lock_version) {
 	var account_name           = account_name;
 	var account_password       = account_password;
 	var new_mail_address       = new_mail_address;
