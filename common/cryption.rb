@@ -1,9 +1,7 @@
 require 'openssl'
 
-PASSWORD = File.read("#{File::dirname(__FILE__)}/../../../config/password.txt")
-
 class Cryption
-	VERSION = 'v0.03'
+	VERSION = 'v0.04'
 	SHA1_CHAR_LENGTH = 40
 	SALT_BYTES = 8
 	KEYIVGEN_ITERATION_COUNT = 1
@@ -25,7 +23,7 @@ class Cryption
 
 	# AES256(CBC)salt有で暗号化 + base64 エンコード
 	# 'openssl -e -base64 -aes-256-cbc' で復号化可能
-	def self.encrypt_base64 (source, password = PASSWORD)
+	def self.encrypt_base64 (source, password)
 		if (source == '') then
 	 		return ''
 		else
@@ -45,7 +43,7 @@ class Cryption
 
 	# base64 デコード + AES256(CBC)salt有で復号化
 	# 'openssl -e -base64 -aes-256-cbc' で暗号化したものを復号化可能
-	def self.decrypt_base64(source, password = PASSWORD)
+	def self.decrypt_base64(source, password)
 		if (source == '') then
 	 		return ''
 		else
@@ -66,7 +64,7 @@ class Cryption
 	end 
 	
 	# AES256(CBC)salt無しで暗号化 + 16進文字列エンコード
-	def self.encrypt (source, password = PASSWORD)
+	def self.encrypt (source, password)
 		if (source == '') then
 	 		return ''
 		else
@@ -78,7 +76,7 @@ class Cryption
 	end
 
 	# 16進文字列デコード + AES256(CBC)salt無しで復号化
-	def self.decrypt(data, password = PASSWORD)
+	def self.decrypt(data, password)
 		if (data == '') then
 	 		return ''
 		else
