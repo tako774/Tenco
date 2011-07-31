@@ -203,7 +203,6 @@ class Authentication
 		    del_flag = 1,
 		    password = NULL,
 		    mail_address = NULL,
-		    encrypted_mail_address = NULL,
 		    lock_version = lock_version + 1,
 			updated_at = CURRENT_TIMESTAMP
 		  WHERE
