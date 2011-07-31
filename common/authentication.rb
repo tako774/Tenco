@@ -6,7 +6,7 @@ require "#{File.dirname __FILE__}/../entity/Account"
 
 # 認証クラス
 class Authentication
-	VERSION = 'v0.06'
+	VERSION = 'v0.07'
 
 	# salt を取得
 	# プライベートクラスメソッド 通常はパスワード無しで salt を公開しないこと
@@ -115,7 +115,7 @@ class Authentication
 		  VALUES (
 		    #{s name},
 			#{s Cryption.mk_stored_password(raw_password, salt)},
-			#{s Cryption.stored_mail_address(mail_address + salt)}
+			#{s Cryption.stored_mail_address(mail_address, salt)},
 			#{s salt}
 		  ) RETURNING *;
 		SQL
