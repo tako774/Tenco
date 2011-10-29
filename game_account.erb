@@ -402,20 +402,12 @@ Tenco! の情報を <a href="http://twitter.com/" target="_blank">twitter</a> �
 </pre>
 	</div>
 	
-<h3>プロフィールあれこれ</h3>
-<p>
-<%- if game_account.cluster_name -%><%= "#{h game_account.cluster_name}クラスタ所属" %><%- end -%>
-</p>
-<p>
-	<a class="suppli" href="<%= "#{CFG[:top_url]}account/#{u account_name}/manage/" %>">アカウント設定</a>
-</p>
 <h3>プレイヤータグ</h3>
 <ul id="account_tags">
 <%- account_tags.each do |at| -%>
 	<li><a href="<%= CFG[:top_url] %>tag/<%= u(at.tag_disp_name).gsub(/%2f/i, '/') %>"><%= h at.tag_disp_name %></a></li>
 <%- end -%>
 </ul>
-
 <a id="toggle_edit_tags" class="suppli">タグ編集</a>
 <div id="edit_tags" style="display:none">
 	<div id="account_tag_tool">
@@ -424,6 +416,33 @@ Tenco! の情報を <a href="http://twitter.com/" target="_blank">twitter</a> �
 	</div>
 	<span id='account_tag_msg' class="suppli"></span>
 </div>
+<h3>登録プロフィール</h3>
+<ul id="account_profiles">
+<%- account_profiles.keys.sort.each do |class_id| -%>
+<%- aps = account_profiles[class_id] -%>
+	<li><%= h aps[:class_name] %>
+		<ul>
+			<%- aps[:profiles].each do |ap| -%>
+			<li>
+				<%- if ap.uri && ap.uri !="" then -%>
+				<a href="<%= h ap.uri %>" target="_blank"><%= h ap.value %></a>
+				<%- else -%>
+				<%= h ap.value %>
+				<%- end -%>
+			</li>
+			<%- end -%>
+		</ul>
+	</li>
+<%- end -%>
+</ul>
+<p>
+	<a class="suppli" href="<%= "#{CFG[:top_url]}account/#{u account_name}/manage/profile/" %>">プロフィール設定</a><br />
+	<a class="suppli" href="<%= "#{CFG[:top_url]}account/#{u account_name}/manage/" %>">アカウント設定</a>
+</p>
+
+<p>
+<%- if game_account.cluster_name -%><%= "#{h game_account.cluster_name}クラスタ所属" %><%- end -%>
+</p>
 
 <%# <canvas id="timechart" width="250" height="225" style="display:block"></canvas> %>
 <p>
@@ -438,8 +457,10 @@ Tenco! の情報を <a href="http://twitter.com/" target="_blank">twitter</a> �
 </ul>
 <%- end -%>
 
-<%= affiliate_html %>
 <hr />
+
+<%= affiliate_html %>
+
 <div class="tools tools_left">
 <h2>リンク</h2>
 <%= link_html %>

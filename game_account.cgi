@@ -4,8 +4,8 @@ begin
 	# 開始時刻
 	now = Time.now
 	# リビジョン
-	REVISION = 'R0.62'
-	DEBUG = false
+	REVISION = 'R0.63'
+	DEBUG = true
 
 	$LOAD_PATH.unshift './common'
 	$LOAD_PATH.unshift './entity'
@@ -149,53 +149,14 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							db = DB.getInstance
 							
 							# アカウント情報取得
+							require 'AccountDao'
 							require 'Account'
-							res = db.exec(<<-"SQL")
-								SELECT
-									id, name, data_password, show_ratings_flag
-								FROM
-									accounts
-								WHERE
-									name = #{s account_name}
-									AND del_flag = 0
-							SQL
-							
-							if res.num_tuples != 1 then
-								res.clear
-								res_status = "Status: 400 Bad Request\n"
-								res_body = "該当アカウントは登録されていません\n"
-								raise "該当アカウントは登録されていません"
-							else
-								account = Account.new
-								res.num_fields.times do |i|
-									account.instance_variable_set("@#{res.fields[i]}", res[0][i])
-								end
-								res.clear	
-							end
+							account = AccountDao.new.get_account_by_name(account_name)
 							
 							# ゲーム情報を取得
+							require 'GameDao'
 							require 'Game'
-							res = db.exec(<<-"SQL")
-								SELECT
-									*
-								FROM
-									games
-								WHERE
-									id = #{game_id.to_i}
-							SQL
-							
-							if res.num_tuples != 1 then
-								res.clear
-								res_status = "Status: 400 Bad Request\n"
-								res_body = "ゲーム情報が登録されていません\n"
-								raise "ゲーム情報が登録されていません"
-							else
-								game = Game.new
-								res.num_fields.times do |i|
-									game.instance_variable_set("@#{res.fields[i]}", res[0][i])
-								end
-								res.clear
-							end
+							game = GameDao.new.get_game_by_id(game_id)
 							
 							# 該当アカウントのゲームごとの情報を取得
 							require 'GameAccount'
@@ -306,7 +267,18 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 								account_tags << account_tag
 							end
 							res.clear
-		
+							
+							# アカウント公開プロフィール情報取得
+							require 'AccountProfileDao'
+							require 'AccountProfile'
+							account_profiles = {}
+							
+							AccountProfileDao.new.get_by_account_name(account_name, { :visibility_check => true } ).each do |ap|
+								account_profiles[ap.class_id.to_i] ||= { :class_name => ap.class_display_name }
+								account_profiles[ap.class_id.to_i][:profiles] ||= []
+								account_profiles[ap.class_id.to_i][:profiles] << ap
+							end
+							
 							# アカウントの対戦記録を取得
 							# 未マッチの場合、player2 の名前は暗号化させるため、パスワードを渡す
 							require 'TrackRecordDao'
