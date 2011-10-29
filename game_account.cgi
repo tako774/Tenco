@@ -4,8 +4,8 @@ begin
 	# 開始時刻
 	now = Time.now
 	# リビジョン
-	REVISION = 'R0.61'
-	DEBUG = true
+	REVISION = 'R0.62'
+	DEBUG = false
 
 	$LOAD_PATH.unshift './common'
 	$LOAD_PATH.unshift './entity'
@@ -91,7 +91,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		matched_game_accounts = [] # 対戦相手情報
 		account = nil    # 対象アカウントの情報
 		other_games = [] # 対象アカウントのマッチ済み他ゲームID
-		affiliates = nil # アフィリエイトデータ　店舗名 => { meta => メタデータハッシュ, item => { item_id => アイテムデータハッシュ } }
+		affiliates_data = nil # アフィリエイトデータ　カテゴリ => { 店舗名 => { meta => メタデータハッシュ, item => { item_id => アイテムデータハッシュ } } }
 		
 		LINK_ERB_PATH   = "./link.erb"   # リンクERBパス
 		FOOTER_ERB_PATH = "./footer.erb" # フッターERBパス
@@ -473,7 +473,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 						footer_html = Erubis::Eruby.new(File.read(FOOTER_ERB_PATH)).result(binding)
 						
 						# アフィリエイト 部生成
-						affiliates = YAML.load_file(AFFILIATE_YAML_PATH)
+						affiliates_data = YAML.load_file(AFFILIATE_YAML_PATH)
 						affiliate_html = Erubis::Eruby.new(File.read(AFFILIATE_ERB_PATH)).result(binding)
 						
 						# キャッシュHTML/ヘッダ出力

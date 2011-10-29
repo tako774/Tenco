@@ -234,15 +234,15 @@ $(document).ready(
 
 <div id="container">
 
-<div id="header" style="text-align:center;border:1px solid #EFEFEF;background-color:#EFEFEF">
-<!-- <h1><a href="<%= CFG[:top_url] %>"><img alt="Tenco!" src='<%= CFG[:static_url] %>images/Tenco.gif' width='<%= 366/3 %>' height='<%= 126/3 %>' /></a></h1> マイページ 開発中バージョンα12（2011/03/20）-->
-<a href="http://info.tenco.info/info/20110320.html">
-<img src="<%= CFG[:static_url] %>images/tenco_nanashi_message2.jpg" alt="Tenco! 創設者 nanashi からのメッセージをお読みください" width="1142" height="172" /></a>
+<div id="header">
+<h1><a href="<%= CFG[:top_url] %>"><img alt="Tenco!" src='<%= CFG[:static_url] %>images/Tenco.gif' width='<%= 366/3 %>' height='<%= 126/3 %>' /></a></h1> マイページα13（2011/04/02）
 <br />
 <p id="meta_info">
-<!-- λ＜レートなんて飾りなんです。偉い人にはそれがわからんのです<br />
+λ＜レートなんて飾りなんです。偉い人にはそれがわからんのです<br />
 <%= now.strftime("%m/%d %H:%M") %> に作成（毎時0分以降に再生成）<br />  
-Tenco! の情報を <a href="http://twitter.com/" target="_blank">twitter</a> 上のハッシュタグ <del>#Tenco</del> <a href="http://twitter.com/#search?q=%23tenco_info" target="_blank">#tenco_info</a> で流す運用を始めています (11/1/4)<br /> -->
+Tenco! の情報を <a href="http://twitter.com/" target="_blank">twitter</a> 上のハッシュタグ <a href="http://twitter.com/#search?q=%23tenco_info" target="_blank">#tenco_info</a> で流す運用を始めています ('11/1/4)<br />
+<a href="http://www.tasofro.net/" target="_blank">緋想天Ver1.06aパッチ</a>が出ています。<a href="http://mint.s150.xrea.com/?%E7%B7%8B%E8%A1%8C%E8%B7%A1#me01a10f" target="_blank">緋行跡の対応方法はこちら</a>に出ています。（'11/10/28）
+<%# <a href="http://www.tasofro.net/" target="_blank">緋想天Ver1.06aパッチ</a>が出ています。<a href="http://mint.s150.xrea.com/?%E5%A4%A9%E5%89%87%E8%A6%B3#l6c4024e" target="_blank">天則観(非想天則Ver1.10a用)</a>も出ています。（'11/9/23）%>
 <%# 現在、対戦履歴表示を直近報告の最大100件のみにしています。現在対応中です。（10/05/26 04:07）<br /> %>
 </p>
 </div>
@@ -253,8 +253,8 @@ Tenco! の情報を <a href="http://twitter.com/" target="_blank">twitter</a> �
 	<li><a href=""></a></li>
 </ul>
 </div>
-<hr />
 -%>
+<hr />
 
 
 <div id="wrapper">
@@ -273,7 +273,7 @@ Tenco! の情報を <a href="http://twitter.com/" target="_blank">twitter</a> �
 				<tr>
 					<th>キャラクター</th>
 					<th>対戦人数/対戦数</th>
-					<th>レート<sub>±RD</sub></th>
+					<th>レート<sub>±RD</sub><span class="suppli"> (勝敗比率値)</span></th>
 					<%- if estimate_ratings.length > 0 -%>
 					<%= "<th class=\"suppli\">推定レート</th>" %>
 					<%- end -%>
@@ -285,9 +285,9 @@ Tenco! の情報を <a href="http://twitter.com/" target="_blank">twitter</a> �
 					<td title="<%= r.type1_id.to_i %>"><%= "#{type1_h[r.type1_id.to_i]}" %></td>
 					<td title="<%= "#{sprintf('%05d', r.matched_accounts.to_i)}" %>"><%= "#{r.matched_accounts.to_i}人/#{r.match_counts.to_i}戦" %></td>
 					<%- if account.show_ratings_flag.to_i != 0 then -%>
-					<td title="<%= "#{sprintf('%04d', r.rating.to_f.round)}" %>"><%= "#{r.rating.to_f.round}<sub>±#{r.ratings_deviation.to_f.floor}</sub>" %></td>
+					<td title="<%= "#{sprintf('%04d', r.rating.to_f.round)}" %>"><%= "#{r.rating.to_f.round}<sub>±#{r.ratings_deviation.to_f.floor}</sub>" %><span class="suppli"> (<%= "#{sprintf('%d', 10 ** (((r.rating.to_i - 3000) / 400.0) + 6))}" %>)</span></td>
 					<%- else -%>
-					<td title="<%= "#{sprintf('%02d',(r.rating.to_f.round / 100.0).floor)}XX" %>"><%= "#{(r.rating.to_f.round / 100.0).floor}XX<sub>±#{r.ratings_deviation.to_f.floor}</sub>" %></td>
+					<td title="<%= "#{sprintf('%02d',(r.rating.to_f.round / 100.0).floor)}XX" %>"><%= "#{(r.rating.to_f.round / 100.0).floor}XX<sub>±#{r.ratings_deviation.to_f.floor}</sub>" %><span class="suppli"> (<%= "#{sprintf('%d', 10 ** ((((r.rating.to_f.round / 100.0).floor * 100 - 3000) / 400.0) + 6))}~#{sprintf('%d', 10 ** (((((r.rating.to_f.round / 100.0).floor * 100 + 100) - 3000) / 400.0) + 6))}" %>)</span></td>
 					<%- end -%>
 					<%- if estimate_ratings.length > 0 -%>
 					<td class="num suppli">
@@ -318,6 +318,18 @@ Tenco! の情報を <a href="http://twitter.com/" target="_blank">twitter</a> �
 			ハイフンは表示対象外か、推定精度不足のため表示されないことを意味します。
 		</p>
 		<%- end -%>
+		<p class="suppli">
+			レート計算時、マッチした対戦の勝敗数が、レート差から予想される勝敗数から<br />
+			離れるほど、レートが上下します。<br/>
+			レート差から予想される勝敗数の比は、おおむね以下のとおり計算できます。<br/>
+			&nbsp;&nbsp;&nbsp;(自分の勝利数) : (相手の勝利数)<br /> 
+			&nbsp;&nbsp;&nbsp;= (自分の勝敗比率値) : (相手の勝敗比率値)<br /> 
+			&nbsp;&nbsp;&nbsp;= 10 ^ (自分のレート/400) : 10 ^ (相手のレート/400)<br /> 
+			&nbsp;&nbsp;&nbsp;= 1 : 10 ^ ((相手のレート - 自分のレート)/400)<br />
+			なお、(勝敗比率値) = 10 ^ (レート/400 - 1.5) です。<span style="color:#EFEFEF">(=μしーれると)</span><br />
+			レート差200で、４戦して１勝３敗が、予想勝敗数の目安です。<br />
+			また、レート変動の大きさは、RDの2乗にも比例します。
+		</p>
 	</div>	
 	
 	<div class="section">
@@ -375,11 +387,10 @@ Tenco! の情報を <a href="http://twitter.com/" target="_blank">twitter</a> �
 	
 	<div id="profile">
 	<p>
-	<%= xhtml_sp2nbsp(h(game_account.rep_name)) %> さん
+	<%= xhtml_sp2nbsp(h(game_account.rep_name)) %> さん<br />
 	</p>
-	<%#
 	<div class="visual" id="side_visual">
-<pre class="AA">### 節電中 ###
+<pre class="AA">### 復活したAA ###
 　　　　 ,.ｨrｰr 、
 　　　y' "´￣｀'ヽ
 .　　 ﾉ　　 くノﾉ))ゝ
@@ -387,14 +398,16 @@ Tenco! の情報を <a href="http://twitter.com/" target="_blank">twitter</a> �
 　　　　'k'_,i{X l}〈つ[|三＞
 　　　 ／'/_ハ.ゝ、
 　　　　 ｀'ﾄ_ﾉ'ﾄ,ﾉ"
-### 節電中 ###
+### 復活したAA ###
 </pre>
 	</div>
-	%>
-		<%= affiliate_html %>
+	
 <h3>プロフィールあれこれ</h3>
 <p>
 <%- if game_account.cluster_name -%><%= "#{h game_account.cluster_name}クラスタ所属" %><%- end -%>
+</p>
+<p>
+	<a class="suppli" href="<%= "#{CFG[:top_url]}account/#{u account_name}/manage/" %>">アカウント設定</a>
 </p>
 <h3>プレイヤータグ</h3>
 <ul id="account_tags">
@@ -414,9 +427,6 @@ Tenco! の情報を <a href="http://twitter.com/" target="_blank">twitter</a> �
 
 <%# <canvas id="timechart" width="250" height="225" style="display:block"></canvas> %>
 <p>
-<a href="<%= "#{CFG[:top_url]}account/#{u account_name}/manage/" %>">アカウント設定</a>
-</p>
-<p>
 	<a href="<%= "#{CFG[:top_url]}game/#{game_id.to_i}/account/#{u account_name}/output=xml" %>"><img width="40" height="18" src="<%= "#{CFG[:static_url]}images/xml.png" %>" alt="アカウント情報（XML形式）" /></a>
 </p>
 <%- if other_games.length > 0 -%>
@@ -427,6 +437,8 @@ Tenco! の情報を <a href="http://twitter.com/" target="_blank">twitter</a> �
 	<%- end -%>
 </ul>
 <%- end -%>
+
+<%= affiliate_html %>
 <hr />
 <div class="tools tools_left">
 <h2>リンク</h2>
@@ -436,6 +448,9 @@ Tenco! の情報を <a href="http://twitter.com/" target="_blank">twitter</a> �
 </div>
 
 <div id="side" class="tools tools_right">
+	<p>
+		<a href="http://info.tenco.info/info/20110320.html"><img src="<%= CFG[:static_url] %>images/tenco_nanashi_message_mini.jpg" alt="Tenco! 創設者 nanashi からのメッセージをお読みください" width="159" height="34" /></a>
+	</p>
 	<h2>プライズページ</h2>
 	<ul>
 		<li><a href="<%= "#{CFG[:top_url]}game/#{game_id.to_i}/pov/1/" %>">レートランキング</a></li>
