@@ -2,7 +2,7 @@ require "#{File.expand_path(File.dirname(__FILE__))}/DaoBase"
 require "#{File.expand_path(File.dirname(__FILE__))}/../entity/AccountProfile"
 
 class AccountProfileDao < DaoBase
-	@@version = 0.01
+	@@version = 0.02
 	
 	# 指定されたアカウントID,プロパティ名のアカウントプロパティを登録する
 	def add(account_id, property_id, value, visibility, uri = nil)
@@ -40,6 +40,8 @@ class AccountProfileDao < DaoBase
 			WHERE
 			  account_id = #{account_id.to_i}
 			  AND profile_property_id = #{property_id.to_i}
+			ORDER BY
+			  ap.id
 		SQL
 		
 		res.each do |row|
@@ -75,7 +77,8 @@ class AccountProfileDao < DaoBase
 			  AND pp.profile_class_id = pc.id
 			  #{"AND ap.is_visible = 1" if options[:visibility_check] }
 			ORDER BY
-			  pc.id
+			  pc.id,
+			  ap.id
 		SQL
 		
 		res.each do |row|
@@ -115,7 +118,8 @@ class AccountProfileDao < DaoBase
 			  AND pp.profile_class_id = pc.id
 			  #{"AND ap.is_visible = 1" if options[:visibility_check] }
 			ORDER BY
-			  pc.id
+			  pc.id,
+			  ap.id
 		SQL
 		
 		res.each do |row|

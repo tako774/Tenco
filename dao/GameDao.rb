@@ -29,6 +29,34 @@ class GameDao < DaoBase
 		return games
 	end
 	
+	# ゲームIDを引数として、ゲーム情報を取得
+	def get_game_by_id(game_id)
+		game = Game.new
+		
+		res = @db.exec(<<-"SQL")
+			SELECT
+				*
+			FROM
+				games
+			WHERE
+				id = #{game_id.to_i}
+		SQL
+		
+		if res.num_tuples != 1 then
+			res.clear
+			res_status = "Status: 400 Bad Request\n"
+			res_body = "ゲーム情報が登録されていません\n"
+			raise "ゲーム情報が登録されていません"
+		else
+			game = Game.new
+			res.num_fields.times do |i|
+				game.instance_variable_set("@#{res.fields[i]}", res[0][i])
+			end
+			res.clear
+		end
+		
+		return game
+	end
 	# バッチ処理対象のゲーム情報を取得
 	def get_batch_target_games
 		games = {}
