@@ -8,7 +8,6 @@ REVISION = '0.01'
 DEBUG = 1
 
 $LOAD_PATH.unshift '../common'
-$LOAD_PATH.unshift '../model'
 
 require 'rubygems'
 require 'active_record'

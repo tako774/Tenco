@@ -1,5 +1,5 @@
 :servers:
   - 127.0.0.1:11211
-  - 74.207.252.239:11211 # conafie.jp
+#  - 74.207.252.239:11211 # conafie.jp
 :marshal: false
 :support_cas: true

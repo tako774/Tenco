@@ -8,14 +8,14 @@
 	<link rel="shortcut icon" type="image/x-icon" href="<%= CFG[:static_url] %>favicon.ico" />
 	<link rel="stylesheet" type="text/css" href="<%= CFG[:static_url] %>css/main.css" />	
 	<link rel="stylesheet" type="text/css" href="<%= CFG[:static_url] %>css/2cols_side-width-fixed.css" />
-	<title>Tenco! 東方非想天則／東方緋想天レーティング</title>
+	<title>Tenco! 東方非想天則／東方緋想天プレイヤー情報共有サービス</title>
 </head>
 <body>
 <div id="container">
 
 <div id="header">
 	<a href="<%= CFG[:top_url] %>"><img alt="Tenco!" src='<%= CFG[:static_url] %>images/Tenco.gif' width='366' height='126' /></a>
-	<h1>Tenco! 東方非想天則／東方緋想天レーティング</h1>
+	<h1>Tenco! 東方非想天則／東方緋想天プレイヤー情報共有サービス</h1>
 </div>
 
 <div id="main_wrapper">
@@ -26,8 +26,8 @@
 
 	<p>
 		<img alt="" src="<%= CFG[:static_url] %>client/images/suwako.ico" width="32" height="32" />
-		<a href="<%= CFG[:static_url] %>client/tsk_report_v003.zip" style="font-weight:bold;font-size:110%;">天則観報告ツール Ver.0.03</a>
-		（2010/11/11 <a href="<%= CFG[:static_url] %>client/tsk_report_history.txt">更新履歴</a>
+		<a href="<%= CFG[:static_url] %>client/tsk_report_v003a.zip" style="font-weight:bold;font-size:110%;">天則観報告ツール Ver.0.03a</a>
+		（2010/11/20 <a href="<%= CFG[:static_url] %>client/tsk_report_history.txt">更新履歴</a>
 		<a href="<%= CFG[:static_url] %>client/tsk_report_readme.txt">Readme.txt</a>）
 	</p>
 	<p>
@@ -49,6 +49,7 @@
 	アップデートは、圧縮ファイルの中身をそのまま上書きしてしまえば完了です。<br />
 	より詳しい情報は、<a href="<%= CFG[:static_url] %>client/tsk_report_readme.txt">Readme.txt</a> や東方 Tools Wiki の <a href="http://mint.s150.xrea.com/?%E5%A4%A9%E5%89%87%E8%A6%B3%E5%A0%B1%E5%91%8A%E3%83%84%E3%83%BC%E3%83%AB" target="_blank">天則観報告ツールのページ</a>に書いてありますので、ご一読願います。
 	</p>
+	
 </div>
 
 <div class="section">
@@ -88,12 +89,27 @@
 	Coolier の <a href="http://coolier.sytes.net:8080/th_up3/file/th3_6493.zip">http://coolier.sytes.net:8080/th_up3/file/th3_6493.zip</a> と同一のファイルです。<br />
 	上記の Coolier アップローダーから緋行跡が取得できない場合は、こちらからダウンロードできます。
 	</p>
+	
+	<h3 id="AU" name="AU">AddressUpdater ダウンロードミラー</h3>
+	<ul class="suppli">
+		<li>クライアント：<a href="<%= CFG[:static_url] %>misc/AddressUpdater8.11.3597.156.zip" style="font-weight:bold">AddressUpdater Ver.8.11.3597.156</a></li>
+		<li>サーバー：<a href="<%= CFG[:static_url] %>misc/HisoutenAddressService8.0.4.zip" style="font-weight:bold">HisoutenAddressService Ver.8.0.4</a>（要J2EEサーバー）</li>
+		<li>サーバー管理ツール：<a href="<%= CFG[:static_url] %>misc/AddressUpdaterA8.11.3597.156.zip" style="font-weight:bold">AddressUpdaterA Ver.8.11.3597.156</a></li>
+	</ul>
+	<p class="suppli">AddressUpdater(<a href="http://www.bngper.mydns.jp/HisoutenAddressService/" target="_blank">サイト１</a>、<a href="http://bngper.dip.jp/HisoutenAddressService/" target="_blank">サイト２</a>)での配布物のミラーです。<br />
+	通常のユーザーはクライアントのみで利用できます。<br />
+	各々最新の配布バイナリだと思いますが、より新しいバイナリが公開されているかもしれません。
+	</p>
+	<p class="suppli">
+	クライアントでの新しいAUサーバーの追加は、「ユーザー設定」タブ→「サーバー」の画面でできます。
+	</p>
 </div>
 
 <div class="section">
 <h2>Tenco! とは</h2>
 
-<p>Tenco! は、ネット対戦ゲームのレーティング情報を提供するプロジェクトです。<br />
+<p>Tenco! は、ネット対戦ゲームのプレイヤー情報を共有するプロジェクトです。<br />
+その一貫として、レーティング情報を提供しています。<br />
 <strong>レーティングとは、「各プレイヤーの相対的な強さを表す数字」のことです。</strong>
 </p>
 

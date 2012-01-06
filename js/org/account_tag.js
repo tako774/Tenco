@@ -1,7 +1,8 @@
 // プレイヤータグ取得
 // 成功したかどうかを返す
 var got_account_tags = false;
-function get_account_tags(account_name) {
+
+function get_account_profiles(account_name) {
 	var account_name = account_name;
 	
 	$("#account_tag_tool").hide();

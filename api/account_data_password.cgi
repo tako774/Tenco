@@ -15,6 +15,8 @@ begin
 	$LOAD_PATH.unshift "#{TOP_DIR}/entity"
 
 	require 'logger'
+	require 'fileutils'
+	
 	require 'utils'
 	require 'setting'
 		
@@ -118,8 +120,10 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		end
 		
 		# キャッシュフォルダがなければ生成
-		Dir.mkdir(CACHE_DIR, 0700) unless File.exist?(CACHE_DIR)
-		Dir.mkdir(CACHE_LOCK_DIR, 0700) unless File.exist?(CACHE_LOCK_DIR)
+		FileUtils.mkdir_p(CACHE_DIR) unless File.exist?(CACHE_DIR)
+		FileUtils.chmod(0700, CACHE_DIR)
+		FileUtils.mkdir_p(CACHE_LOCK_DIR) unless File.exist?(CACHE_LOCK_DIR)
+		FileUtils.chmod(0700, CACHE_LOCK_DIR)
 
 		# キャッシュパス設定・プロセスロックファイルパス設定
 		cache_xml_path  = "#{CACHE_DIR}/#{account_name}.xml"

@@ -1,22 +1,25 @@
-<h3>震災募金用広告（東方ナンバリング）</h3>
-<div class="affiliate" style="height:240px">
-	<select id="affiliate_shop_select" style="width:146px;margin-left:14px;margin-bottom:0px">
-	<%- affiliates.keys.sort.each do |show_order| -%>
-		<%- aff = affiliates[show_order] -%>
+<h3>震災募金用広告</h3>
+<%- affiliates_data.keys.sort.each do |category_order| -%>
+	<%- affiliates = affiliates_data[category_order] -%>
+<div class="affiliate" style="height:188px">
+	<select id="affiliate_shop_select_<%= category_order %>" style="width:146px;margin-left:14px;margin-bottom:0px">
+	<%- affiliates.keys.sort.each do |shop_order| -%>
+		<%- aff = affiliates[shop_order] -%>
 		<option value="<%= aff["meta"]["shop_id"] %>"><%= aff["meta"]["shop_name"] %> <%= sprintf("%.1f", aff["meta"]["rate"] * 100) %>%募金</option>
 	<%- end -%>
 	</select>
 
-	<%- affiliates.keys.sort.each do |show_order| -%>
-		<%- aff = affiliates[show_order] -%>
-	<ul id="affiliate_<%= aff["meta"]["shop_id"] %>" style="display:none">
+	<%- affiliates.keys.sort.each do |shop_order| -%>
+		<%- aff = affiliates[shop_order] -%>
+	<ul id="affiliate_<%= category_order %>_<%= aff["meta"]["shop_id"] %>" style="display:none">
 		<%- aff["item"].keys.sort.each do |item_id| -%>
 			<%- item_data = aff["item"][item_id] -%>
 		<li id="<%= aff["meta"]["shop_id"] %>_<%= item_id %>" style="width:250px">
 			<a href="<%= item_data["link_url"] %>" target="_blank" >
-				<img border="0" src="<%= item_data["img_large_url"] %>" alt="<%= h item_data["title"] %>" width="146" height="146" /><br />
-				<%= h item_data["title"] %>
-				<img src="<%= item_data["ping_img_url"] %>" width="1" height="1" border="0" />
+				<img border="0" src="<%= item_data["img_large_url"] %>" alt="<%= h item_data["title"] %>" width="146" height="146" />
+				<br />
+				<%# h item_data["title"] %>
+				<img alt="" src="<%= item_data["ping_img_url"] %>" width="1" height="1" border="0" />
 			</a>
 		</li>
 		<%- end -%>
@@ -24,26 +27,27 @@
 	<script type="text/javascript">
 		//<![CDATA[ 
 		// クロスフェード
-		var cf_<%= aff["meta"]["shop_id"] %> = new Crossfader( new Array(<%= (aff["item"].keys.sort.map { |item_id| "\'#{aff['meta']['shop_id']}_#{item_id}\'" }).join(",") %>), 500, 5000 );
+		var cf_<%= aff["meta"]["shop_id"] %> = new Crossfader( new Array(<%= (aff["item"].keys.sort.map { |item_id| "\'#{aff['meta']['shop_id']}_#{item_id}\'" }).join(",") %>), 500, 4000 );
 		// ]]>
 	</script>
 	<%- end -%>
 	<script type="text/javascript">
 		//<![CDATA[
-		var current_shop_id = "<%= affiliates[affiliates.keys.sort.first]["meta"]["shop_id"] %>";
-		$("#affiliate_" + current_shop_id).show();
+		var current_shop_id_<%= category_order %> = "<%= affiliates[affiliates.keys.sort.first]["meta"]["shop_id"] %>";
+		$("#affiliate_<%= category_order %>_" + current_shop_id_<%= category_order %>).show();
 		// アフィリエイト店舗切り替えに実行関数紐付け
-		$("#affiliate_shop_select").change(
+		$("#affiliate_shop_select_<%= category_order %>").change(
 			function() {
-				var selected_shop_id = $("#affiliate_shop_select option:selected").val();
-				$("#affiliate_" + current_shop_id).hide();
-				$("#affiliate_" + selected_shop_id).show();
-				current_shop_id = selected_shop_id;
+				var selected_shop_id_<%= category_order %> = $("#affiliate_shop_select_<%= category_order %> option:selected").val();
+				$("#affiliate_<%= category_order %>_" + current_shop_id_<%= category_order %>).hide();
+				$("#affiliate_<%= category_order %>_" + selected_shop_id_<%= category_order %>).show();
+				current_shop_id_<%= category_order %> = selected_shop_id_<%= category_order %>;
 			}
 		);
 		// ]]>
 	</script>
 </div>
-<p>
-	<span class="suppli">(二次制作品についても準備中です)</span>
-</p>
+<%- end -%>
+<span class="suppli">
+	<a href="http://info.tenco.info/info/20110320.html">広告による募金プロジェクトのページ</a>
+</span>

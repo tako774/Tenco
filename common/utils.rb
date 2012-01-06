@@ -121,6 +121,12 @@ module Utils
 	def validate_uri(str)
 		str =~ URI.regexp && $& == str ? true : false
 	end
+	
+	# URI から twitter screen name を取得
+	def twitter_screen_name_from_uri(uri)
+		uri =~ /https?:\/\/twitter\.com\/(?:#!\/|)([a-zA-Z0-9_]+)/
+		return $1
+	end
 end
 
 include Utils

@@ -8,7 +8,7 @@ now = Time.now
 # 他方は未ソートの複数ファイルとし、
 # ソート済みの本体ファイルに未ソートのファイルデータをマージする
 
-REVISION = '0.05'
+REVISION = '0.06'
 DEBUG = 1
 
 $LOAD_PATH.unshift '../common'
@@ -100,6 +100,7 @@ begin
 		# 既存ソート済みファイルとマージしつつファイル出力
 		File.open(data_temp_file, 'wb') do |w|
 			File.open(data_file, 'rb') do |r|
+				# 既存データと新規データを比較し、古い方から出力していく
 				while (line = r.gets) do
 					while (trn_data.length != 0) do
 						if (trn_data[0] < line) then
@@ -118,8 +119,13 @@ begin
 					existing_data_counts += 1
 				end
 			end
-			w.puts trn_data.join();
-			merged_data_counts += trn_data.length
+			
+			# 既存データを出力し終わっても、新規データがまだのこっていればすべて出力
+			if trn_data.length != 0 then
+				w.puts trn_data.join();
+				merged_data_counts += trn_data.length
+			end
+			
 		end
 
 		res_body << "既存データ数 #{existing_data_counts} 件とマージしました\n" if DEBUG		

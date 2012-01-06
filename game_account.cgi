@@ -4,8 +4,8 @@ begin
 	# 開始時刻
 	now = Time.now
 	# リビジョン
-	REVISION = 'R0.63'
-	DEBUG = true
+	REVISION = 'R0.66'
+	DEBUG = false
 
 	$LOAD_PATH.unshift './common'
 	$LOAD_PATH.unshift './entity'
@@ -92,6 +92,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		account = nil    # 対象アカウントの情報
 		other_games = [] # 対象アカウントのマッチ済み他ゲームID
 		affiliates_data = nil # アフィリエイトデータ　カテゴリ => { 店舗名 => { meta => メタデータハッシュ, item => { item_id => アイテムデータハッシュ } } }
+		account_twitter_data = {} # twitter データ account_id => [{ :uri => uri, :screen_name => screen_name }]
 		
 		LINK_ERB_PATH   = "./link.erb"   # リンクERBパス
 		FOOTER_ERB_PATH = "./footer.erb" # フッターERBパス
@@ -343,7 +344,6 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 								t.player2_name = hide_ng_words(t.player2_name)
 							end
 							
-							
 							# 対戦相手一覧取得
 							require 'GameAccountDao'
 							gad = GameAccountDao.new
@@ -353,7 +353,14 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							
 							# 対戦相手一覧の情報取得
 							matched_game_accounts = gad.get_game_accounts(game_id, player2_account_ids)
-
+							
+							# Twitter screen name 取得
+							require 'AccountProfileDao'
+							apd = AccountProfileDao.new
+							
+							# 自分と対戦相手の twitter データ 取得
+							account_twitter_data = apd.get_twitter_data_by_account_ids([account.id] + player2_account_ids)
+							
 							# Type1 区分値取得
 							res = db.exec(<<-"SQL")
 								SELECT

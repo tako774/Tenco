@@ -6,15 +6,15 @@ body {
 }
 A {
   color: #f2864d;
-  text-decoration: underline;
+  text-decoration: none;
 }
 A:link {
   color: #f2864d;
-  text-decoration: underline;
+  text-decoration: none;
 }
 A:visited {
   color: #996666;
-  text-decoration: underline;
+  text-decoration: none;
 }
 A:active {
   color: #ffffff;
@@ -81,8 +81,7 @@ caption {
   background-color: #ffffd0;
 }
 th, td {
-  line-height: 1.6em;
-  padding: 0.2em 0.5em 0;
+  padding: 0.15em 0.5em 0;
 }
 td { border-bottom: 1px solid #a0a0a0; }
 .column-wise th { border: 1px solid #ffffff; }
@@ -96,16 +95,15 @@ th {
 }
 ul {
   padding-left: 0.3em;
-  margin-left: 0.5em;
-  margin-top: 0.1em;
-  margin-bottom: 0.3em;
+  margin-left: 0.6em;
+  margin-top: 0em;
+  margin-bottom: 0.1em;
   list-style-type: none;
 }
 li {
   padding-left: 0em;
   margin-left: 0em;
-  margin-bottom: 0em;
-  line-height: 1.7em;
+  margin-bottom: 0.1em;
 }
 div.section { padding-bottom: 1.25em; }
 td.num { text-align: right; }
@@ -124,7 +122,9 @@ table.account { font-size: 95%; }
   white-space: nowrap;
 }
 .msg { color: #999999; }
+.uri { font-family:monospace; }
 .suppli, .stats { font-size: 80%; }
+.affiliate { font-size: 70% }
 #header { margin-top: 0.5em; }
 #meta_info {
   position: absolute;
@@ -173,7 +173,16 @@ table.account { font-size: 95%; }
   text-decoration: underline;
 }
 #main h2:first-letter { font-size: 161.8%; }
-#profile { font-size: 95%; }
+#side {
+  margin-top:1em;
+}
+#side_visual {
+  margin-bottom:0.75em;
+}
+#profile {
+  font-size: 95%;
+  line-height: 1.4em;  
+}
 #profile h3 { font-size: 100%; }
 #track_records_tool, #tags_tool {
   margin: 0em 0.4em;

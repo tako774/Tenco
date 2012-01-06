@@ -235,14 +235,14 @@ $(document).ready(
 <div id="container">
 
 <div id="header">
-<h1><a href="<%= CFG[:top_url] %>"><img alt="Tenco!" src='<%= CFG[:static_url] %>images/Tenco.gif' width='<%= 366/3 %>' height='<%= 126/3 %>' /></a></h1> マイページα13（2011/04/02）
+<h1><a href="<%= CFG[:top_url] %>"><img alt="Tenco!" src='<%= CFG[:static_url] %>images/Tenco.gif' width='<%= 366/3 %>' height='<%= 126/3 %>' /></a></h1> マイページα16（2011/12/15）
 <br />
 <p id="meta_info">
 λ＜レートなんて飾りなんです。偉い人にはそれがわからんのです<br />
 <%= now.strftime("%m/%d %H:%M") %> に作成（毎時0分以降に再生成）<br />  
 Tenco! の情報を <a href="http://twitter.com/" target="_blank">twitter</a> 上のハッシュタグ <a href="http://twitter.com/#search?q=%23tenco_info" target="_blank">#tenco_info</a> で流す運用を始めています ('11/1/4)<br />
-<a href="http://www.tasofro.net/" target="_blank">緋想天Ver1.06aパッチ</a>が出ています。<a href="http://mint.s150.xrea.com/?%E7%B7%8B%E8%A1%8C%E8%B7%A1#me01a10f" target="_blank">緋行跡の対応方法はこちら</a>に出ています。（'11/10/28）
-<%# <a href="http://www.tasofro.net/" target="_blank">緋想天Ver1.06aパッチ</a>が出ています。<a href="http://mint.s150.xrea.com/?%E5%A4%A9%E5%89%87%E8%A6%B3#l6c4024e" target="_blank">天則観(非想天則Ver1.10a用)</a>も出ています。（'11/9/23）%>
+プロフィール設定で<a href="http://twitter.com/" target="_blank"> twitter </a>が登録されていれば、アイコンをマイページに出すようにしました（'11/12/12）
+<%# <a href="http://www.tasofro.net/" target="_blank">緋想天Ver1.06aパッチ</a>が出ています。<a href="http://mint.s150.xrea.com/?%E5%A4%A9%E5%89%87%E8%A6%B3#l6c4024e" target="_blank">天則観(非想天則Ver1.10a用)</a>も出ています。（11/9/23）%>
 <%# 現在、対戦履歴表示を直近報告の最大100件のみにしています。現在対応中です。（10/05/26 04:07）<br /> %>
 </p>
 </div>
@@ -358,23 +358,46 @@ Tenco! の情報を <a href="http://twitter.com/" target="_blank">twitter</a> �
 					<%- end -%>
 					<%- if t.player1_points > t.player2_points -%>
 					<td class="time suppli"><%= t.play_timestamp.strftime("%y/%m/%d %H:%M") %></td>
-					<td><%= "#{z2h_long_str(xhtml_sp2nbsp(h(t.player1_name)))} (#{type1_h[t.player1_type1_id.to_i]})" %></td>
+					<td>
+						<%- if (! t.player2_account_name.nil?) && (data = account_twitter_data[account.id.to_i]) -%>
+							<%- screen_name = data.first[:screen_name] -%>
+							<a href="http://twitter.com/<%= h screen_name %>" target="_blank"><img alt="" title="twitter @<%= h screen_name %>" src="
+https://api.twitter.com/1/users/profile_image?screen_name=<%= h screen_name %>&amp;size=mini" /></a>
+						<%- end -%>
+						<%= "#{z2h_long_str(xhtml_sp2nbsp(h(t.player1_name)))} (#{type1_h[t.player1_type1_id.to_i]})" %></td>
 					<td class="vs"><%= "#{t.player1_points.to_i} - #{t.player2_points.to_i}" %></td>
 						<%- unless t.player2_account_name.nil? -%>
-					<td><a href="<%= "#{CFG[:top_url]}game/#{game_id.to_i}/account/#{u t.player2_account_name.to_s}/" %>"><%= z2h_long_str(xhtml_sp2nbsp(h(t.player2_name))) %></a><%= " (#{type1_h[t.player2_type1_id.to_i]})" %></td>
+					<td>
+							<%- if data = account_twitter_data[t.player2_account_id.to_i] -%>
+								<%- screen_name = data.first[:screen_name] -%>
+						<a href="http://twitter.com/<%= h screen_name %>" target="_blank"><img alt="" title="twitter @<%= h screen_name %>" src="
+https://api.twitter.com/1/users/profile_image?screen_name=<%= h screen_name %>&amp;size=mini" /></a>
+							<%- end -%>
+						<a href="<%= "#{CFG[:top_url]}game/#{game_id.to_i}/account/#{u t.player2_account_name.to_s}/" %>"><%= z2h_long_str(xhtml_sp2nbsp(h(t.player2_name))) %></a><%= " (#{type1_h[t.player2_type1_id.to_i]})" %></td>
 						<%- else -%>
-					<td><span class="enc_alt"><%= "◇#{t.player2_name[11..14]}" %></span><span class="enc"><%= u(h(t.player2_name)) %></span> <%= "(#{type1_h[t.player2_type1_id.to_i]})" %></td>
+					<td><span class="enc_alt"><%= "◇#{t.player2_name[11..14]}" %></span><span class="enc"><%= u(h(t.player2_name)) %></span><%= "(#{type1_h[t.player2_type1_id.to_i]})" %></td>
 						<%- end -%>
 					<%- else -%>
 					<td class="time suppli"><%= t.play_timestamp.strftime("%y/%m/%d %H:%M")  %></td>
 						<%- unless t.player2_account_name.nil? -%>
-					<td><a href="<%= "#{CFG[:top_url]}game/#{game_id.to_i}/account/#{u t.player2_account_name.to_s}/" %>"><%= z2h_long_str(xhtml_sp2nbsp(h(t.player2_name))) %></a><%= " (#{type1_h[t.player2_type1_id.to_i]})" %></td>
+					<td>
+							<%- if data = account_twitter_data[t.player2_account_id.to_i] -%>
+								<%- screen_name = data.first[:screen_name] -%>
+						<a href="http://twitter.com/<%= h screen_name %>" target="_blank"><img alt="" title="twitter @<%= h screen_name %>" src="
+https://api.twitter.com/1/users/profile_image?screen_name=<%= h screen_name %>&amp;size=mini" /></a>
+							<%- end -%>
+						<a href="<%= "#{CFG[:top_url]}game/#{game_id.to_i}/account/#{u t.player2_account_name.to_s}/" %>"><%= z2h_long_str(xhtml_sp2nbsp(h(t.player2_name))) %></a><%= " (#{type1_h[t.player2_type1_id.to_i]})" %></td>
 						<%- else -%>
 					<td><span class="enc_alt"><%= "◇#{t.player2_name[11..14]}" %></span><span class="enc"><%= u(h(t.player2_name)) %></span> <%= "(#{type1_h[t.player2_type1_id.to_i]})" %></td>
 						<%- end -%>
 					<td class="vs"><%= "#{t.player2_points.to_i} - #{t.player1_points.to_i}" %></td>
-					<td><%= "#{z2h_long_str(xhtml_sp2nbsp(h(t.player1_name)))} (#{type1_h[t.player1_type1_id.to_i]})" %></td>
-				
+					<td>
+						<%- if (! t.player2_account_name.nil?) && (data = account_twitter_data[account.id.to_i]) -%>
+							<%- screen_name = data.first[:screen_name] -%>
+							<a href="http://twitter.com/<%= h screen_name %>" target="_blank"><img alt="" title="twitter @<%= h screen_name %>" src="
+https://api.twitter.com/1/users/profile_image?screen_name=<%= h screen_name %>&amp;size=mini" /></a>
+						<%- end -%>
+						<%= "#{z2h_long_str(xhtml_sp2nbsp(h(t.player1_name)))} (#{type1_h[t.player1_type1_id.to_i]})" %></td>
 					<%- end -%>
 				</tr>
 				<%- end -%>
@@ -387,28 +410,37 @@ Tenco! の情報を <a href="http://twitter.com/" target="_blank">twitter</a> �
 	
 	<div id="profile">
 	<p>
-	<%= xhtml_sp2nbsp(h(game_account.rep_name)) %> さん<br />
+	<%= xhtml_sp2nbsp(h(game_account.rep_name)) %> さん
 	</p>
 	<div class="visual" id="side_visual">
-<pre class="AA">### 復活したAA ###
-　　　　 ,.ｨrｰr 、
+	<%- if account_twitter_data[account.id.to_i] then -%>
+		<%- twitter_screen_names = account_twitter_data[account.id.to_i].map { |data| data[:screen_name] } -%>
+		<ul>
+		<%- twitter_screen_names.each do |screen_name| -%>
+			<li><a href="http://twitter.com/<%= h screen_name %>" target="_blank"><img alt="" title="twitter @<%= h screen_name %>" src="
+https://api.twitter.com/1/users/profile_image?screen_name=<%= h screen_name %>&amp;size=original" width="128px" /></a></li>
+		<%- end -%>
+		</ul>
+	<%- else -%>
+	<pre class="AA" title="プロフィール設定で twitter の URL を登録すると、アイコン画像が表示されます">　　　　 ,.ｨrｰr 、
 　　　y' "´￣｀'ヽ
 .　　 ﾉ　　 くノﾉ))ゝ
 　　　ﾙi,,,,ﾘ§ﾟ-ﾉ
 　　　　'k'_,i{X l}〈つ[|三＞
 　　　 ／'/_ハ.ゝ、
 　　　　 ｀'ﾄ_ﾉ'ﾄ,ﾉ"
-### 復活したAA ###
-</pre>
+　　　  No Image</pre>
+	<%- end -%>
 	</div>
-	
 <h3>プレイヤータグ</h3>
 <ul id="account_tags">
 <%- account_tags.each do |at| -%>
-	<li><a href="<%= CFG[:top_url] %>tag/<%= u(at.tag_disp_name).gsub(/%2f/i, '/') %>"><%= h at.tag_disp_name %></a></li>
+	<li><a href="<%= CFG[:top_url] %>tag/<%= u(at.tag_disp_name).gsub(/%2f/i, "/") %>"><%= h at.tag_disp_name %></a></li>
 <%- end -%>
 </ul>
-<a id="toggle_edit_tags" class="suppli">タグ編集</a>
+<p>
+	<a id="toggle_edit_tags" class="suppli">タグ編集</a>
+</p>
 <div id="edit_tags" style="display:none">
 	<div id="account_tag_tool">
 		<input id='input_account_tag_name' name='input_account_tag_name' type='text' size='40' value="" /><br />
@@ -420,7 +452,7 @@ Tenco! の情報を <a href="http://twitter.com/" target="_blank">twitter</a> �
 <ul id="account_profiles">
 <%- account_profiles.keys.sort.each do |class_id| -%>
 <%- aps = account_profiles[class_id] -%>
-	<li><%= h aps[:class_name] %>
+	<li><span style="font-weight:bold"><%= h aps[:class_name] %></span>
 		<ul>
 			<%- aps[:profiles].each do |ap| -%>
 			<li>
@@ -433,6 +465,9 @@ Tenco! の情報を <a href="http://twitter.com/" target="_blank">twitter</a> �
 			<%- end -%>
 		</ul>
 	</li>
+<%- end -%>
+<%- if account_profiles.length == 0 then -%>
+<li class="suppli" style="color:#999999">プロフィール未登録</li>
 <%- end -%>
 </ul>
 <p>

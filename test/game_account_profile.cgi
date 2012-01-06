@@ -69,19 +69,24 @@ begin
 		
 		# ゲーム・アカウント・使用名称ごとに、使用回数の降順で取得
 		res = db.exec(<<-"SQL")
-		  SELECT
-			game_id AS game_id,
-			account_id AS account_id,
-			player_name AS rep_name,
-			SUM(matched_track_records_count) AS count
-		  FROM
-			game_account_player_name_daily_stats
-		  WHERE
-			game_id = #{game_id.to_i}
-		  GROUP BY
-			game_id, account_id, player_name
-		  ORDER BY
-			game_id, account_id, count DESC
+			SELECT
+			  game_id,
+			  account_id,
+			  rep_name
+			FROM
+			  (
+			    SELECT
+			      game_id AS game_id,
+			      account_id AS account_id,
+			      player_name AS rep_name,
+			      rank() OVER (PARTITION BY game_id, account_id ORDER BY matched_track_records_count DESC) AS count_rank
+			    FROM
+			      game_account_player_name_stats
+			    WHERE
+			      game_id = 2
+			  ) AS gapns_rank
+			WHERE
+			  count_rank = 1
 		SQL
 		
 		res_body << "#{res.num_tuples} 件のゲーム・アカウント・使用名称のデータをDBから取得しました\n"

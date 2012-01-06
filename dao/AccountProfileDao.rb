@@ -3,6 +3,7 @@ require "#{File.expand_path(File.dirname(__FILE__))}/../entity/AccountProfile"
 
 class AccountProfileDao < DaoBase
 	@@version = 0.02
+	TWITTER_PROPERTY_NAME = "twitter"
 	
 	# 指定されたアカウントID,プロパティ名のアカウントプロパティを登録する
 	def add(account_id, property_id, value, visibility, uri = nil)
@@ -142,5 +143,43 @@ class AccountProfileDao < DaoBase
 			WHERE
 			  ap.id = #{id.to_i}
 		SQL
+	end
+	
+	def get_twitter_data_by_account_ids(account_ids, options = {:visibility_check => true} )
+		
+		account_twitter_uris = {}
+		
+		res = @db.exec(<<-"SQL")
+			SELECT
+			    account_id,
+			    uri
+			FROM
+			  account_profiles ap
+			WHERE
+			  ap.profile_property_id = (
+			    SELECT
+			      id
+			    FROM
+			      profile_properties
+			    WHERE
+			      name = #{s TWITTER_PROPERTY_NAME}
+			  )
+			  AND ap.account_id IN (#{(account_ids.map { |i| "'#{i.to_i}'" } ).join(", ")})
+			  #{"AND ap.is_visible = 1" if options[:visibility_check] }
+		SQL
+		
+		res.each do |row|
+			account_id = row[0].to_i
+			uri = row[1]
+			
+			if screen_name = twitter_screen_name_from_uri(uri) then
+				account_twitter_uris[account_id] ||= []
+				account_twitter_uris[account_id] << { :uri => uri, :screen_name => screen_name }
+			end
+		end
+		
+		res.clear
+		
+		return account_twitter_uris
 	end
 end

@@ -12,7 +12,7 @@
 	<script type="text/javascript" charset="utf-8" src="<%= CFG[:static_url] %>js/jquery.js"></script>
 	<script type="text/javascript" charset="utf-8" src="<%= CFG[:static_url] %>js/jsdeferred.jquery.js"></script>
 	<script type="text/javascript" charset="utf-8" src="<%= CFG[:static_url] %>js/utils.js"></script>
-	<script type="text/javascript" charset="utf-8" src="<%= CFG[:static_url] %>js/account.js"></script>
+	<script type="text/javascript" charset="utf-8" src="<%= CFG[:static_url] %>js/account.js?2"></script>
 	<title><%= h account_name %> さんのアカウント設定 - Tenco!</title>
 	<script type="text/javascript">
 //<![CDATA[ 
@@ -73,7 +73,7 @@ $(document).ready(
 
 <div id="header">
 	<h1><a href="<%= CFG[:top_url] %>"><img alt="Tenco!" src='<%= CFG[:static_url] %>images/Tenco.gif' width='<%= 366/3 %>' height='<%= 126/3 %>' /></a></h1>
-	<p>アカウント設定ページα5 (2010/11/19)</p>
+	<p>アカウント設定ページα6 (2011/11/01)</p>
 </div>
 
 <hr />
@@ -95,11 +95,11 @@ $(document).ready(
 	<h3>現在の設定</h3>
 	<table id="current_account_settings" class="column-wise">
 		<tr><th>自レート表示</th><td><span id="show_ratings"></span></td></tr>
-		<tr><th>プロファイル編集許可（タグ等）</th><td><span id="allow_edit_profile"></span></td></tr>
+		<tr><th>タグ編集許可</th><td><span id="allow_edit_profile"></span></td></tr>
 	</table>
 
 	<h3>新しい設定</h3>
-	<p>メールアドレスは空欄にして変更すると、登録を削除できます。<br />
+	<p>メールアドレスは空欄にして変更すると、メールアドレスの登録を削除できます。<br />
 	また、パスワードは空欄のままにすると変更されません。<br />
 	注意：パスワード変更後は、すべての報告ツールの設定（config.yaml）の変更も忘れずに。</p>
 	<p><button id='update_settings' tabindex='10' style="display:none">設定更新</button></p>
@@ -112,7 +112,7 @@ $(document).ready(
 			</td>
 		</tr>
 		<tr>
-			<th>プロファイル編集許可（タグ等）</th>
+			<th>タグ編集許可</th>
 			<td>
 				<label><input name='new_allow_edit_profile' tabindex='10' type='radio' value="1" />編集できる</label>
 				<label><input name='new_allow_edit_profile' tabindex='11' type='radio' value="0" />編集不可（自分も不可）</label>
