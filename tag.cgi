@@ -11,6 +11,7 @@ begin
 
 	$LOAD_PATH.unshift './common'
 	$LOAD_PATH.unshift './entity'
+	$LOAD_PATH.unshift './dao'
 
 	require 'time'
 	require 'logger'
@@ -137,6 +138,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 						require 'db'
 						require 'utils'
 						require 'time'
+						require 'html_helper'
 						
 						# DB接続
 						db = DB.getInstance
@@ -197,6 +199,11 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							res.clear	
 						end
 						
+							# Twitter screen name 取得
+						require 'AccountProfileDao'
+						apd = AccountProfileDao.new
+						account_twitter_data = apd.get_twitter_data_by_account_ids(accounts.keys)
+							
 						# 該当アカウントのゲームごとの情報を取得
 						# タイミングによっては、タグをつけられたアカウントが
 						# どのゲームも報告していないケースがある
@@ -255,32 +262,6 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							res.clear
 						end
 						
-=begin						
-						# アカウントのレーティング情報を取得
-						require 'GameAccountRating'
-						res = db.exec(<<-"SQL")
-							SELECT
-							  r.*
-							FROM
-							  game_account_ratings r
-							WHERE
-							  r.game_id = #{game_id.to_i}
-							  AND r.account_id = #{account.id.to_i}
-							ORDER BY
-							  r.ratings_deviation,
-							  r.rating DESC
-							SQL
-						
-						res.each do |r|
-							rating = GameAccountRating.new
-							res.num_fields.times do |i|
-								rating.instance_variable_set("@#{res.fields[i]}", r[i])
-							end
-							ratings << rating
-						end
-						res.clear
-=end	
-
 						# Type1 区分値取得
 						if game_accounts.keys.length > 0 then
 							res = db.exec(<<-"SQL")

@@ -10,6 +10,7 @@ begin
 
 	$LOAD_PATH.unshift './common'
 	$LOAD_PATH.unshift './entity'
+	$LOAD_PATH.unshift './dao'
 
 	require 'time'
 	require 'logger'
@@ -135,13 +136,15 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 						type1 = {}             # 対象の Type1 区分値
 						ratings = {}
 						ratings_each_type1 = {}
+						account_ids = [] # アカウントID
+						account_twitter_data = [] # アカウントのツイッター情報
 					
 						### データ取得
 						begin
 							require 'utils'
-							include Utils
 							require 'erubis'
 							include Erubis::XmlHelper
+							require 'html_helper'
 							
 							# DB接続
 							require 'db'
@@ -328,6 +331,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 								  #{MAX_SHOW_NUM if pov_eval_unit_seg != SEG_V[:pov_eval_unit][:game_type1]}
 								SQL
 							
+							account_ids_hash = {}
 							res.each do |r|
 								rating = GameAccountRating.new
 								res.fields.length.times do |i|
@@ -339,8 +343,14 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 								ratings_each_type1[rating.type1_id.to_i] ||= {}
 								ratings_each_type1[rating.type1_id.to_i][rating.game_pov_class_id.to_i] ||= []
 								ratings_each_type1[rating.type1_id.to_i][rating.game_pov_class_id.to_i] << rating
+								account_ids_hash[rating.account_id.to_i] = nil
 							end
 							res.clear
+							
+							# Twitter screen name 取得
+							require 'AccountProfileDao'
+							apd = AccountProfileDao.new
+							account_twitter_data = apd.get_twitter_data_by_account_ids(account_ids_hash.keys)
 							
 							# Type1 区分値取得
 							res = db.exec(<<-"SQL")

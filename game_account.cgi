@@ -141,10 +141,10 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 						begin
 							require 'db'
 							require 'utils'
-							include Utils
 							require 'time'
 							require 'erubis'
 							include Erubis::XmlHelper
+							require 'html_helper'
 							
 							# DB接続
 							db = DB.getInstance
