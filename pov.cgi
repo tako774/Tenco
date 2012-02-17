@@ -90,6 +90,8 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 			pov_eval_unit_seg = SEG_V[:pov_eval_unit][query['pov_eval_unit'].to_sym] # POV評価単位
 			output = query['output'] || 'html'  # 出力形式
 			
+			MAX_SHOW_NUM = 500 # 最大表示人数
+			
 			header_erb_path = "./pov_header.erb" # ヘッダーERBパス
 			main_erb_path   = "./pov_#{pov_id}_main_#{query['pov_eval_unit'].to_s}.erb" # メインERBパス
 			related_game_pov_erb_path = "./pov_related_game_pov.erb" # 関連POVリンクERBパス
@@ -130,7 +132,6 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 						related_game_povs = [] # 関連ゲームＰＯＶ情報
 						game_pov_classes = []  # ゲームＰＯＶクラス情報
 						prizes = []            # 達成情報
-						prize_accounts = {}    # 達成したアカウントリスト
 						type1 = {}             # 対象の Type1 区分値
 						ratings = {}
 						ratings_each_type1 = {}
@@ -281,35 +282,6 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							end
 							res.clear
 							
-							## 達成したアカウントリストを取得
-							if prizes.length > 0
-								require 'PrizeAccount'
-								res = db.exec(<<-"SQL")
-									SELECT
-									  pa.*
-									FROM
-									  prize_accounts pa, prizes p, accounts a
-									WHERE
-									      p.game_pov_id = #{game_pov.id.to_i}
-									  AND pa.prize_id = p.id
-									  AND a.id = pa.account_id
-									  AND a.del_flag = 0
-								SQL
-								
-								if res.num_tuples < 1 then
-									# 達成したアカウントリストを取得
-								else
-									res.each do |r|
-										prize_account = PrizeAccount.new
-										res.fields.length.times do |i|
-											prize_account.instance_variable_set("@#{res.fields[i]}", r[i])
-										end
-										prize_accounts[prize_account.prize_id] = prize_account
-									end
-								end
-								res.clear
-							end
-							
 							## 達成したアカウントのレート情報取得
 							require 'GameAccountRating'
 							res = db.exec(<<-"SQL")
@@ -352,6 +324,8 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 								  r.game_type1_ratings_rank,
 								  r.rating DESC,
 								  r.ratings_deviation
+								#{"LIMIT" if pov_eval_unit_seg != SEG_V[:pov_eval_unit][:game_type1]}
+								  #{MAX_SHOW_NUM if pov_eval_unit_seg != SEG_V[:pov_eval_unit][:game_type1]}
 								SQL
 							
 							res.each do |r|
@@ -367,8 +341,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 								ratings_each_type1[rating.type1_id.to_i][rating.game_pov_class_id.to_i] << rating
 							end
 							res.clear
-														
-
+							
 							# Type1 区分値取得
 							res = db.exec(<<-"SQL")
 								SELECT
