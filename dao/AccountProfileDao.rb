@@ -67,6 +67,7 @@ class AccountProfileDao < DaoBase
 			  pp.is_unique,
 			  pp.name,
 			  pp.display_name,
+			  pc.name AS class_name,
 			  pc.display_name AS class_display_name
 			FROM
 			  account_profiles ap,
@@ -105,6 +106,7 @@ class AccountProfileDao < DaoBase
 			  pp.is_unique,
 			  pp.name,
 			  pp.display_name,
+			  pc.name AS class_name,
 			  pc.display_name AS class_display_name,
 			  pc.id AS class_id
 			FROM

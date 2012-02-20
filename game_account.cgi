@@ -4,7 +4,7 @@ begin
 	# 開始時刻
 	now = Time.now
 	# リビジョン
-	REVISION = 'R0.66'
+	REVISION = 'R0.67'
 	DEBUG = false
 
 	$LOAD_PATH.unshift './common'
@@ -275,7 +275,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							account_profiles = {}
 							
 							AccountProfileDao.new.get_by_account_name(account_name, { :visibility_check => true } ).each do |ap|
-								account_profiles[ap.class_id.to_i] ||= { :class_name => ap.class_display_name }
+								account_profiles[ap.class_id.to_i] ||= {:class_display_name => ap.class_display_name}
 								account_profiles[ap.class_id.to_i][:profiles] ||= []
 								account_profiles[ap.class_id.to_i][:profiles] << ap
 							end
@@ -408,12 +408,17 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 						account_element = root.add_element('account')
 						account_element.add_element('name').add_text(account_name)
 						
-						# game 要素生成
+						# account/game 要素生成
 						game_element = account_element.add_element('game')
 						game_element.add_element('id').add_text(game_id.to_s)
 						game_element.add_element('name').add_text(game.name)
 						game_element.add_element('representative_account_name').add_text(game_account.rep_name)
 						
+						# account/game/cluster 要素生成
+						account_cluster_element = game_element.add_element('account_cluster')
+						account_cluster_element.add_element('name').add_text(game_account.cluster_name.to_s)
+						
+						# account/game/type1 要素生成
 						if account.show_ratings_flag.to_i != 0 then
 							# type1 要素生成
 							ratings.each do |r|
@@ -422,7 +427,6 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 									type1_element = game_element.add_element('type1')
 									type1_element.add_element('id').add_text(r.type1_id)
 									type1_element.add_element('name').add_text(type1[r.type1_id.to_i])
-									# type1_element.add_element('elo_rating_value').add_text("#{r.rating.to_f.round.to_s}")
 									type1_element.add_element('rating').add_text("#{r.rating.to_f.round.to_s}±#{r.ratings_deviation.to_f.floor.to_s}")
 									type1_element.add_element('rating_value').add_text(r.rating.to_f.round.to_s)
 									type1_element.add_element('ratings_deviation').add_text(r.ratings_deviation.to_f.floor.to_s)
@@ -430,6 +434,17 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 									type1_element.add_element('match_counts').add_text(r.match_counts)
 								end
 							end	
+						end
+						
+						# account/profile 要素生成
+						account_profiles.keys.sort.each do |class_id|
+							aps = account_profiles[class_id]
+							aps[:profiles].each do |ap|
+								profile_element = account_element.add_element('profile')
+								profile_element.add_element('property', {'title' => ap.display_name, 'class' => ap.class_name, 'class_title' => ap.class_display_name}).add_text ap.name
+								profile_element.add_element('value').add_text ap.value
+								profile_element.add_element('uri').add_text ap.uri if ap.uri
+							end
 						end
 						
 						# キャッシュXML/ヘッダ出力

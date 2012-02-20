@@ -15,6 +15,7 @@ class AccountProfile
 		:display_name,
 		# ProfileClasses
 		:class_id,
+		:class_name,
 		:class_display_name
 	)
 end
