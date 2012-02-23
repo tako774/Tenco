@@ -5,7 +5,7 @@ begin
 now = Time.now
 
 ### レートランキングデータ作成処理 ###
-REVISION = '0.03'
+REVISION = '0.04'
 DEBUG = 1
 
 # アプリケーションのトップディレクトリ
@@ -18,7 +18,6 @@ $LOAD_PATH.unshift "#{TOP_DIR}/dao"
 require 'time'
 require 'logger'
 require 'utils'
-include Utils
 require 'db'
 
 source = ""
@@ -42,9 +41,8 @@ end
 
 begin
 	# 設定
-	game_id = 1
-	LIMIT_MAX_RD = 150             # ランキング対象の最大RD
-	LIMIT_MIN_MATCHED_ACCOUNTS = 5 # ランキング対象の最小マッチ済対戦アカウント人数
+	LIMIT_MAX_RD = 150 # ランキング対象の最大RD
+	LIMIT_MIN_MATCHED_ACCOUNTS = 20 # ランキング対象の最小マッチ済対戦アカウント人数
 		
 	# DB 接続
 	require 'db'
@@ -78,9 +76,9 @@ begin
 			  accounts a, game_account_ratings r
 			WHERE
 				  a.id = r.account_id
+			  AND r.game_id = #{game_id.to_i}
 			  AND a.del_flag = 0
 			  AND a.show_ratings_flag != 0
-			  AND r.game_id = #{game_id.to_i}
 			  AND r.ratings_deviation < #{LIMIT_MAX_RD.to_i}
 			  AND r.matched_accounts >= #{LIMIT_MIN_MATCHED_ACCOUNTS.to_i}
 			ORDER BY
@@ -154,17 +152,28 @@ begin
 				  updated_at = CURRENT_TIMESTAMP,
 				  lock_version = lock_version + 1
 				WHERE
-				  game_id = #{game_id.to_i}
-				  AND (
-					NOT (
-						  ratings_deviation < #{LIMIT_MAX_RD.to_i}
-					  AND matched_accounts >= #{LIMIT_MIN_MATCHED_ACCOUNTS.to_i}
+					id IN(
+						SELECT
+							gar.id
+						FROM
+							accounts a,
+							game_account_ratings gar
+						WHERE
+							gar.account_id = a.id
+							AND gar.game_id = #{game_id.to_i}
+							AND (
+								NOT (
+									a.del_flag = 0
+									AND a.show_ratings_flag != 0
+									AND gar.ratings_deviation < #{LIMIT_MAX_RD.to_i}
+									AND gar.matched_accounts >= #{LIMIT_MIN_MATCHED_ACCOUNTS.to_i}
+								)
+							)
+							AND (
+								gar.game_type1_ratings_rank > 0
+								OR gar.game_each_type1_ratings_rank > 0
+							)
 					)
-				  )
-				  AND (
-					game_type1_ratings_rank > 0
-					OR game_each_type1_ratings_rank > 0
-				  )
 			SQL
 				
 		rescue => ex
