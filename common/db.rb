@@ -1,13 +1,13 @@
 ### DB接続シングルトン
 # require 'rubygems'
 require 'pg'
-require 'pg-util'
+require "#{File::dirname(__FILE__)}/pg-util"
 require 'yaml'
 
 CONFIG = YAML.load_file("#{File::dirname(__FILE__)}/../../../config/db.yaml")
 
 class DB
-	@@revision = 'R0.03'
+	@@revision = 'R0.04'
 	@@db = nil
 	attr_reader :con
 	
@@ -15,6 +15,8 @@ class DB
 	def initialize
 		# DBコネクト取得
 		@con = PGconn.connect(CONFIG[:host], CONFIG[:port], "", "", CONFIG[:database], CONFIG[:username], CONFIG[:password])
+		# クライアント文字コード設定
+		@con.set_client_encoding("utf-8")
 	end
 
 	def self.getInstance
