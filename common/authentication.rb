@@ -191,7 +191,7 @@ class Authentication
 		
 		# ソルト文字列取得
 		salt = get_salt(name)
-		raise "エラー：アカウント認証に失敗しました。salt が見つかりません（#{name}, #{host_name}）" unless salt
+		raise "エラー：アカウント認証に失敗しました。salt が見つかりません（#{name}）" unless salt
 
 		# DB接続取得
 		db = DB.getInstance
@@ -252,7 +252,7 @@ class Authentication
 		
 		# ソルト文字列取得
 		salt = get_salt(name)
-		raise "エラー：アカウント認証に失敗しました。salt が見つかりません（#{name}, #{host_name}）" unless salt
+		raise "エラー：アカウント認証に失敗しました。salt が見つかりません（#{name}）" unless salt
 
 		# DB接続取得
 		db = DB.getInstance
@@ -269,7 +269,7 @@ class Authentication
 			updated_at = CURRENT_TIMESTAMP
 		  WHERE
 			name = #{s name}
-			AND mail_address = #{s Cryption.stored_password(mail_address, salt)}
+			AND mail_address = #{s Cryption.stored_mail_address(mail_address, salt)}
 			AND del_flag = 0
 		  RETURNING *;
 		SQL
@@ -305,7 +305,7 @@ class Authentication
 		
 		# ソルト文字列取得
 		salt = get_salt(name)
-		raise "エラー：アカウント認証に失敗しました。salt が見つかりません（#{name}, #{host_name}）" unless salt
+		raise "エラー：アカウント認証に失敗しました。salt が見つかりません（#{name}）" unless salt
 		
 		# 新パスワード生成
 		new_password = Cryption.mk_octet_str(RESET_PASSWORD_LENGTH)
@@ -313,17 +313,17 @@ class Authentication
 		# DB接続取得
 		db = DB.getInstance
 		
-		# アカウント削除SQL実行
+		# パスワードリセットSQL実行
 		sql = <<-"SQL"
 		  UPDATE
 		    accounts
 		  SET
-		    password = #{s new_password},
+		    password = #{s Cryption.mk_stored_password(new_password, salt)},
 		    lock_version = lock_version + 1,
 			updated_at = CURRENT_TIMESTAMP
 		  WHERE
 			name = #{s name}
-			AND mail_address = #{s Cryption.stored_password(mail_address, salt)}
+			AND mail_address = #{s Cryption.stored_mail_address(mail_address, salt)}
 			AND del_flag = 0
 		  RETURNING *;
 		SQL
@@ -340,7 +340,7 @@ class Authentication
 			rescue
 				host_name = ENV['REMOTE_ADDR']
 			end
-			raise "エラー：パスワードリセットに失敗しました（生メールアドレスキー）。（#{name}, #{host_name}）"
+			raise "エラー：パスワードリセットに失敗しました（生メールアドレスキー）。（#{name}）"
 		end
 		
 		account = Account.new
@@ -348,7 +348,10 @@ class Authentication
 			account.instance_variable_set("@#{res.fields[i]}", res[0][i])
 		end
 		res.clear
-		return account
+		
+		# 生パスワードを返す唯一のパターン
+		# とりあえず配列で返す‥‥
+		return account, new_password
 		
 	end
 end
