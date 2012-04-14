@@ -254,8 +254,7 @@ begin
 				end
 				
 				# まだプライズアカウント情報レコードがなければ作成
-				if !(prize_accounts[gar.account_id] &&
-				     prize_accounts[gar.account_id][gar.type1_id]) then
+				if !(prize_accounts[gar.account_id] && prize_accounts[gar.account_id][gar.type1_id]) then
 					db.exec(<<-"SQL")
 					  INSERT INTO
 						prize_accounts

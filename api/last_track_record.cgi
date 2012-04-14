@@ -5,9 +5,10 @@ begin
 	now = Time.now
 
 	### 登録済み最終対戦結果時刻出力 API ###
-	REVISION = 'R0.11'
+	REVISION = 'R0.10'
 
 	$LOAD_PATH.unshift '../common'
+	$LOAD_PATH.unshift '../model'
 
 	require 'yaml'
 	require 'time'

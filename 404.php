@@ -3,6 +3,8 @@
 	header("HTTP/1.0 404 Not Found", FALSE);
 	echo("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
 	
+	$top_url    = "http://tenco.info/";
+	$static_url = "http://static.tenco.info/";
 	
 	$contents = array();
 	$content = "";
@@ -599,21 +601,21 @@ i　　　ｲ　 　| 　| |　 _二ｿ:::ﾉ l | |
 
 HTML;
 	array_push($contents, $content);
-?>
 	
+print <<< HTML
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns='http://www.w3.org/1999/xhtml' xml:lang='ja' lang='ja'>
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<meta http-equiv="content-style-type" content="text/css" />
 	<meta http-equiv="content-script-type" content="text/javascript" />
-	<link rel="stylesheet" type="text/css" href="/css/main.css" />	
+	<link rel="stylesheet" type="text/css" href="${static_url}/css/main.css" />	
 	<title>404 Not Found - Tenco!</title>
 </head>
 <body>
 
 <div id="header">
-	<h1><a href="http://tenco.info/"><img alt="Tenco!" src='http://tenco.info/images/Tenco.gif' width='122' height='42' /></a></h1>
+	<h1><a href="${top_url}"><img alt="Tenco!" src='${static_url}images/Tenco.gif' width='122' height='42' /></a></h1>
 	<p style="font-weight:bold">
 		404 Not Found : ファイルが見つからないよ！
 	</p>
@@ -621,6 +623,8 @@ HTML;
 		λ＜ファイルが見つからないよ！
 	</p>
 </div>
+HTML;
+?>
 
 <hr />
 
@@ -636,4 +640,3 @@ HTML;
 
 </body>
 </html>
-
