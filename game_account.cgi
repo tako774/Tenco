@@ -4,7 +4,7 @@ begin
 	# 開始時刻
 	now = Time.now
 	# リビジョン
-	REVISION = 'R0.68'
+	REVISION = 'R0.67'
 	DEBUG = false
 
 	$LOAD_PATH.unshift './common'
@@ -94,11 +94,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		affiliates_data = nil # アフィリエイトデータ　カテゴリ => { 店舗名 => { meta => メタデータハッシュ, item => { item_id => アイテムデータハッシュ } } }
 		account_twitter_data = {} # twitter データ account_id => [{ :uri => uri, :screen_name => screen_name }]
 		
-<<<<<<< HEAD
 		META_INFO_ERB_PATH = "./game_account_meta_info.erb" # ヘッダメッセージERBパス
-=======
-		HEADER_ERB_PATH = "./game_account_header.erb" # ヘッダERBパス
->>>>>>> 93d9ce384a9cab3ed3b609a839c11121b7c9ef94
 		LINK_ERB_PATH   = "./link.erb"   # リンクERBパス
 		FOOTER_ERB_PATH = "./footer.erb" # フッターERBパス
 		AFFILIATE_ERB_PATH = "./affiliate.erb" # アフィリエイトERBパス
