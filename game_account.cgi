@@ -4,7 +4,7 @@ begin
 	# 開始時刻
 	now = Time.now
 	# リビジョン
-	REVISION = 'R0.67'
+	REVISION = 'R0.68'
 	DEBUG = false
 
 	$LOAD_PATH.unshift './common'
@@ -94,6 +94,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		affiliates_data = nil # アフィリエイトデータ　カテゴリ => { 店舗名 => { meta => メタデータハッシュ, item => { item_id => アイテムデータハッシュ } } }
 		account_twitter_data = {} # twitter データ account_id => [{ :uri => uri, :screen_name => screen_name }]
 		
+		META_INFO_ERB_PATH = "./game_account_meta_info.erb" # ヘッダメッセージERBパス
 		LINK_ERB_PATH   = "./link.erb"   # リンクERBパス
 		FOOTER_ERB_PATH = "./footer.erb" # フッターERBパス
 		AFFILIATE_ERB_PATH = "./affiliate.erb" # アフィリエイトERBパス
@@ -461,6 +462,8 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 						
 						### キャッシュHTML出力
 						
+						# ヘッダメッセージ 部生成
+						meta_info_html = Erubis::Eruby.new(File.read(META_INFO_ERB_PATH)).result(binding)
 						# リンク 部生成
 						link_html = Erubis::Eruby.new(File.read(LINK_ERB_PATH)).result(binding)
 						# footer 部生成
