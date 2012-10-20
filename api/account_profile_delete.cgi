@@ -5,7 +5,7 @@ begin
 	now = Time.now
 
 	### アカウントプロフィール削除 API ###
-	REVISION = 'R0.01'
+	REVISION = 'R0.02'
 	DEBUG = false
 
 	$LOAD_PATH.unshift "#{File.expand_path(File.dirname(__FILE__))}/../common"
@@ -23,6 +23,7 @@ begin
 	
 	require 'authentication'
 	
+	require 'AccountDao'
 	require 'AccountProfileDao'
 	require 'ProfilePropertyDao'
 	
@@ -84,6 +85,8 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		account_password = nil # アカウントパスワード
 		account = nil # アカウント情報
 		account_profile_id = nil # アカウントプロフィールID
+    
+		TWITTER_PROPERTY_NAME = "twitter"
 		
 		# ポストデータ取得
 		if ENV['CONTENT_LENGTH'].to_i > MAX_POST_DATA_BYTES then
@@ -140,8 +143,18 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		end
 		
 		# アカウントプロフィール情報を削除
-		AccountProfileDao.new.delete_by_id(account_profile_id)
-	
+		account_profile = AccountProfileDao.new.delete_by_id(account_profile_id)
+    
+	  # twitter のプロフィール削除時には画像URLを消し、更新要求フラグを削除
+    pp_dao = ProfilePropertyDao.new
+    profile_property = pp_dao.get_by_id(account_profile.profile_property_id)
+    
+    if profile_property.name == TWITTER_PROPERTY_NAME and
+       screen_name = twitter_screen_name_from_uri(account_profile.uri) then
+      AccountDao.new.update_image_url(account_name, nil)
+      AccountDao.new.update_renew_image_url_flag(account_name, false)
+    end
+    
 		# トランザクション終了
 		db.exec("COMMIT;")
 		res_body << "transaction finished...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG

@@ -2,7 +2,32 @@ require 'DaoBase'
 require 'ProfileProperty'
 
 class ProfilePropertyDao < DaoBase
-	@@version = 0.01
+	@@version = 0.02
+  
+	# 指定されたIDのプロファイルプロパティ情報を返す
+	def get_by_id(id)
+		profile_property = nil
+		
+		res = @db.exec(<<-"SQL")
+			SELECT
+			  pp.*
+			FROM
+			  profile_properties pp
+			WHERE
+			  pp.id = #{id.to_i}
+		SQL
+
+		if res.num_tuples == 1 then
+			profile_property = ProfileProperty.new
+			res.num_fields.times do |i|
+				profile_property.instance_variable_set("@#{res.fields[i]}", res[0][i])
+			end
+		end
+		
+		res.clear
+			
+		return profile_property
+	end
 	
 	# 指定されたプロパティ名のプロファイルプロパティ情報を返す
 	def get_by_name(property_name)
@@ -14,7 +39,7 @@ class ProfilePropertyDao < DaoBase
 			FROM
 			  profile_properties pp
 			WHERE
-			  name = #{s property_name}
+			  pp.name = #{s property_name}
 		SQL
 
 		if res.num_tuples == 1 then

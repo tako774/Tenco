@@ -5,7 +5,7 @@ begin
 	now = Time.now
 
 	### アカウントプロフィール登録 API ###
-	REVISION = 'R0.01'
+	REVISION = 'R0.02'
 	DEBUG = false
 
 	$LOAD_PATH.unshift "#{File.expand_path(File.dirname(__FILE__))}/../common"
@@ -23,6 +23,7 @@ begin
 	
 	require 'authentication'
 	
+	require 'AccountDao'
 	require 'AccountProfileDao'
 	require 'ProfilePropertyDao'
 	
@@ -88,7 +89,8 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		account = nil # アカウント情報
 		profile_property = nil # プロフィールプロパティ情報
 		account_profile_id = nil # 登録したアカウントプロフィールID
-		
+    
+		TWITTER_PROPERTY_NAME = "twitter"
 		STRIP_CHAR = "　\s\t\r\n\f\v"
 		
 		# ポストデータ取得
@@ -167,7 +169,7 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		
 		if property_uri == "" then
 			property_uri = nil
-		elsif !property_uri.nil?		
+		elsif !property_uri.nil?
 			unless validate_uri(property_uri) then
 				res_status = "Status: 400 Bad Request\n"
 				res_body = "URLの形式が不正です"
@@ -238,7 +240,7 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 			res_status = "Status: 409 Conflict\n" 
 			res_body << "プロフィール情報の登録に失敗しました。\n"
 			res_body << "入力されたプロフィールは、1アカウントに1つだけ登録可能です(#{profile_property.display_name})。\n"
-			res_body << "ページを再読込してください。\n"
+			res_body << "表示がおかしい場合は、ページを再読込してください。\n"
 			raise ex
 		end
 		
@@ -253,6 +255,12 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		# プロフィール情報を登録
 		account_profile_id = apd.add(account.id, profile_property.id, property_value, property_visibility, property_uri)
 		
+    # twitter のプロフィール登録時には画像URL更新要求フラグを保存
+    if property_name == TWITTER_PROPERTY_NAME and
+       screen_name = twitter_screen_name_from_uri(property_uri) then
+      AccountDao.new.update_renew_image_url_flag(account_name, true)
+    end
+    
 		# トランザクション終了
 		db.exec("COMMIT;")
 		res_body << "transaction finished...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG

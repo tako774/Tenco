@@ -138,14 +138,30 @@ class AccountProfileDao < DaoBase
 		return account_profiles
 	end
 	
-	def delete_by_id(id)
-		res = @db.exec(<<-"SQL")
-			DELETE FROM
-			  account_profiles ap
-			WHERE
-			  ap.id = #{id.to_i}
-		SQL
-	end
+  def delete_by_id(id)
+    account_profile = AccountProfile.new
+    
+    res = @db.exec(<<-"SQL")
+      DELETE FROM
+        account_profiles ap
+      WHERE
+        ap.id = #{id.to_i}
+      RETURNING
+        *
+    SQL
+    
+    if res.num_tuples != 1 then
+      res.clear
+      raise "該当アカウントプロフィールは登録されていません(id:#{id})"
+    else
+      res.num_fields.times do |i|
+        account_profile.instance_variable_set("@#{res.fields[i]}", res[0][i])
+      end
+      res.clear
+    end
+    
+    return account_profile
+  end
 	
 	def get_twitter_data_by_account_ids(account_ids, options = {:visibility_check => true} )
 		
