@@ -319,7 +319,7 @@ $(document).ready(
 			&nbsp;&nbsp;&nbsp;= (自分の勝敗比率値) : (相手の勝敗比率値)<br /> 
 			&nbsp;&nbsp;&nbsp;= 10 ^ (自分のレート/400) : 10 ^ (相手のレート/400)<br /> 
 			&nbsp;&nbsp;&nbsp;= 1 : 10 ^ ((相手のレート - 自分のレート)/400)<br />
-			なお、(勝敗比率値) = 10 ^ (レート/400 - 1.5) です。<span style="color:#EFEFEF">(=μしーれると)</span><br />
+			なお、(勝敗比率値) = 10 ^ (レート/400 - 1.5) です。<br />
 			レート差200で、４戦して１勝３敗が、予想勝敗数の目安です。<br />
 			また、レート変動の大きさは、RDの2乗にも比例します。
 		</p>
@@ -403,7 +403,7 @@ $(document).ready(
 		<ul>
 		<%- twitter_screen_names.each do |screen_name| -%>
 			<li><a href="http://twitter.com/<%= h screen_name %>" target="_blank"><img alt="" title="twitter @<%= h screen_name %>" src="
-https://api.twitter.com/1/users/profile_image?screen_name=<%= h screen_name %>&amp;size=original" width="128px" /></a></li>
+https://api.twitter.com/1/users/profile_image?screen_name=<%= h screen_name %>&amp;size=reasonably_small" width="128px" /></a></li>
 		<%- end -%>
 		</ul>
 	<%- else -%>
