@@ -42,7 +42,8 @@ class AccountDao < DaoBase
         accounts
       SET
         image_url = #{image_url ? s(image_url) : "null"},
-        lock_version = lock_version + 1
+        lock_version = lock_version + 1,
+        updated_at = CURRENT_TIMESTAMP
       WHERE
         name = #{s account_name}
       RETURNING
@@ -71,7 +72,8 @@ class AccountDao < DaoBase
         accounts
       SET
         renew_image_url_flag = #{is_renew_image_url ? 1 : 0},
-        lock_version = lock_version + 1
+        lock_version = lock_version + 1,
+        updated_at = CURRENT_TIMESTAMP
       WHERE
         name = #{s account_name}
       RETURNING
