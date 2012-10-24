@@ -6,16 +6,28 @@ require 'erubis'
 module HTMLHelper
 
 	include Erubis::XmlHelper
-	
-	# twitter 画像（リンク付き）HTML生成
-	def twitter_image_html(screen_name, size = "mini")
+  
+	# プレイヤー画像（リンク付き）HTML生成
+	def player_image_html(twitter_data)
 		return <<-"HTML"
-<a href="http://twitter.com/#{h screen_name}" target="_blank"><img
-  src="https://api.twitter.com/1/users/profile_image?screen_name=#{h screen_name}&amp;size=#{size}"
+<a href="#{h twitter_data[:url]}" target="_blank"><img
+  src="#{h twitter_data[:player_image_url]}"
   alt=""
-  title="twitter @#{h screen_name}"
-  width="24"
-  height="24"
+  title="twitter @#{h twitter_data[:screen_name]}"
+  width="128px"
+  /></a>
+		HTML
+	end
+	
+	# twitter アイコン画像（リンク付き）HTML生成
+	def icon_image_html(twitter_data)
+		return <<-"HTML"
+<a href="#{h twitter_data[:url]}" target="_blank"><img
+  src="#{h twitter_data[:icon_image_url]}"
+  alt=""
+  title="twitter @#{h twitter_data[:screen_name]}"
+  width="24px"
+  height="24px"
   /></a>
 		HTML
 	end

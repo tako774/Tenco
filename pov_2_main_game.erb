@@ -19,7 +19,7 @@
 				<td class="num"><%= h r.matched_accounts %>名</td>
 				<td>
 					<%- if data = account_twitter_data[r.account_id.to_i] -%>
-						<%= twitter_image_html(data.first[:screen_name], "mini") -%>
+						<%= icon_image_html(data.first) -%>
 					<%- end -%>
 					<a href="<%= "#{CFG[:top_url]}game/#{r.game_id.to_i}/account/#{u r.account_name}/" %>"><%= z2h_long_str(xhtml_sp2nbsp(h(hide_ng_words(r.rep_name)))) %></a>
 				</td>

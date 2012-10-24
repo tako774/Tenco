@@ -233,7 +233,7 @@ $(document).ready(
 <div id="container">
 
 <div id="header">
-<h1><a href="<%= CFG[:top_url] %>"><img alt="Tenco!" src='<%= CFG[:static_url] %>images/Tenco.gif' width='<%= 366/3 %>' height='<%= 126/3 %>' /></a></h1> マイページα19（2012/10/06）
+<h1><a href="<%= CFG[:top_url] %>"><img alt="Tenco!" src='<%= CFG[:static_url] %>images/Tenco.gif' width='<%= 366/3 %>' height='<%= 126/3 %>' /></a></h1> マイページα20（2012/10/24）
 <br />
 <p id="meta_info">
 <%= meta_info_html %>
@@ -353,14 +353,14 @@ $(document).ready(
 					<td class="time suppli"><%= t.play_timestamp.strftime("%y/%m/%d %H:%M") %></td>
 					<td>
 						<%- if (! t.player2_account_name.nil?) && (data = account_twitter_data[account.id.to_i]) -%>
-							<%= twitter_image_html(data.first[:screen_name], "mini") -%>
+							<%= icon_image_html(data.first) -%>
 						<%- end -%>
 						<%= "#{z2h_long_str(xhtml_sp2nbsp(h(t.player1_name)))} (#{type1_h[t.player1_type1_id.to_i]})" %></td>
 					<td class="vs"><%= "#{t.player1_points.to_i} - #{t.player2_points.to_i}" %></td>
 						<%- unless t.player2_account_name.nil? -%>
 					<td>
 							<%- if data = account_twitter_data[t.player2_account_id.to_i] -%>
-								<%= twitter_image_html(data.first[:screen_name], "mini") -%>
+								<%= icon_image_html(data.first) -%>
 							<%- end -%>
 						<a href="<%= "#{CFG[:top_url]}game/#{game_id.to_i}/account/#{u t.player2_account_name.to_s}/" %>"><%= z2h_long_str(xhtml_sp2nbsp(h(t.player2_name))) %></a><%= " (#{type1_h[t.player2_type1_id.to_i]})" %></td>
 						<%- else -%>
@@ -371,7 +371,7 @@ $(document).ready(
 						<%- unless t.player2_account_name.nil? -%>
 					<td>
 							<%- if data = account_twitter_data[t.player2_account_id.to_i] -%>
-								<%= twitter_image_html(data.first[:screen_name], "mini") -%>
+								<%= icon_image_html(data.first) -%>
 							<%- end -%>
 						<a href="<%= "#{CFG[:top_url]}game/#{game_id.to_i}/account/#{u t.player2_account_name.to_s}/" %>"><%= z2h_long_str(xhtml_sp2nbsp(h(t.player2_name))) %></a><%= " (#{type1_h[t.player2_type1_id.to_i]})" %></td>
 						<%- else -%>
@@ -380,7 +380,7 @@ $(document).ready(
 					<td class="vs"><%= "#{t.player2_points.to_i} - #{t.player1_points.to_i}" %></td>
 					<td>
 						<%- if (! t.player2_account_name.nil?) && (data = account_twitter_data[account.id.to_i]) -%>
-							<%= twitter_image_html(data.first[:screen_name], "mini") -%>
+							<%= icon_image_html(data.first) -%>
 						<%- end -%>
 						<%= "#{z2h_long_str(xhtml_sp2nbsp(h(t.player1_name)))} (#{type1_h[t.player1_type1_id.to_i]})" %></td>
 					<%- end -%>
@@ -398,12 +398,10 @@ $(document).ready(
 	<%= xhtml_sp2nbsp(h(game_account.rep_name)) %> さん
 	</p>
 	<div class="visual" id="side_visual">
-	<%- if account_twitter_data[account.id.to_i] then -%>
-		<%- twitter_screen_names = account_twitter_data[account.id.to_i].map { |data| data[:screen_name] } -%>
+	<%- if twitter_data = account_twitter_data[account.id.to_i] then -%>
 		<ul>
-		<%- twitter_screen_names.each do |screen_name| -%>
-			<li><a href="http://twitter.com/<%= h screen_name %>" target="_blank"><img alt="" title="twitter @<%= h screen_name %>" src="
-https://api.twitter.com/1/users/profile_image?screen_name=<%= h screen_name %>&amp;size=reasonably_small" width="128px" /></a></li>
+		<%- twitter_data.each do |data| -%>
+			<li><%= player_image_html(data) %></li>
 		<%- end -%>
 		</ul>
 	<%- else -%>
@@ -512,7 +510,7 @@ https://api.twitter.com/1/users/profile_image?screen_name=<%= h screen_name %>&a
 		<%- matched_game_accounts.each do |a| -%>
 		<li>
 			<%- if data = account_twitter_data[a.account_id.to_i] -%>
-				<%= twitter_image_html(data.first[:screen_name], "mini") -%>
+				<%= icon_image_html(data.first) -%>
 			<%- end -%>
 			<a href="<%= "#{CFG[:top_url]}game/#{game_id.to_i}/account/#{u a.account_name}/" %>"><%= xhtml_sp2nbsp(h(a.rep_name)) %></a>
 		</li>

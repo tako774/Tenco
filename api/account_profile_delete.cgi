@@ -22,10 +22,12 @@ begin
 	require 'setting'
 	
 	require 'authentication'
-	
+  
 	require 'AccountDao'
 	require 'AccountProfileDao'
 	require 'ProfilePropertyDao'
+	require 'ExServiceDao'
+  require 'AccountExServiceAccountDao'
 	
 	# 設定読み込み
 	CFG = Setting.new
@@ -86,6 +88,7 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		account = nil # アカウント情報
 		account_profile_id = nil # アカウントプロフィールID
     
+    EX_SERVICE_NAME_TWITTER = "twitter"
 		TWITTER_PROPERTY_NAME = "twitter"
 		
 		# ポストデータ取得
@@ -145,14 +148,15 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		# アカウントプロフィール情報を削除
 		account_profile = AccountProfileDao.new.delete_by_id(account_profile_id)
     
-	  # twitter のプロフィール削除時には画像URLを消し、更新要求フラグを削除
+	  # twitter のプロフィール削除時には、アカウントのもつ外部サービスアカウント情報を削除
     pp_dao = ProfilePropertyDao.new
     profile_property = pp_dao.get_by_id(account_profile.profile_property_id)
     
     if profile_property.name == TWITTER_PROPERTY_NAME and
        screen_name = twitter_screen_name_from_uri(account_profile.uri) then
-      AccountDao.new.update_image_url(account_name, nil)
-      AccountDao.new.update_renew_image_url_flag(account_name, false)
+       
+      ex_service_twitter = ExServiceDao.new.get_by_name(EX_SERVICE_NAME_TWITTER)
+      AccountExServiceAccountDao.new.delete_by_ex_service_id_account_key(account.id, ex_service_twitter.id, screen_name)
     end
     
 		# トランザクション終了

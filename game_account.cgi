@@ -4,7 +4,7 @@ begin
 	# 開始時刻
 	now = Time.now
 	# リビジョン
-	REVISION = 'R0.67'
+	REVISION = 'R0.68'
 	DEBUG = false
 
 	$LOAD_PATH.unshift './common'
@@ -92,7 +92,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		account = nil    # 対象アカウントの情報
 		other_games = [] # 対象アカウントのマッチ済み他ゲームID
 		affiliates_data = nil # アフィリエイトデータ　カテゴリ => { 店舗名 => { meta => メタデータハッシュ, item => { item_id => アイテムデータハッシュ } } }
-		account_twitter_data = {} # twitter データ account_id => [{ :uri => uri, :screen_name => screen_name }]
+		account_twitter_data = {} # twitter データ account_id => [{ :uri => uri, :screen_name => screen_name, :profile_image_url => profile_image_url }]
 		
 		META_INFO_ERB_PATH = "./game_account_meta_info.erb" # ヘッダメッセージERBパス
 		LINK_ERB_PATH   = "./link.erb"   # リンクERBパス
@@ -355,12 +355,10 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							# 対戦相手一覧の情報取得
 							matched_game_accounts = gad.get_game_accounts(game_id, player2_account_ids)
 							
-							# Twitter screen name 取得
-							require 'AccountProfileDao'
-							apd = AccountProfileDao.new
-							
-							# 自分と対戦相手の twitter データ 取得
-							account_twitter_data = apd.get_twitter_data_by_account_ids([account.id] + player2_account_ids)
+							# twitter データ取得
+							require 'ExServiceAccountDao'
+							esa_dao = ExServiceAccountDao.new
+							account_twitter_data = esa_dao.get_twitter_data_by_account_ids([account.id] + player2_account_ids)
 							
 							# Type1 区分値取得
 							res = db.exec(<<-"SQL")

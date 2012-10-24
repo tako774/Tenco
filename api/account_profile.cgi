@@ -23,9 +23,16 @@ begin
 	
 	require 'authentication'
 	
+  require 'ExService'
+  require 'ExServiceAccount'
+  require 'AccountExServiceAccount'
+  
 	require 'AccountDao'
 	require 'AccountProfileDao'
 	require 'ProfilePropertyDao'
+	require 'ExServiceDao'
+  require 'ExServiceAccountDao'
+  require 'AccountExServiceAccountDao'
 	
 	# 設定読み込み
 	CFG = Setting.new
@@ -90,6 +97,7 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		profile_property = nil # プロフィールプロパティ情報
 		account_profile_id = nil # 登録したアカウントプロフィールID
     
+    EX_SERVICE_NAME_TWITTER = "twitter"
 		TWITTER_PROPERTY_NAME = "twitter"
 		STRIP_CHAR = "　\s\t\r\n\f\v"
 		
@@ -255,10 +263,29 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		# プロフィール情報を登録
 		account_profile_id = apd.add(account.id, profile_property.id, property_value, property_visibility, property_uri)
 		
-    # twitter のプロフィール登録時には画像URL更新要求フラグを保存
+    # twitter のプロフィール登録時には、外部サービスアカウント情報を保存
     if property_name == TWITTER_PROPERTY_NAME and
        screen_name = twitter_screen_name_from_uri(property_uri) then
-      AccountDao.new.update_renew_image_url_flag(account_name, true)
+      
+      ex_service_twitter = ExServiceDao.new.get_by_name(EX_SERVICE_NAME_TWITTER)
+      ex_service_account = nil
+      esa_dao = ExServiceAccountDao.new
+      account_ex_service_account = AccountExServiceAccount.new
+      aesa_dao = AccountExServiceAccountDao.new
+      
+      # 外部サービスアカウント情報のデータを取得、まだなければ登録
+      unless ex_service_account = esa_dao.get_by_ex_service_name_account_key(ex_service_twitter.name, screen_name) then
+        ex_service_account = ExServiceAccount.new
+        ex_service_account.ex_service_id = ex_service_twitter.id
+        ex_service_account.account_key = screen_name
+        ex_service_account.request_update_flag = 1
+        ex_service_account = esa_dao.insert(ex_service_account)
+      end
+      
+      # Tenco!アカウントのもつ外部サービスアカウント情報を登録
+      account_ex_service_account.account_id = account.id
+      account_ex_service_account.ex_service_account_id = ex_service_account.id
+      aesa_dao.insert(account_ex_service_account)
     end
     
 		# トランザクション終了
