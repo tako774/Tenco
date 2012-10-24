@@ -5,7 +5,7 @@ begin
 	now = Time.now
 
 	### 登録済み最終対戦結果時刻出力 API ###
-	REVISION = 'R0.10'
+	REVISION = 'R0.11'
 
 	$LOAD_PATH.unshift '../common'
 	$LOAD_PATH.unshift '../model'
@@ -15,6 +15,8 @@ begin
 	require 'logger'
 	require 'utils'
 
+  require "#{File.expand_path(File.dirname(__FILE__))}/../dao/ExServiceAccountDao"
+  
 	# ログファイルパス
 	LOG_PATH = "../log/log_#{now.strftime('%Y%m%d')}.log"
 	ACCESS_LOG_PATH = "../log/access_#{now.strftime('%Y%m%d')}.log"
@@ -77,7 +79,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 				require 'db'
 				db = DB.getInstance
 				
-				# 登録された対戦記録のうち、play_timestamp が最終のものを取得	
+				# 登録された対戦記録のうち、play_timestamp が最終のものを取得
 				res = db.exec(<<-"SQL")
 					SELECT
 						last_play_timestamp
@@ -95,7 +97,10 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 				else
 					last_track_record_timestamp = nil
 				end
-					
+				
+        # 外部サービス情報の更新要求フラグを立てる
+        ExServiceAccountDao.new.set_request_flag_by_account_name(account_name)
+        
 			rescue => ex
 				res_status = "Status: 500 Server Error\n"
 				res_body = "サーバーエラーです。\n"
