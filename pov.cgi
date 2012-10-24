@@ -5,7 +5,7 @@ begin
 	# 開始時刻
 	now = Time.now
 	# リビジョン
-	REVISION = 'R0.14'
+	REVISION = 'R0.15'
 	DEBUG = false
 
 	$LOAD_PATH.unshift './common'
@@ -347,10 +347,10 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							end
 							res.clear
 							
-							# Twitter screen name 取得
-							require 'AccountProfileDao'
-							apd = AccountProfileDao.new
-							account_twitter_data = apd.get_twitter_data_by_account_ids(account_ids_hash.keys)
+							# Twitter データ取得
+							require 'ExServiceAccountDao'
+							esa_dao = ExServiceAccountDao.new
+							account_twitter_data = esa_dao.get_twitter_data_by_account_ids(account_ids_hash.keys)
 							
 							# Type1 区分値取得
 							res = db.exec(<<-"SQL")
