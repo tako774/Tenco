@@ -161,4 +161,31 @@ class ExServiceAccountDao < DaoBase
     return new_entity
   end
   
+  # 指定されたアカウント名の更新要求フラグを立てる
+  def set_request_flag_by_account_name(account_name)
+  
+    res = @db.exec(<<-"SQL")
+      UPDATE
+        ex_service_accounts
+      SET
+        request_update_flag = 1
+      , lock_version = lock_version + 1
+      , updated_at = CURRENT_TIMESTAMP
+      WHERE
+        id IN (
+          SELECT
+            esa.id
+          FROM  
+            accounts a,
+            account_ex_service_accounts aesa,
+            ex_service_accounts esa
+          WHERE
+                a.name = #{s account_name}
+            AND aesa.account_id = a.id
+            AND aesa.ex_service_account_id = esa.id
+          )
+    SQL
+    
+  end
+  
 end
