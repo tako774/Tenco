@@ -101,7 +101,7 @@ li {
   margin-left: 0em;
   margin-bottom: 0.1em;
 }
-div.section { padding-bottom: 1.25em; }
+div.section { margin-bottom: 2em; }
 td.num { text-align: right; }
 table.account { font-size: 95%; }
 .AA {
@@ -119,7 +119,11 @@ table.account { font-size: 95%; }
 }
 .msg { color: #999999; }
 .uri { font-family: monospace; }
-.suppli, .stats { font-size: 80%; }
+.suppli {
+  font-size: 80%;
+  line-height: 1.7;
+}
+.stats { font-size: 80%; }
 .affiliate { font-size: 70%; }
 #header { margin-top: 0.5em; }
 #meta_info {
@@ -127,6 +131,7 @@ table.account { font-size: 95%; }
   font-size: 70%;
   top: 0em;
   right: 0.5em;
+  line-height: 1.8;
 }
 .menu {
   padding: 0.25em 0em 0.35em 0em;
@@ -168,7 +173,10 @@ table.account { font-size: 95%; }
   font-size: 1.25em;
   text-decoration: underline;
 }
-#main h2:first-letter { font-size: 161.8%; }
+#main h2:first-letter {
+  font-size: 161.8%;
+  line-height: 1;
+}
 #side { margin-top: 1em; }
 #side_visual { margin-bottom: 0.75em; }
 #profile {
