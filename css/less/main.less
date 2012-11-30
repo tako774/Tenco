@@ -6,18 +6,25 @@ body {
   line-height:1.5em;
 }
 
-A         { color: #F2864D; text-decoration: underline; } 
-A:link    { color: #F2864D; text-decoration: underline; } 
-A:visited { color: #996666; text-decoration: underline; } 
+A         { color: #F2864D; text-decoration: none; } 
+A:link    { color: #F2864D; text-decoration: none; } 
+A:visited { color: #996666; text-decoration: none; } 
 A:active  { color: #FFFFFF; text-decoration: underline; background-color: #330000;} 
 A:hover   { color: #FFFFFF; text-decoration: underline; background-color: #330000;}
 
+.visual A { text-decoration: none; }
+.visual A:link { text-decoration: none; }
+.visual A:visited { text-decoration: none; }
+.visual A:hover {
+  text-decoration: none;
+  background-color: transparent;
+}
+.visual A:active {
+  text-decoration: none;
+  background-color: transparent;
+}
+
 img           {border-width:0; vertical-align:middle;}
-img A         {text-decoration:none;}
-img A:link    {text-decoration:none;}
-img A:visited {text-decoration:none;}
-img A:hover   {text-decoration:none;}
-img A:active  {text-decoration:none;}
 
 button {
  /* height: 1.8em; */
@@ -67,8 +74,7 @@ caption {
 }
 
 th, td {
-  line-height: 1.6em;
-  padding: 0.2em 0.5em 0;
+  padding: 0.15em 0.5em 0;
 }
 
 td {
@@ -92,18 +98,17 @@ th {
 }
 
 ul {
-  padding-left:0.3em;
-  margin-left:0.5em;
-  margin-top:0.1em;
-  margin-bottom:0.3em;
+  padding-left: 0.3em;
+  margin-left: 0.6em;
+  margin-top: 0em;
+  margin-bottom: 0.1em;
   list-style-type:none;
 }
 
 li {
-  padding-left:0em;
-  margin-left:0em;
-  margin-bottom:0em;
-  line-height:1.7em;  
+  padding-left: 0em;
+  margin-left: 0em;
+  margin-bottom: 0.1em;
 }
 
 div.section {
@@ -149,12 +154,20 @@ table.account {
   color: #999999;
 }
 
+.uri { 
+  font-family:monospace;
+}
+
 .suppli {
   font-size: 80%;
 }
 
 .stats {
   font-size: 80%;
+}
+
+.affiliate {
+  font-size: 70%
 }
 
 #header {
@@ -227,8 +240,15 @@ table.account {
   font-size:161.8%;
 }
 
+#side {
+  margin-top:1em;
+}
+#side_visual {
+  margin-bottom:0.75em;
+}
 #profile {
   font-size: 95%;
+  line-height: 1.4em;  
 }
 
 #profile h3 {

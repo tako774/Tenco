@@ -26,7 +26,6 @@ A:hover {
   text-decoration: underline;
   background-color: #330000;
 }
-
 .visual A { text-decoration: none; }
 .visual A:link { text-decoration: none; }
 .visual A:visited { text-decoration: none; }
@@ -38,7 +37,6 @@ A:hover {
   text-decoration: none;
   background-color: transparent;
 }
-
 img {
   border-width: 0;
   vertical-align: middle;
@@ -80,9 +78,7 @@ caption {
   padding: 0.25em 0.5em 0.15em;
   background-color: #ffffd0;
 }
-th, td {
-  padding: 0.15em 0.5em 0;
-}
+th, td { padding: 0.15em 0.5em 0; }
 td { border-bottom: 1px solid #a0a0a0; }
 .column-wise th { border: 1px solid #ffffff; }
 .column-wise td { border: 1px solid #ffffff; }
@@ -122,9 +118,9 @@ table.account { font-size: 95%; }
   white-space: nowrap;
 }
 .msg { color: #999999; }
-.uri { font-family:monospace; }
+.uri { font-family: monospace; }
 .suppli, .stats { font-size: 80%; }
-.affiliate { font-size: 70% }
+.affiliate { font-size: 70%; }
 #header { margin-top: 0.5em; }
 #meta_info {
   position: absolute;
@@ -173,15 +169,11 @@ table.account { font-size: 95%; }
   text-decoration: underline;
 }
 #main h2:first-letter { font-size: 161.8%; }
-#side {
-  margin-top:1em;
-}
-#side_visual {
-  margin-bottom:0.75em;
-}
+#side { margin-top: 1em; }
+#side_visual { margin-bottom: 0.75em; }
 #profile {
   font-size: 95%;
-  line-height: 1.4em;  
+  line-height: 1.4em;
 }
 #profile h3 { font-size: 100%; }
 #track_records_tool, #tags_tool {
