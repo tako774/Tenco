@@ -458,6 +458,12 @@ $(document).ready(
 	<a class="suppli" href="<%= "#{CFG[:top_url]}account/#{u account_name}/manage/" %>">アカウント設定</a>
 </p>
 
+<%- unless twitter_data = account_twitter_data[account.id.to_i] then -%>
+<p class="suppli" style="color:#999999">
+プロフィール設定で twitter の URL を登録すると、アイコン画像が表示されます
+</p>
+<%- end -%>
+
 <p>
 <%- if game_account.cluster_name -%><%= "#{h game_account.cluster_name}クラスタ所属" %><%- end -%>
 </p>
