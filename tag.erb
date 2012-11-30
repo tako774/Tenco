@@ -73,7 +73,7 @@ $(document).ready(
 				<td class="suppli num"><%= ga.account_id.to_i %></td>
 				<td>
 					<%- if data = account_twitter_data[ga.account_id.to_i] -%>
-						<%= twitter_image_html(data.first[:screen_name], "mini") -%>
+						<%= icon_image_html(data.first) -%>
 					<%- end -%>
 					<a href="<%= "#{CFG[:top_url]}game/#{game_id.to_i}/account/#{accounts[ga.account_id.to_i].name}/" %>"><%= h ga.rep_name %></a>
 				</td>

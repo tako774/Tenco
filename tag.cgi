@@ -6,7 +6,7 @@
 begin
 	now = Time.now
 	# リビジョン
-	REVISION = 'R0.03'
+	REVISION = 'R0.04'
 	DEBUG = false
 
 	$LOAD_PATH.unshift './common'
@@ -199,10 +199,10 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							res.clear	
 						end
 						
-							# Twitter screen name 取得
-						require 'AccountProfileDao'
-						apd = AccountProfileDao.new
-						account_twitter_data = apd.get_twitter_data_by_account_ids(accounts.keys)
+            # Twitter データ取得
+            require 'ExServiceAccountDao'
+            esa_dao = ExServiceAccountDao.new
+            account_twitter_data = esa_dao.get_twitter_data_by_account_ids(accounts.keys)
 							
 						# 該当アカウントのゲームごとの情報を取得
 						# タイミングによっては、タグをつけられたアカウントが
