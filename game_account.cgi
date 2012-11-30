@@ -453,6 +453,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							File.open(cache_xml_header_path, 'w') do |wh|
 								wh.flock(File::LOCK_EX)
 								wh.puts "Content-Type:text/xml; charset=utf-8"
+								wh.puts "Access-Control-Allow-Origin: *"
 								wh.puts "Last-Modified: #{now.httpdate}"
 								wh.puts "Expires: #{cache_expires.httpdate}"
 							end
