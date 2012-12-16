@@ -20,7 +20,7 @@ begin
 	# 設定読み込み
 	CFG = Setting.new
 	# TOP ページ URL
-	TOP_URL = CFG['top_url']
+	TOP_URL = CFG[:top_url]
 		
 	# ログファイルパス
 	LOG_PATH = "../log/log_#{now.strftime('%Y%m%d')}.log"
@@ -31,7 +31,7 @@ begin
 	ACCOUNT_NAME_BYTE_MIN = 1
 	ACCOUNT_NAME_BYTE_MAX = 32
 	ACCOUNT_NAME_REGEX = /\A[a-zA-Z0-9_]+\z/
-	ACCOUNT_PASSWORD_BYTE_MIN = 4
+	ACCOUNT_PASSWORD_BYTE_MIN = 8
 	ACCOUNT_PASSWORD_BYTE_MAX = 16
 	ACCOUNT_PASSWORD_REGEX = /\A[\x01-\x7F]+\z/
 	ACCOUNT_MAIL_ADDRESS_BYTE_MAX = 256
