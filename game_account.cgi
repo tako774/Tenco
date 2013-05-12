@@ -4,7 +4,7 @@ begin
 	# 開始時刻
 	now = Time.now
 	# リビジョン
-	REVISION = 'R0.68'
+	REVISION = 'R0.69'
 	DEBUG = false
 
 	$LOAD_PATH.unshift './common'
@@ -469,8 +469,10 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 						footer_html = Erubis::Eruby.new(File.read(FOOTER_ERB_PATH)).result(binding)
 						
 						# アフィリエイト 部生成
-						affiliates_data = YAML.load_file(AFFILIATE_YAML_PATH)
-						affiliate_html = Erubis::Eruby.new(File.read(AFFILIATE_ERB_PATH)).result(binding)
+            # 空白をいれればなにも表示されない
+						# affiliates_data = YAML.load_file(AFFILIATE_YAML_PATH)
+						# affiliate_html = Erubis::Eruby.new(File.read(AFFILIATE_ERB_PATH)).result(binding)
+						affiliate_html = ""
 						
 						# キャッシュHTML/ヘッダ出力
 						File.open(cache_html_path, 'w') do |w|

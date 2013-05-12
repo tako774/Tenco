@@ -93,6 +93,7 @@ $(document).ready(
 <tr>
 	<th><%= "#{h type1[type1_id].split(//u)[0]}" %></th>
 	<%- rank_ranges.keys.sort.reverse.each do |r| -%>
+	<%- game_type1_range_stats[type1_id] ||= {} -%>
 	<%- gtrs = game_type1_range_stats[type1_id][r] -%>
 		<%- if gtrs -%>
 	<td class="num"><%= "#{gtrs.rating.to_f.round}" %></td>
