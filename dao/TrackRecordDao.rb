@@ -151,6 +151,39 @@ class TrackRecordDao < DaoBase
 		end
 	end
 	
+  # 指定された game_id, play_timestamp, player1_account_name の id を取得します。
+  # play_timestamp の形式は、iso8601 形式の localtime
+  def get_id_by_timestamp(game_id, play_timestamp, account_name)
+    ids = []
+    game_id = game_id.to_i
+    
+    sql = <<-"SQL"
+      SELECT
+        t.*
+      FROM
+        track_records t,
+        accounts a
+      WHERE
+        a.name = #{s account_name}
+        AND t.player1_account_id = a.id
+        AND t.play_timestamp = to_timestamp('#{play_timestamp}', 'YYYY-MM-DD HH24-MI-SS')
+        AND t.game_id = #{game_id.to_i}
+    SQL
+    
+    res = @db.exec sql
+    if res.num_tuples >= 1 then
+      track_record = TrackRecord.new
+			res.num_fields.times do |i|
+				track_record.instance_variable_set("@#{res.fields[i]}", res[0][i])
+			end
+			res.clear
+      track_record
+    else
+      nil
+    end
+    
+  end
+  
 =begin
 	# 指定された game_id,player2_name,player2_type1_id の対戦結果idリストを取得します
 	def get_ids_by_game_p2name_p2type1(game_id, player2_name, player2_type1_id)
