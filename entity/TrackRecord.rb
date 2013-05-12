@@ -4,5 +4,3 @@ class TrackRecord
 	# game_account.cgi —p
 	attr_accessor :player2_account_name, :player2_rep_name, :player2_account_del_flag
 end
-
-	
