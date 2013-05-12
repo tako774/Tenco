@@ -83,7 +83,7 @@ begin
 			    FROM
 			      game_account_player_name_stats
 			    WHERE
-			      game_id = 2
+			      game_id = #{game_id.to_i}
 			  ) AS gapns_rank
 			WHERE
 			  count_rank = 1
