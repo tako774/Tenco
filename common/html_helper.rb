@@ -32,6 +32,11 @@ module HTMLHelper
 		HTML
 	end
 	
+  # スラッシュを省いて url エンコード
+  def u_except_slash(text)
+    text.split("/").map{ |s| u s }.join("/")
+  end
+  
 end
 
 include HTMLHelper
