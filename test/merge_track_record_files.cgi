@@ -8,7 +8,7 @@ now = Time.now
 # 他方は未ソートの複数ファイルとし、
 # ソート済みの本体ファイルに未ソートのファイルデータをマージする
 
-REVISION = '0.06'
+REVISION = '0.07'
 DEBUG = 1
 
 $LOAD_PATH.unshift '../common'
@@ -21,6 +21,7 @@ require 'time'
 
 require 'db'
 require 'utils'
+require 'fileutils'
 
 source = ""
 
@@ -71,6 +72,9 @@ begin
 		
 		res_body << "★GAME_ID:#{game_id} の処理\n"
 		
+    # 既存のデータファイルがなければ作成
+    FileUtils.touch data_file unless File.exist?(data_file)
+    
 		# トランファイル一覧取得
 		Dir.glob("#{TRN_DATA_DIR}/#{game_id}_*.dat").each do |trn_file|
 			trn_files << trn_file
