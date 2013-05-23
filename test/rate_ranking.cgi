@@ -5,7 +5,7 @@ begin
 now = Time.now
 
 ### レートランキングデータ作成処理 ###
-REVISION = '0.04'
+REVISION = '0.05'
 DEBUG = 1
 
 # アプリケーションのトップディレクトリ
@@ -40,9 +40,6 @@ rescue
 end
 
 begin
-	# 設定
-	LIMIT_MAX_RD = 150 # ランキング対象の最大RD
-	LIMIT_MIN_MATCHED_ACCOUNTS = 20 # ランキング対象の最小マッチ済対戦アカウント人数
 		
 	# DB 接続
 	require 'db'
@@ -73,14 +70,17 @@ begin
 			SELECT 
 			  r.*
 			FROM 
-			  accounts a, game_account_ratings r
+			  accounts a,
+        game_account_ratings r,
+        games g
 			WHERE
-				  a.id = r.account_id
-			  AND r.game_id = #{game_id.to_i}
+			      a.id = r.account_id
+        AND g.id = #{game_id.to_i}
+			  AND r.game_id = g.id
 			  AND a.del_flag = 0
 			  AND a.show_ratings_flag != 0
-			  AND r.ratings_deviation < #{LIMIT_MAX_RD.to_i}
-			  AND r.matched_accounts >= #{LIMIT_MIN_MATCHED_ACCOUNTS.to_i}
+			  AND r.ratings_deviation < g.ranking_limit_ratings_deviation
+			  AND r.matched_accounts >= g.ranking_min_matched_accounts
 			ORDER BY
 			  r.rating DESC
 		SQL
