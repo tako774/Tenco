@@ -51,7 +51,7 @@ begin
 		[
 			"",
 			now.strftime('%Y/%m/%d %H:%M:%S'),
-			ENV['REMOTE_ADDR'],
+			ENV['HTTP_X_FORWARDED_FOR'] || ENV['HTTP_X_REAL_IP'] || ENV['REMOTE_ADDR'],
 			ENV['HTTP_USER_AGENT'],
 			ENV['REQUEST_URI'],
 			File::basename(__FILE__)
