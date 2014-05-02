@@ -79,9 +79,9 @@ class Authentication
 			begin
 				require 'socket'
 				host_name = ""
-				host_name = Socket.gethostbyaddr((ENV['REMOTE_ADDR'].split('.').collect {|x| x.to_i}).pack('C4'))[0]
+				host_name = Socket.gethostbyaddr(((ENV['HTTP_X_FORWARDED_FOR'] || ENV['HTTP_X_REAL_IP'] || ENV['REMOTE_ADDR']).split('.').collect {|x| x.to_i}).pack('C4'))[0]
 			rescue
-				host_name = ENV['REMOTE_ADDR']
+				host_name = ENV['HTTP_X_FORWARDED_FOR'] || ENV['HTTP_X_REAL_IP'] || ENV['REMOTE_ADDR']
 			end
 			raise "エラー：アカウント認証に失敗しました。（#{name}, #{host_name}）"
 		else
@@ -169,9 +169,9 @@ class Authentication
 			begin
 				require 'socket'
 				host_name = ""
-				host_name = Socket.gethostbyaddr((ENV['REMOTE_ADDR'].split('.').collect {|x| x.to_i}).pack('C4'))[0]
+				host_name = Socket.gethostbyaddr(((ENV['HTTP_X_FORWARDED_FOR'] || ENV['HTTP_X_REAL_IP'] || ENV['REMOTE_ADDR']).split('.').collect {|x| x.to_i}).pack('C4'))[0]
 			rescue
-				host_name = ENV['REMOTE_ADDR']
+				host_name = ENV['HTTP_X_FORWARDED_FOR'] || ENV['HTTP_X_REAL_IP'] || ENV['REMOTE_ADDR']
 			end
 			raise "エラー：アカウントの更新に失敗しました。（#{host_name}）\n#{sql}"
 		else
@@ -221,9 +221,9 @@ class Authentication
 			begin
 				require 'socket'
 				host_name = ""
-				host_name = Socket.gethostbyaddr((ENV['REMOTE_ADDR'].split('.').collect {|x| x.to_i}).pack('C4'))[0]
+				host_name = Socket.gethostbyaddr(((ENV['HTTP_X_FORWARDED_FOR'] || ENV['HTTP_X_REAL_IP'] || ENV['REMOTE_ADDR']).split('.').collect {|x| x.to_i}).pack('C4'))[0]
 			rescue
-				host_name = ENV['REMOTE_ADDR']
+				host_name = ENV['HTTP_X_FORWARDED_FOR'] || ENV['HTTP_X_REAL_IP'] || ENV['REMOTE_ADDR']
 			end
 			raise "エラー：アカウントの削除に失敗しました。（#{name}, #{host_name}）"
 		end
@@ -282,9 +282,9 @@ class Authentication
 			begin
 				require 'socket'
 				host_name = ""
-				host_name = Socket.gethostbyaddr((ENV['REMOTE_ADDR'].split('.').collect {|x| x.to_i}).pack('C4'))[0]
+				host_name = Socket.gethostbyaddr(((ENV['HTTP_X_FORWARDED_FOR'] || ENV['HTTP_X_REAL_IP'] || ENV['REMOTE_ADDR']).split('.').collect {|x| x.to_i}).pack('C4'))[0]
 			rescue
-				host_name = ENV['REMOTE_ADDR']
+				host_name = ENV['HTTP_X_FORWARDED_FOR'] || ENV['HTTP_X_REAL_IP'] || ENV['REMOTE_ADDR']
 			end
 			raise "エラー：アカウントの削除に失敗しました（生メールアドレスキー）。（#{name}, #{host_name}）"
 		end
@@ -336,9 +336,9 @@ class Authentication
 			begin
 				require 'socket'
 				host_name = ""
-				host_name = Socket.gethostbyaddr((ENV['REMOTE_ADDR'].split('.').collect {|x| x.to_i}).pack('C4'))[0]
+				host_name = Socket.gethostbyaddr(((ENV['HTTP_X_FORWARDED_FOR'] || ENV['HTTP_X_REAL_IP'] || ENV['REMOTE_ADDR']).split('.').collect {|x| x.to_i}).pack('C4'))[0]
 			rescue
-				host_name = ENV['REMOTE_ADDR']
+				host_name = ENV['HTTP_X_FORWARDED_FOR'] || ENV['HTTP_X_REAL_IP'] || ENV['REMOTE_ADDR']
 			end
 			raise "エラー：パスワードリセットに失敗しました（生メールアドレスキー）。（#{name}）"
 		end
