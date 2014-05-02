@@ -4,7 +4,7 @@ begin
 	# 開始時刻
 	now = Time.now
 	# リビジョン
-	REVISION = 'R0.69'
+	REVISION = 'R0.72'
 	DEBUG = false
 
 	$LOAD_PATH.unshift './common'
@@ -80,8 +80,11 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		query = {} # クエリストリング
 		db = nil   # DB接続 
 		
+    
 		track_record_ids = [] # 対戦結果ID一覧
 		track_records = []    # 対戦結果
+    recently_used_type1ids = [] # 最近の対戦結果で使用したキャラID
+    has_random_rate = false # ランダムレートをもっているかどうか
 		type1 = {}            # プレイヤー属性１区分値
 		type1_h = {}          # プレイヤー属性１区分値（HTML エスケープ済み）
 		ratings = []          # プレイヤーのレーティング 
@@ -154,11 +157,21 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							require 'AccountDao'
 							require 'Account'
 							account = AccountDao.new.get_account_by_name(account_name)
-							
+              if account.nil? then
+                res_status = "Status: 404 Not Found.\n"
+                res_status = "Location: /404\n"
+                raise "存在しないアカウント名が指定されました。(#{account_name})"
+              end
+              
 							# ゲーム情報を取得
 							require 'GameDao'
 							require 'Game'
 							game = GameDao.new.get_game_by_id(game_id)
+              if game.nil? then
+                res_status = "Status: 404 Not Found.\n"
+                res_status = "Location: /404\n"
+                raise "存在しないゲームIDが指定されました。(#{game_id})"
+              end
 							
 							# 該当アカウントのゲームごとの情報を取得
 							require 'GameAccount'
@@ -193,6 +206,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 								res.num_fields.times do |i|
 									game_account.instance_variable_set("@#{res.fields[i]}", res[0][i])
 								end
+                game_account.cluster_name ||= "第#{game_account.cluster_id}" if game_account.cluster_id
 								res.clear
 							end
 							
@@ -247,6 +261,9 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							end
 							res.clear
 							
+              # ランダムレートが出現しているかどうかを取得
+              has_random_rate = ratings.map{|r| r.type1_id.to_i}.include?(SEG_V[:virtual_type1][:random][:value].to_i)
+              
 							# アカウントタグ情報取得
 							require 'AccountTag'
 							res = db.exec(<<-"SQL")
@@ -295,6 +312,10 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 								track_records = trd.get_track_records_by_ids(track_record_ids[0..MAX_TRACK_RECORDS - 1], account.data_password)
 								track_records.sort! { |a,b| b.play_timestamp <=> a.play_timestamp }
 							end
+              
+              # 取得した対戦結果に含まれるキャラIDを取得
+              recently_used_type1ids = track_records.map{|t| t.player1_type1_id.to_i}.uniq
+              
 
 							# 推定レートの値を取得
 							# アカウントのレートが一定以上の場合のみ取得
@@ -386,7 +407,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							end
 							
 						rescue => ex
-							res_status = "Status: 500 Server Error\n"
+							res_status = "Status: 500 Server Error\n" unless res_status
 							res_body << "サーバーエラーです。ごめんなさい。\n" unless res_body
 							raise ex
 						ensure

@@ -74,7 +74,7 @@ $(document).ready(
 <div id="main">
 
 <div class="section">
-<h2><%= h game.name %> の全キャラ統計</h2>
+<h2 class="game_title" style="background: url(<%= CFG[:static_url] %>client/images/game_<%= game.id.to_i %>_32x32.ico) no-repeat scroll 0 0 transparent; padding-left: 38px">全キャラ統計 - <%= h game.name %></h2>
 
 <h3>上側％別レート分布</h3>
 <p class="suppli">
@@ -113,12 +113,7 @@ $(document).ready(
 </div>
 
 <div id="side" class="tools tools_right">
-	<h2>プライズページ</h2>
-	<ul>
-		<li><a href="<%= "#{CFG[:top_url]}game/#{u game_id}/pov/1/" %>">レートランキング</a></li>
-		<li><a href="<%= "#{CFG[:top_url]}game/#{u game_id}/pov/1/type1/" %>">レートランキング（キャラ別）</a></li>
-		<li><a href="<%= "#{CFG[:top_url]}game/#{u game_id}/pov/2/" %>">マッチ数ランキング</a></li>
-	</ul>
+	<%= link_internal_html %>
 	<h2>リンク</h2>
 	<%= link_html %>
 </div>

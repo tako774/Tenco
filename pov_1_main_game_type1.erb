@@ -1,4 +1,4 @@
-	<h2><%= h game_pov.name %>- <%= h game.name %></h2>
+	<h2 class="game_title" style="background: url(<%= CFG[:static_url] %>client/images/game_<%= game.id.to_i %>_32x32.ico) no-repeat scroll 0 0 transparent; padding-left: 38px"><%= h game_pov.name %> - <%= h game.name %></h2>
 	<div class="section">
 		<div class="menu">
 			<ul id="type1_list">
@@ -15,8 +15,9 @@
 				<tr>
 					<th>順位</th>
 					<th>名前</th>
-					<th>レート<sub>±RD</sub>（対戦人数/対戦数）</th>
+					<th><span class="nowrap">レート<sub>±RD</sub></span> <span class="nowrap suppli">(対戦人数/対戦数)
 					<th class="suppli">全体順位</th>
+					<th class="suppli">レート－RD</th>
 					<th class="suppli">クラスタ</th>
 				</tr>
 			</thead>
@@ -33,8 +34,9 @@
 					<%- end -%>
 					<a href="<%= "#{CFG[:top_url]}game/#{r.game_id.to_i}/account/#{u r.account_name}/" %>"><%= z2h_long_str(xhtml_sp2nbsp(h(hide_ng_words(r.rep_name)))) %></a>
 					</td>
-					<td><%= "#{h r.rating.to_f.round}<sub>±#{h r.ratings_deviation.to_f.floor}</sub>（#{h r.matched_accounts}人/#{h r.match_counts}戦）" %></td>
+					<td><span class="nowrap"><%= "#{h r.rating.to_f.round}<sub>±#{h r.ratings_deviation.to_f.floor}</sub></span> <span class=\"nowrap suppli\">(#{h r.matched_accounts}人/#{h r.match_counts}戦)" %></span></td>
 					<td class="suppli">#<%= h r.game_type1_ratings_rank %></td>
+					<td class="suppli"><%= h((r.rating.to_f - r.ratings_deviation.to_f).round) %></td>
 					<td class="suppli"><%= h r.cluster_name %></td>
 				</tr>
 							<%- end -%>

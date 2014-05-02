@@ -45,7 +45,7 @@ $(document).ready(
 		$("#search_str").keyup(
 			function(evt) {
 				if (evt.which == 13) {
-					$("#search_track_records").click();
+					$("#search_tags").click();
 				}			
 			}
 		);
@@ -97,10 +97,12 @@ $(document).ready(
 			</thead>
 			<tbody>			
 		<%- tags.each do |tag| -%>
+      <%- if tag.account_num.to_i >= 5 -%>
 			<tr>
-				<td><a href="<%= CFG[:top_url] %>tag/<%= u(tag.rep_disp_name).gsub(/%2f/i, '/') %>"><%= h tag.rep_disp_name %></a></td>
+        <td><a href="<%= CFG[:top_url] %>tag/<%= u(tag.rep_disp_name).gsub(/%2f/i, '/') %>"><%= h tag.rep_disp_name %></a></td>
 				<td class="num"><%= tag.account_num.to_i %> 名</td>
 			</tr>
+      <%- end -%>
 		<%- end -%>
 			</tbody>
 			</table>

@@ -88,8 +88,9 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 		game_type1_vs_type1_stats = {} # ゲームアカウント情報、キー1：使用キャラ、キー2：対戦相手キャラ
 		type1 = {} # キャラ区分値=>キャラ名のハッシュ
 		
-		FOOTER_ERB_PATH = "./footer.erb" # フッターERBパス
+		LINK_INTERNAL_ERB_PATH = "./link_internal.erb" # 内部リンクERBパス
 		LINK_ERB_PATH = "./link.erb" # リンクERBパス
+		FOOTER_ERB_PATH = "./footer.erb" # フッターERBパス
 		
 		# クエリストリング分解・取得
 		query = parse_query_str(ENV['QUERY_STRING'])
@@ -229,17 +230,17 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 						db.close if db
 					end
 					### キャッシュHTML出力
-					require 'erb'
-					include ERB::Util
 					
+					# 内部リンク 部生成
+					link_internal_html = Erubis::Eruby.new(File.read(LINK_INTERNAL_ERB_PATH)).result(binding)
 					# link 部生成
-					link_html = ERB.new(File.read(LINK_ERB_PATH), nil, '-').result(binding)
+					link_html = Erubis::Eruby.new(File.read(LINK_ERB_PATH)).result(binding)
 					# footer 部生成
-					footer_html = ERB.new(File.read(FOOTER_ERB_PATH), nil, '-').result(binding)
+					footer_html = Erubis::Eruby.new(File.read(FOOTER_ERB_PATH)).result(binding)
 					
 					File.open(cache_html_path, 'w') do |w|
 						w.flock(File::LOCK_EX)
-						w.puts ERB.new(File.read("#{File::basename(__FILE__, '.*')}.erb"), nil, '-').result(binding)
+						w.puts Erubis::Eruby.new(File.read("#{File::basename(__FILE__, '.*')}.erb")).result(binding)
 						# ヘッダ出力
 						File.open(cache_html_header_path, 'w') do |wh|
 							wh.flock(File::LOCK_EX)

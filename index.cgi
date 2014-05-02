@@ -5,7 +5,7 @@ begin
 	# 開始時刻
 	now = Time.now
 	# リビジョン
-	REVISION = 'R0.13'
+	REVISION = 'R0.14'
 	DEBUG = false
 
 	# TOP ディレクトリパス
@@ -73,7 +73,7 @@ rescue
 	exit
 end
 
-if ENV['REQUEST_METHOD'] == 'GET' then
+if ['GET', 'HEAD'].include? ENV['REQUEST_METHOD'] then
 	begin
 		query = {} # クエリストリング
 		db = nil   # DB接続 
@@ -292,6 +292,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 			err_log.puts
 		end
 	end
+  res_body = "" if ENV['REQUEST_METHOD'] == 'HEAD'
 else
 	res_status = "Status: 400 Bad Request\n"
 	res_body = "400 Bad Request\n"

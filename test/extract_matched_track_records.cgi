@@ -62,7 +62,7 @@ begin
 		
 		res = db.exec(<<-"SQL")
 			SELECT
-			  EXTRACT(EPOCH FROM rep_timestamp),
+			  EXTRACT(EPOCH FROM rep_timestamp - to_timestamp(0)),
 			  player1_account_id,
 			  player2_account_id,
 			  player1_type1_id,

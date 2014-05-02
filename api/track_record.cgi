@@ -5,7 +5,7 @@ begin
 	now = Time.now
 
 	### 対戦結果I/F API ###
-	REVISION = 'R0.38'
+	REVISION = 'R0.39'
 	DEBUG = false
 
 	$LOAD_PATH.unshift '../common'
@@ -48,7 +48,7 @@ begin
 	MATCHING_TIME_LIMIT_SECONDS = 300
 	
 	# 対戦時刻が現在よりどれだけ未来のデータを許容するか
-	PLAY_TIMESTAMP_ERROR_LIMIT_SECONDS = 900
+	PLAY_TIMESTAMP_ERROR_LIMIT_SECONDS = 600
 
 	# バリデーション用定数
 	ID_REGEX = /\A[0-9]+\z/
@@ -92,6 +92,7 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		track_records = []         # 今回DBにインサートした対戦記録
 		source_track_records = []  # 受信対戦記録
 		time_over_track_records = [] # 対戦時刻が現在より大きく未来の対戦結果
+    time_too_early_records = [] # マッチング開始日時よりも古い対戦結果
 		last_play_timestamp = nil # 最終対戦時刻
 		is_force_insert = false      # 強制インサートモード設定（同一アカウントからの重複時にエラー終了せず続行する）
 		PLEASE_RETRY_FORCE_INSERT = "<Please Retry in Force-Insert Mode>"  # 強制インサートリトライのお願い文字列
@@ -204,8 +205,8 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		
 		# ゲームID存在確認
 		game_dao = GameDao.new
-		game = game_dao.get_games(game_id.to_s)
-		if game.length == 0 then
+    game = game_dao.get_game_by_id(game_id.to_s)
+		if game.nil? then 
 			res_status = "Status: 400 Bad Request\n"
 			res_body = "登録されていないゲームIDのデータが送信されています。\n"
 			raise "受信ゲームIDがDBに存在しません（#{game_id.to_s}）"
@@ -222,7 +223,9 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		log_msg = "#{source_track_records.length} rcv.\t#{is_force_insert.to_s}\t#{data.elements['account/name'].text}" if data.elements['account/name'].text
 		log_msg << "\t#{Time.now - now}"
 				
-		# トランザクション開始
+		res_body << "受信対戦結果データ件数：#{source_track_records.length.to_s}件\n"
+
+    # トランザクション開始
 		db.exec("BEGIN TRANSACTION;")
 		
 		# 強制インサートモード時
@@ -237,7 +240,7 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 				# 既存の同一アカウントの対戦結果タイムスタンプを取得
 				res = db.exec(<<-"SQL")
 				  SELECT
-				    play_timestamp
+				    to_char(play_timestamp, 'YYYY-MM-DD HH24:MI:SS')
 				  FROM
 				    track_records
 				  WHERE
@@ -246,13 +249,12 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 				SQL
 				
 				# 既存データの対戦タイムスタンプと同一タイムスタンプの報告データを削除
+        # 本来は日時オブジェクト同士で比較するほうが綺麗だけれども、
+        # parse すると重いので文字列同士で比較する
 				res.each do |r|
 					existing_timestamps << r[0]
 				end
-				
-				res_body << "受信対戦結果データ件数：#{source_track_records.length.to_s}件\n"
 				source_track_records.delete_if do |tr_hash|
-					# タイムスタンプの文字列形式は、postgres モジュール以下レベルの実装依存
 					existing_timestamps.index(Time.iso8601(tr_hash['timestamp'].to_s).localtime.strftime('%Y-%m-%d %H:%M:%S'))
 				end
 				res_body << "重複削除後対戦結果データ件数：#{source_track_records.length.to_s}件\n"
@@ -279,9 +281,22 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		
 		if time_over_track_records.length > 0 then
 			res_body << "！対戦時刻が現在より#{PLAY_TIMESTAMP_ERROR_LIMIT_SECONDS}秒以上未来の対戦データを無視しました\n"
-			res_body << "対戦時刻が未来のデータ件数：#{time_over_track_records.length}件\n"
+			res_body << "！対戦時刻が未来のデータ件数：#{time_over_track_records.length}件\n"
 		end
 		
+    # 古すぎる対戦報告をはじく
+		source_track_records.each do |tr|
+			if Time.iso8601(tr['timestamp'].to_s).localtime < game.match_start_at then
+				time_too_early_records << tr
+			end
+		end
+		source_track_records = source_track_records - time_too_early_records
+		
+		if time_too_early_records.length > 0 then
+			res_body << "！対戦時刻が #{game.match_start_at.strftime('%Y/%m/%d %H:%M:%S')} より古い対戦データを無視しました\n"
+			res_body << "！対戦時刻が古すぎるデータ件数：#{time_too_early_records.length}件\n"
+		end
+    
 		# 試合結果データをDBに登録する
 		begin
 			if source_track_records.length > 0 then

@@ -232,7 +232,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							end
 							# NGワード伏字化
 							ga.rep_name = hide_ng_words(ga.rep_name)
-							ga.cluster_name ||= "（新参加）"
+              ga.cluster_name ||= ga.cluster_id ? "第#{ga.cluster_id.to_i}" : "（新参加）"
 							game_accounts[ga.game_id.to_i] ||= {}
 							game_accounts[ga.game_id.to_i][ga.account_id.to_i] ||= ga
 							

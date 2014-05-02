@@ -5,7 +5,7 @@ begin
 	now = Time.now
 
 	### アカウントI/F API ###
-	REVISION = 'R0.10'
+	REVISION = 'R0.11'
 
 	$LOAD_PATH.unshift '../common'
 	$LOAD_PATH.unshift '../entity'
@@ -137,7 +137,7 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		
 		res_body = "#{account_name}さんのアカウントを登録しました！\n"
 		res_body << "※※※　ご利用URL　※※※\n"
-		res_body << "☆マイページ（緋想天）　：#{TOP_URL}game/1/account/#{account_name}/\n"
+		res_body << "☆マイページ（心綺楼）　：#{TOP_URL}game/4/account/#{account_name}/\n"
 		res_body << "☆マイページ（非想天則）：#{TOP_URL}game/2/account/#{account_name}/\n"
 		res_body << "☆アカウント設定用ページ：#{TOP_URL}account/#{account_name}/manage/\n"
 	ensure

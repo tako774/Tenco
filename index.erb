@@ -8,56 +8,71 @@
 	<link rel="shortcut icon" type="image/x-icon" href="<%= CFG[:static_url] %>favicon.ico" />
 	<link rel="stylesheet" type="text/css" href="<%= CFG[:static_url] %>css/main.css" />
 	<link rel="stylesheet" type="text/css" href="<%= CFG[:static_url] %>css/2cols_side-width-fixed.css" />
-	<title>Tenco! 東方非想天則／東方緋想天プレイヤー情報共有サービス</title>
+	<title>Tenco! 東方心綺楼／東方非想天則プレイヤー情報共有サービス</title>
 </head>
 <body>
 <div id="container">
 
 <div id="header">
 	<a href="<%= CFG[:top_url] %>"><img alt="Tenco!" src='<%= CFG[:static_url] %>images/Tenco.gif' width='366' height='126' /></a>
-	<h1>Tenco! 東方非想天則／東方緋想天プレイヤー情報共有サービス</h1>
+	<h1>Tenco! 東方心綺楼／東方非想天則プレイヤー情報共有サービス</h1>
 </div>
 
 <div id="main_wrapper">
 <div id="main">
+<p>→<strong><a href="#project_info">Tenco! とは</a></strong></p>
 
-<!--
 <div class="section">
-	<h2>天則観報告ツール</h2>
-
-	<p>
-		<img alt="" src="<%= CFG[:static_url] %>client/images/skr_report.ico" width="32" height="32" />
-		<a href="<%= CFG[:static_url] %>client/skr_report_v000.zip" style="font-weight:bold;font-size:110%;">天則観報告ツール Ver.0.00</a>
-		（2013/1/xx <a href="<%= CFG[:static_url] %>client/skr_report_history.txt">更新履歴</a>
-		<a href="<%= CFG[:static_url] %>client/skr_report_readme.txt">Readme.txt</a>）
-	</p>
-	<p>
-	<a href="http://mint.s150.xrea.com/?%E5%A4%A9%E5%89%87%E8%A6%B3" target="_blank" style="font-weight:bold">天則観</a>の対戦結果を、Tenco! サーバーに報告するアプリです。<br />
-	対戦結果を報告すると、心綺楼の<a href="<%= CFG[:top_url] %>game/3/account/nanashi/" style="font-weight:bold">マイページ</a>が見られるようになります。
-	<span class="suppli">（上記のマイページのリンク先は、nanashi@Tenco!企画・制作・運用担当のマイページです）</span>
-	</p>
-
-	<h2>インストール方法・使い方 - 天則観報告ツール</h2>
+	<h2>綺録帖報告ツール（東方心綺楼 対戦結果報告ツール）</h2>
+  
+  <p>
+    <img alt="" src="<%= CFG[:static_url] %>client/images/game_4_32x32.ico" width="32" height="32" />
+    <a href="<%= CFG[:static_url] %>client/skr_report_v002c.zip" style="font-weight:bold;font-size:110%;">綺録帖報告ツール Ver.0.02c</a>
+    （2013/07/26 <a href="<%= CFG[:static_url] %>client/skr_report_readme.txt">Readme.txt</a> <a href="<%= CFG[:static_url] %>client/skr_report_history.txt">更新履歴</a>）
+  </p>
+  <p>
+  <a href="http://mint.s150.xrea.com/?%E7%B6%BA%E9%8C%B2%E5%B8%96" target="_blank" style="font-weight:bold">綺録帖</a>の対戦結果を、Tenco! サーバーに報告するアプリです。<br />
+  対戦結果を報告すると、心綺楼の<a href="<%= CFG[:top_url] %>game/4/account/nanashi/" style="font-weight:bold">マイページ</a>が見られるようになります。
+  </p>
+  <p>
+  すでに他ゲームの報告ツールを使っている方は、一度でもマッチングすれば、<br />
+  そのあと既存のマイページからリンクが貼られます。<br />
+  <span class="suppli">（上記のマイページのリンク先は、nanashi@Tenco!企画・制作・運用担当のマイページです）</span>
+  </p>
+  
+	<h2>インストール方法・使い方 - 綺録帖報告ツール</h2>
 	<ol>
-	<li>天則観のフォルダに、解凍してできたフォルダを<strong>フォルダごと</strong>移動します。<br />
+  <li>先に、<a href="http://mint.s150.xrea.com/?%E7%B6%BA%E9%8C%B2%E5%B8%96" target="_blank">綺録帖</a>をインストールします。</li>
+	<li>綺録帖のフォルダに、解凍してできたフォルダを<strong>フォルダごと</strong>移動します。<br />
 		エクスプローラーで、下記画像のように見えていればOK<br />
-		<a href="<%= CFG[:static_url] %>images/skr_report_install_01.png"><img alt="skr.exe や Default.db と、天則観報告ツールフォルダは同じ階層におきます" src="<%= CFG[:static_url] %>images/skr_report_install_01.png"/></a></li>
+		<a href="<%= CFG[:static_url] %>images/skr_report_install_01.png"><img alt="solfisk.exe や Default.db と、綺録帖報告ツールフォルダは同じ階層におきます" src="<%= CFG[:static_url] %>images/skr_report_install_01.png"/></a></li>
 	<li>あとは、skr_report.exe を実行するだけです。黒窓が立ち上がります。<br />
-	初回起動時のみ、サーバーへのアカウント登録またはアカウント設定が必要です。</li>
+	初回起動時のみ、サーバーへのアカウント登録または、アカウント設定が必要です。</li>
 	</ol>
 	<p>
 	アップデートは、圧縮ファイルの中身をそのまま上書きしてしまえば完了です。<br />
-	より詳しい情報は、<a href="<%= CFG[:static_url] %>client/tsk_report_readme.txt">Readme.txt</a> や東方 Tools Wiki の <a href="http://mint.s150.xrea.com/?%E5%A4%A9%E5%89%87%E8%A6%B3%E5%A0%B1%E5%91%8A%E3%83%84%E3%83%BC%E3%83%AB" target="_blank">天則観報告ツールのページ</a>に書いてありますので、ご一読願います。
+	より詳しい情報は、<a href="<%= CFG[:static_url] %>client/skr_report_readme.txt">Readme.txt</a> <%# や東方 Tools Wiki の <a href="http://mint.s150.xrea.com/?%E5%A4%A9%E5%89%87%E8%A6%B3%E5%A0%B1%E5%91%8A%E3%83%84%E3%83%BC%E3%83%AB" target="_blank">天則観報告ツールのページ</a> %>に書いてありますので、ご一読願います。
 	</p>
-	
+  <p>
+  （既存の Tenco! アカウントをお持ちの方へ）<br />
+  綺録帖報告ツールでは、設定ファイル（config.yaml）を開いて直接パスワードを記入すると、<br />
+  アカウント認証エラーになります（パスワードは暗号化して保存されるようになったため）。<br />
+  必ず報告ツール exe を実行してパスワードを設定するようお願い致します。 <br />
+  </p>
 </div>
--->
+
+<div class="section">
+	<h2>心綺楼体験版 対戦結果報告ツール ＜テスト版＞</h2>
+  <p>
+  心綺楼体験版 対戦結果報告ツールは公開を終了しました。（2013/5/28）
+  </p>
+</div>
 
 <div class="section">
 	<h2>天則観報告ツール</h2>
 
 	<p>
-		<img alt="" src="<%= CFG[:static_url] %>client/images/suwako.ico" width="32" height="32" />
+		<img alt="" src="<%= CFG[:static_url] %>client/images/game_2_32x32.ico" width="32" height="32" />
 		<a href="<%= CFG[:static_url] %>client/tsk_report_v004.zip" style="font-weight:bold;font-size:110%;">天則観報告ツール Ver.0.04</a>
 		（2012/10/24 <a href="<%= CFG[:static_url] %>client/tsk_report_history.txt">更新履歴</a>
 		<a href="<%= CFG[:static_url] %>client/tsk_report_readme.txt">Readme.txt</a>）
@@ -81,14 +96,100 @@
 	アップデートは、圧縮ファイルの中身をそのまま上書きしてしまえば完了です。<br />
 	より詳しい情報は、<a href="<%= CFG[:static_url] %>client/tsk_report_readme.txt">Readme.txt</a> や東方 Tools Wiki の <a href="http://mint.s150.xrea.com/?%E5%A4%A9%E5%89%87%E8%A6%B3%E5%A0%B1%E5%91%8A%E3%83%84%E3%83%BC%E3%83%AB" target="_blank">天則観報告ツールのページ</a>に書いてありますので、ご一読願います。
 	</p>
-	
+		
+	<h3 id="AU"><a href="http://mint.s150.xrea.com/?AddressUpdater" target="_blank">AddressUpdater</a> ダウンロードミラー</h3>
+	<ul class="suppli">
+		<li>クライアント（心綺楼版）：<a href="<%= CFG[:static_url] %>misc/AddressUpdaterSnkr8.13.135.2.zip" style="font-weight:bold">AddressUpdaterSnkr α2 (Ver.8.13.135.2)</a></li>
+		<li>クライアント（天則向け）：<a href="<%= CFG[:static_url] %>misc/AddressUpdater8.11.3597.156_serverlist20130816.zip" style="font-weight:bold">AddressUpdater Ver.8.11.3597.156_serverlist20130816</a>（ねやす鯖(非想天則) 設定済み）</li>
+		<li>サーバー：<a href="<%= CFG[:static_url] %>misc/HisoutenAddressService8.0.4.zip" style="font-weight:bold">HisoutenAddressService Ver.8.0.4</a>（要Java Servlet コンテナ。Tomcat6 での動作を確認済み。）</li>
+		<li>サーバー管理ツール：<a href="<%= CFG[:static_url] %>misc/AddressUpdaterA8.11.3597.156.zip" style="font-weight:bold">AddressUpdaterA Ver.8.11.3597.156</a></li>
+		<li style="color:#BBBBBB;text-decoration:line-through;">クライアント：<a href="<%= CFG[:static_url] %>misc/AddressUpdater8.11.3597.156.zip">AddressUpdater Ver.8.11.3597.156</a>（公式配布物 設定されている鯖は2013/8/23閉鎖済み）</li>
+	</ul>
+	<p class="suppli">
+    AddressUpdater公式サイト(2013/8/23閉鎖)での配布物のミラーと、心綺楼対応版です。<br />
+    通常のユーザーはクライアントのみで利用できます。<br />
+	</p>
+	<p class="suppli">
+	クライアントでの新しいAUサーバーの追加は、「ユーザー設定」タブ→「サーバー」の画面でできます。<br />
+  詳しくは<a href="http://mint.s150.xrea.com/" target="_blank">東方 Tools Wiki</a>の<a href="http://mint.s150.xrea.com/?AddressUpdater" target="_blank">AddressUpdater</a>のページを参照ください。
+	</p>
+	<p class="suppli">
+    心綺楼向けのサーバーを建てる方は、web.xml の GameInformations を以下のように書き換える必要があります。<br />
+    東方心綺楼 Ver1.21, th135, 0x004d8348, 9998:9999; <br />
+    最初の３つの値は綺録帖の th135addr.ini の値と同じです。<br />
+    ４つ目の値は、このままで構いません（利用しません）。
+	</p>
+  
+  <h3 id="AU_repository"><a href="http://mint.s150.xrea.com/?AddressUpdater" target="_blank">AddressUpdater</a> ソースレポジトリ</h3>
+  
+	<p class="suppli">
+  原著作者である bngper さんの許可を得て、以下のレポジトリでソースを公開しています。<br />
+  自由に改変・再配布可能です。
+	</p>
+  <ul class="suppli">
+    <li><a href="https://github.com/tako774/AddressUpdater" target="_blank">AddressUpdater</a>(クライアント)</li>
+    <li><a href="https://github.com/tako774/HisoutenAddressService" target="_blank">HisoutenAddressService</a>(サーバー)</li>
+  </ul>
+</div>
+
+<div id="project_info" class="section">
+<h2>Tenco! とは</h2>
+<p>
+Tenco! は、ネット対戦ゲームのプレイヤー情報を共有するプロジェクトです。<br />
+</p>
+<p>
+その一貫として、レーティングを提供をしています。<br />
+レーティングとは、「各プレイヤーの相対的な強さを表す数字」のことです。<br />
+</p>
+<p>
+ゲーム初心者～中級者のプレイヤーにとって、<br />
+</p>
+<ul>
+<li>どうすれば自分と近い強さのプレイヤーと対戦できるの？</li>
+<li>さっきの人はどのくらいの強さなの？</li>
+<li>どんな上級者がいるの？</li>
+</ul>
+<p>
+といったことは、なかなかわからないところです。<br />
+Tenco! を使って、自分のレートを知り、他のプレイヤーと比べることで、<br />
+これらを解決する大きなてがかりにすることができます。
+</p>
+<p>
+また、上級者のプレイヤーにとっては、自分の強さを測る手がかりともなります。
+</p>
+<p>
+レーティングの提供は、以下の流れで実施します。
+</p>
+<ol>
+  <li>対戦結果を各プレイヤーが Tenco! サーバーに報告</li>
+  <li>Tenco! サーバーがレーティングを計算</li>
+  <li>レート情報を各プレイヤー用のWebページに反映</li>
+</ol>
+<p>
+この中で一番重要なのは、一番最初の Tenco! サーバーに各プレイヤーの対戦結果を集める部分です。<br />
+このプロジェクトは、プレイヤーのみんなの報告により、はじめて成立します。<br />
+みなさまの対戦結果の報告をお待ちしております。 
+</p>
+
 </div>
 
 <div class="section">
-	<h2>緋行跡報告ツール</h2>
+<h2>プロジェクトの状況</h2>
+<ul>
+<li>報告：<strong>東方心綺楼＜体験版＞について対応済み！</strong></li>
+<li>計算：<strong>'08/12/16レーティング計算Rev.3リリース！「グリコレーティング」になり、レート信頼度・適正レートへの収束速度が大幅改善！</strong>毎時0分ちょっと前に更新。</li>
+<li>表示：プレイヤー間でのリプレイファイルの共有を企画中です。(2013/5/25)</li>
+<li>ドキュメント作成・QA：<a href="http://mint.s150.xrea.com/?%E7%B7%8B%E8%A1%8C%E8%B7%A1%E5%A0%B1%E5%91%8A%E3%83%84%E3%83%BC%E3%83%AB%20Tenco%21" target="_blank">東方 Tools Wiki</a> や <a href="http://jbbs.livedoor.jp/game/48698/">萃磨選堆の東方非想天則掲示板</a> のツールスレに多少の説明書きがあります</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>以下、過去情報</h2>
+
+	<h3>緋行跡報告ツール</h3>
 
 	<p>
-	<img alt="" src="<%= CFG[:static_url] %>client/images/tenco.ico" width="32" height="32" /> <a href="<%= CFG[:static_url] %>client/hks_report_v008.zip" style="font-weight:bold;font-size:110%;">緋行跡報告ツール Ver.0.08</a>（2009/10/15 <a href="<%= CFG[:static_url] %>client/hks_report_history.txt">更新履歴</a> <a href="<%= CFG[:static_url] %>client/hks_report_readme.txt">Readme.txt</a>）
+	<img alt="" src="<%= CFG[:static_url] %>client/images/game_1_32x32.ico" width="32" height="32" /> <a href="<%= CFG[:static_url] %>client/hks_report_v008.zip" style="font-weight:bold;font-size:110%;">緋行跡報告ツール Ver.0.08</a>（2009/10/15 <a href="<%= CFG[:static_url] %>client/hks_report_history.txt">更新履歴</a> <a href="<%= CFG[:static_url] %>client/hks_report_readme.txt">Readme.txt</a>）
 	</p>
 	<p>
 	<a href="http://mint.s150.xrea.com/?%E7%B7%8B%E8%A1%8C%E8%B7%A1" target="_blank" style="font-weight:bold">緋行跡 (Rev.10** 系列)</a>の対戦結果を、Tenco! サーバーに報告するアプリです。<br />
@@ -96,7 +197,7 @@
 	<span class="suppli">（上記のリンク先は、nanashi@Tenco!企画・制作・運用担当のページです）</span>
 	</p>
 
-	<h2>インストール方法・使い方 - 緋行跡報告ツール</h2>
+	<h3>インストール方法・使い方 - 緋行跡報告ツール</h3>
 	<ol>
 	<li>緋行跡のフォルダに、解凍してできたフォルダを<strong>フォルダごと</strong>移動します。<br />
 	エクスプローラーで、<a href="<%= CFG[:static_url] %>images/hks_report_install_01.png">この画像</a>のように見えていればOK。</li>
@@ -121,52 +222,8 @@
 	Coolier の <a href="http://coolier.sytes.net:8080/th_up3/file/th3_6493.zip">http://coolier.sytes.net:8080/th_up3/file/th3_6493.zip</a> と同一のファイルです。<br />
 	上記の Coolier アップローダーから緋行跡が取得できない場合は、こちらからダウンロードできます。
 	</p>
-	
-	<h3 id="AU" name="AU">AddressUpdater ダウンロードミラー</h3>
-	<ul class="suppli">
-		<li>クライアント：<a href="<%= CFG[:static_url] %>misc/AddressUpdater8.11.3597.156.zip" style="font-weight:bold">AddressUpdater Ver.8.11.3597.156</a></li>
-		<li>サーバー：<a href="<%= CFG[:static_url] %>misc/HisoutenAddressService8.0.4.zip" style="font-weight:bold">HisoutenAddressService Ver.8.0.4</a>（要J2EEサーバー）</li>
-		<li>サーバー管理ツール：<a href="<%= CFG[:static_url] %>misc/AddressUpdaterA8.11.3597.156.zip" style="font-weight:bold">AddressUpdaterA Ver.8.11.3597.156</a></li>
-	</ul>
-	<p class="suppli">AddressUpdater(<a href="http://www.bngper.mydns.jp/HisoutenAddressService/" target="_blank">サイト１</a>、<a href="http://bngper.dip.jp/HisoutenAddressService/" target="_blank">サイト２</a>)での配布物のミラーです。<br />
-	通常のユーザーはクライアントのみで利用できます。<br />
-	各々最新の配布バイナリだと思いますが、より新しいバイナリが公開されているかもしれません。
-	</p>
-	<p class="suppli">
-	クライアントでの新しいAUサーバーの追加は、「ユーザー設定」タブ→「サーバー」の画面でできます。
-	</p>
-</div>
 
-<div class="section">
-<h2>Tenco! とは</h2>
-
-<p>Tenco! は、ネット対戦ゲームのプレイヤー情報を共有するプロジェクトです。<br />
-その一貫として、レーティング情報を提供しています。<br />
-<strong>レーティングとは、「各プレイヤーの相対的な強さを表す数字」のことです。</strong>
-</p>
-
-<p>レーティング情報の提供は、以下の流れで実施します。</p>
-
-<ol>
-<li>対戦結果を各プレイヤーが Tenco! サーバーに報告</li>
-<li>Tenco! サーバーがレーティングを計算</li>
-<li>レーティング情報を各プレイヤー用のWebページに反映</li>
-</ol>
-<p>
-この中で一番重要なのは、一番最初の Tenco! サーバーに各プレイヤーの対戦結果を集める部分です。<br />
-プレイヤーのみんなの報告により、はじめて成立します。<br />
-みなさまの対戦結果の報告をお待ちしております。
-</p>
-</div>
-
-<div class="section">
-<h2>プロジェクトの状況</h2>
-<ul>
-<li>報告：<strong>非想天則について対応済み！</strong></li>
-<li>計算：<strong>'08/12/16レーティング計算Rev.3リリース！「グリコレーティング」になり、レート信頼度・適正レートへの収束速度が大幅改善！</strong>毎時0分ちょっと前に更新。</li>
-<li>表示：<a href="<%= CFG[:top_url] %>game/2/account/nanashi/">開発版ページ</a>。マイページ開発中！</li>
-<li>ドキュメント作成・QA：<a href="http://mint.s150.xrea.com/?%E7%B7%8B%E8%A1%8C%E8%B7%A1%E5%A0%B1%E5%91%8A%E3%83%84%E3%83%BC%E3%83%AB%20Tenco%21" target="_blank">東方 Tools Wiki</a> や <a href="http://jbbs.livedoor.jp/game/48698/">萃磨選堆の東方非想天則掲示板</a> のツールスレに多少の説明書きがあります</li>
-</ul>
+<h3>過去の告知</h3>
 <p id="info_20091006">
 	2009/10/15 01:00<br />
 	<strong>告知：Tenco!のサイトのURLを段階的に変えます</strong>
@@ -371,7 +428,9 @@ DBアクセス頻度を下げるため、マイページのキャッシュ化・
 	</p>
 	<p class="suppli">（2009/8/7現在）</p>
 	<p class="suppli">参考：<a href="http://ja.wikipedia.org/wiki/%E8%A4%87%E9%9B%91%E3%83%8D%E3%83%83%E3%83%88%E3%83%AF%E3%83%BC%E3%82%AF#.E7.8F.BE.E5.AE.9F.E4.B8.96.E7.95.8C.E3.81.AE.E3.83.8D.E3.83.83.E3.83.88.E3.83.AF.E3.83.BC.E3.82.AF.E3.81.AE.E6.80.A7.E8.B3.AA" target="_blank">Wikipedia: 複雑ネットワーク#現実世界のネットワークの性質</a></p>
-
+  
+	<h2>Tenco! ステータス</h2>
+<a href="http://status.tenco.info/912690"><img src="https://share.pingdom.com/banners/244ea3ad" alt="Uptime Report for Status Report - Tenco!: Last 30 days" title="Uptime Report for Status Report - Tenco!: Last 30 days" width="300" height="165" /></a>
 </div>
 
 <hr />

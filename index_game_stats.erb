@@ -1,5 +1,6 @@
 <h2>Tenco! 統計情報</h2>
 <%- games.keys.sort.reverse.each do |game_id| -%>
+  <%- if games[game_id].is_show_stats.to_i == 1 -%>
 <h3><%= h games[game_id].name %></h3>
 <table id="game_<%= game_id.to_i %>_stat_summary" class="column-wise">
 	<tr>
@@ -40,8 +41,9 @@
 	</tr>
 	<%- end -%>
 </table>
+  <%- end -%><%# if is_show_stats == 1 %>
 <%- end -%>
 <p class="suppli">
 ※ 報告マッチ済分のみ集計<br />
-毎時57分頃更新
+毎時53分頃集計
 </p>

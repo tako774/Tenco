@@ -1,5 +1,5 @@
 
-	<h2><%= h game_pov.name %>- <%= h game.name %></h2>
+	<h2 class="game_title" style="background: url(<%= CFG[:static_url] %>client/images/game_<%= game.id.to_i %>_32x32.ico) no-repeat scroll 0 0 transparent; padding-left: 38px"><%= h game_pov.name %> - <%= h game.name %> </h2>
 	<%- game_pov_classes.each do |gpc| -%>
 	<%- if ratings[gpc.value.to_i] -%>
 	<h3><%= h gpc.name %></h3>
@@ -9,7 +9,7 @@
 				<th>マッチ人数</th>
 				<th>名前</th>
 				<th>キャラクター</th>
-				<th>レート<sub>±RD</sub>（対戦人数/対戦数）</th>
+				<th><span class="nowrap">レート<sub>±RD</sub></span> <span class="nowrap suppli">(対戦人数/対戦数)</span></th>
 				<th class="suppli">クラスタ</th>
 			</tr>
 		</thead>
@@ -25,9 +25,9 @@
 				</td>
 				<td><%= h "#{type1[r.type1_id.to_i]}" %></td>
 				<%- if r.show_ratings_flag.to_i != 0 -%>
-				<td><%= "#{h r.rating.to_f.round}<sub>±#{h r.ratings_deviation.to_f.floor}</sub>（#{h r.matched_accounts}人/#{h r.match_counts}戦）" %></td>
+				<td><span class="nowrap"><%= "#{h r.rating.to_f.round}<sub>±#{h r.ratings_deviation.to_f.floor}</sub></span> <span class=\"nowrap suppli\">(#{h r.matched_accounts}人/#{h r.match_counts}戦)" %></span></td>
 				<%- else -%>
-				<td><%= "#{(r.rating.to_f.round / 100.0).floor}XX<sub>±#{r.ratings_deviation.to_f.floor}</sub>（#{r.matched_accounts.to_i}人/#{r.match_counts.to_i}戦）" %></td>
+				<td><span class="nowrap"><%= "#{(r.rating.to_f.round / 100.0).floor}XX<sub>±#{r.ratings_deviation.to_f.floor}</sub></span> <span class=\"nowrap suppli\">(#{h r.matched_accounts}人/#{h r.match_counts}戦)" %></span></td>
 				<%- end -%>
 				<td class="suppli"><%= h r.cluster_name %></td>
 			</tr>

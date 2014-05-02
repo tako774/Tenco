@@ -84,8 +84,9 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 									
 		game_id = nil # ゲームID
 		
-		FOOTER_ERB_PATH = "./footer.erb" # フッターERBパス
+		LINK_INTERNAL_ERB_PATH = "./link_internal.erb" # 内部リンクERBパス
 		LINK_ERB_PATH = "./link.erb" # リンクERBパス
+		FOOTER_ERB_PATH = "./footer.erb" # フッターERBパス
 		
 		# クエリストリング分解・取得
 		query = parse_query_str(ENV['QUERY_STRING'])
@@ -288,6 +289,8 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 					
 					### キャッシュHTML出力
 					
+					# 内部リンク 部生成
+					link_internal_html = Erubis::Eruby.new(File.read(LINK_INTERNAL_ERB_PATH)).result(binding)
 					# link 部生成
 					link_html = Erubis::Eruby.new(File.read(LINK_ERB_PATH)).result(binding)
 					# footer 部生成

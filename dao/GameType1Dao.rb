@@ -7,6 +7,7 @@ class GameType1Dao < DaoBase
 	# 指定されたゲームIDたちの情報をすべてかえす
 	def get_by_game_ids(game_ids)
 		game_type1s = {} # game_id => { type1_id => game_type1 }
+    return game_type1s if game_ids.length == 0
 		
 		res = @db.exec(<<-"SQL")
 			SELECT

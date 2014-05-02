@@ -55,16 +55,16 @@ begin
 	# 処理対象のゲームID取得
 	require 'GameDao'
 	game_dao = GameDao.new
-	games = game_dao.get_rating_targets
+	game_ids = game_dao.get_batch_target_ids
 	
 	res_body << "batch target games selected...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
 	
 	# ゲームIDごとにレート計算実行
-	games.each do |game|
-		res_body << "★GAME_ID:#{game.id} の処理\n"
+	game_ids.each do |game_id|
+		res_body << "★GAME_ID:#{game_id} の処理\n"
 		
-		data_file = "#{DATA_DIR}/#{game.id}"
-		script_file = "#{TMP_DIR}/#{File::basename(__FILE__)}_#{game.id}.sql"
+		data_file = "#{DATA_DIR}/#{game_id}"
+		script_file = "#{TMP_DIR}/#{File::basename(__FILE__)}_#{game_id}.sql"
 		
 		# データロード用SQLファイル作成
 		File.open(script_file, "w") do |io|
@@ -113,7 +113,7 @@ SET
 FROM
   temp_game_account_ratings tmp
 WHERE
-  gar.game_id = #{game.id}
+  gar.game_id = #{game_id}
   AND gar.account_id = tmp.account_id
   AND gar.type1_id = tmp.type1_id
 ;
@@ -130,7 +130,7 @@ INSERT INTO
   match_counts
 )
 SELECT
-  #{game.id},
+  #{game_id},
   account_id,
   type1_id,
   rating,
@@ -146,7 +146,7 @@ WHERE
     FROM
       game_account_ratings gar
     WHERE
-	  gar.game_id = #{game.id}
+	  gar.game_id = #{game_id}
   AND gar.account_id = tmp.account_id
   AND gar.type1_id = tmp.type1_id
 )

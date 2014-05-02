@@ -63,7 +63,7 @@ class TrackRecordDao < DaoBase
 			res = @db.exec(<<-"SQL")
 				SELECT
 					t.id,
-					EXTRACT(EPOCH FROM t.play_timestamp) AS play_timestamp,
+					EXTRACT(EPOCH FROM (t.play_timestamp - to_timestamp(0))) AS play_timestamp,
 					t.player1_name,
 					t.player1_type1_id,
 					t.player1_points,

@@ -5,6 +5,9 @@
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<meta http-equiv="content-style-type" content="text/css" />
 	<meta http-equiv="content-script-type" content="text/javascript" />
+  <%- if game.is_noindex.to_i != 0 then -%>
+	<meta name="robots" content="noindex" />
+  <%- end -%>
 	<link rel="shortcut icon" type="image/x-icon" href="<%= CFG[:static_url] %>favicon.ico" />
 	<link rel="stylesheet" type="text/css" href="<%= CFG[:static_url] %>css/main.css" />
 	<link rel="stylesheet" type="text/css" href="<%= CFG[:static_url] %>css/3cols_sides-width-fixed.css" />
@@ -29,6 +32,50 @@
 $(document).ready(
 		
 	function(){
+    // 最近対戦のないレートデータの表示／非表示切り替え
+    if ($(".recently_unused").size() > 0) {
+      $(".recently_unused").hide();
+      $("#show_recently_unused_ratings").show();
+    }
+    $("#show_recently_unused_ratings").click(
+      function() {
+        $(".recently_unused").show();
+        $("#show_recently_unused_ratings").hide();
+        $("#hide_recently_unused_ratings").show();
+      }
+    );
+    $("#hide_recently_unused_ratings").click(
+      function() {
+        $(".recently_unused").hide();
+        $("#hide_recently_unused_ratings").hide();
+        $("#show_recently_unused_ratings").show();
+      }
+    );
+    
+    // レーティング説明の表示／非表示切り替え
+    $("#hide_rating_notes").click(
+      function() {
+        $(".rating_notes").hide();
+        $("#hide_rating_notes").hide();
+        $("#show_rating_notes").show();
+        $.cookie('is_show_rating_notes', 0, { expires: 2000, path: '/'});
+      }
+    );
+    $("#show_rating_notes").click(
+      function() {
+        $(".rating_notes").show();
+        $("#show_rating_notes").hide();
+        $("#hide_rating_notes").show();
+        $.cookie('is_show_rating_notes', 1, { expires: 2000, path: '/'});
+      }
+    );
+    if (!$.cookie('is_show_rating_notes') || $.cookie('is_show_rating_notes') == 1) {
+      $("#show_rating_notes").click();
+    }
+    else {
+      $("#hide_rating_notes").click();
+    }
+    
 		// ラベル：対戦結果表示モード
 		var tr_show_mode_label = {
 			'all'   : '全件表示'
@@ -222,6 +269,8 @@ $(document).ready(
 		if (tr_show_mode == 'all') {
 			change_tr_show_mode(tr_show_mode);
 		}
+    
+
 	}
 );
 
@@ -233,7 +282,7 @@ $(document).ready(
 <div id="container">
 
 <div id="header">
-<h1><a href="<%= CFG[:top_url] %>"><img alt="Tenco!" src='<%= CFG[:static_url] %>images/Tenco.gif' width='<%= 366/3 %>' height='<%= 126/3 %>' /></a></h1> マイページα22（2013/4/29）
+<h1><a href="<%= CFG[:top_url] %>"><img alt="Tenco!" src='<%= CFG[:static_url] %>images/Tenco.gif' width='<%= 366/3 %>' height='<%= 126/3 %>' /></a></h1> マイページα27（2013/6/11）
 <br />
 <p id="meta_info">
 <%= meta_info_html %>
@@ -255,7 +304,7 @@ $(document).ready(
 	<div id="main">
 	
 	<div class="section">
-		<h2>レーティング Rev.3 - <%= "#{h game.name}" %></h2>
+		<h2 class="game_title" style="background: url(<%= CFG[:static_url] %>client/images/game_<%= game.id.to_i %>_32x32.ico) no-repeat scroll 0 0 transparent; padding-left: 38px">レーティング Rev.3 - <%= "#{h game.name}" %></h2>
 		<%- if account.show_ratings_flag.to_i == 0 then -%>
 		<p class="suppli">
 		レートはあいまい表示設定です。百の位以上のみ表示します。
@@ -274,7 +323,16 @@ $(document).ready(
 			</thead>
 			<tbody>
 				<%- ratings.each do |r| -%>
+        <%- if 
+              has_random_rate || 
+              r.ratings_deviation.to_f <= 150 ||
+              recently_used_type1ids.include?(r.type1_id.to_i)
+            then
+        -%>
 				<tr>
+        <%- else -%>
+        <tr class="recently_unused">
+        <%- end -%>
 					<td title="<%= r.type1_id.to_i %>"><%= "#{type1_h[r.type1_id.to_i]}" %></td>
 					<td title="<%= "#{sprintf('%05d', r.matched_accounts.to_i)}" %>"><%= "#{r.matched_accounts.to_i}人/#{r.match_counts.to_i}戦" %></td>
 					<%- if account.show_ratings_flag.to_i != 0 then -%>
@@ -295,7 +353,9 @@ $(document).ready(
 				<%- end -%>
 			</tbody>
 		</table>
-		<p class="suppli">
+    <span class="suppli"><a id="show_recently_unused_ratings" style="display:none">すべて表示</a></span>
+    <span class="suppli"><a id="hide_recently_unused_ratings" style="display:none">主なキャラのみ表示</a></span>
+		<p class="suppli rating_notes">
 			<abbr title="Ratings Deviation">RD</abbr> はレートのばらつきの大きさ示すものです。<br />
 			数字が小さいほど、レートとしての信頼性が高くなります。<br />
 			対戦すると <abbr title="Ratings Deviation">RD</abbr> は下がり、時間経過でわずかずつ上昇します。最小50、初期値350 です。<br />
@@ -304,14 +364,14 @@ $(document).ready(
 			レート計算は毎時0分ちょっと前に行います。
 		</p>
 		<%- if estimate_ratings.length > 0 -%>
-		<p class="suppli">
+		<p class="suppli rating_notes">
 			<a href="<%= CFG[:top_url] %>estimate_rating.cgi?game_id=<%= game_id.to_i %>&amp;name=<%= u est_target_names.join("<>") %>">推定レート</a>は他プレイヤーの対戦結果報告を元に算出されます。<br />
 			推定レート値が通常のレート値より極端に低い場合、<br />
 			負け試合のみを意図して報告しないことが原因の場合があります（確実ではありません）。<br />
 			ハイフンは表示対象外か、推定精度不足のため表示されないことを意味します。
 		</p>
 		<%- end -%>
-		<p class="suppli">
+		<p class="suppli rating_notes">
 			レート計算時、マッチした対戦の勝敗数が、レート差から予想される勝敗数から<br />
 			離れるほど、レートが上下します。<br/>
 			レート差から予想される勝敗数の比は、おおむね以下のとおり計算できます。<br/>
@@ -323,6 +383,8 @@ $(document).ready(
 			レート差200で、４戦して１勝３敗が、予想勝敗数の目安です。<br />
 			また、レート変動の大きさは、RDの2乗にも比例します。
 		</p>
+    <span class="suppli"><a id="show_rating_notes" style="display:none">レーティングの説明を表示</a></span>
+    <span class="suppli"><a id="hide_rating_notes" style="display:none">レーティングの説明を隠す</a></span>
 	</div>	
 	
 	<div class="section">
@@ -507,7 +569,11 @@ $(document).ready(
 		<li><a href="<%= "#{CFG[:top_url]}game/#{game_id.to_i}/type1_stats/" %>">全キャラ統計（作成中）</a></li>
 		<li><a href="<%= "#{CFG[:top_url]}game/#{game_id.to_i}/type1_vs_type1_stats/" %>">キャラ対キャラ統計</a></li>
 	</ul>
-	<h2>タグ</h2>
+	<h2>リプレイ</h2>
+	<ul>
+		<li><a href="<%= "#{CFG[:top_url]}game/#{game_id.to_i}/replay/" %>">最新リプレイファイル</a></li>
+	</ul>
+	<h2>プレイヤータグ</h2>
 	<ul>
 		<li><a href="<%= CFG[:top_url] %>tag/">タグ一覧</a></li>
 	</ul>

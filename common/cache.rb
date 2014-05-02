@@ -7,13 +7,13 @@ class Cache
   
   def initialize(config_file = "#{File.dirname(__FILE__)}/#{File.basename(__FILE__, '.*')}.yaml")
     config = YAML.load_file(config_file)
-	
-	servers = config.delete(:servers) 
-	@marshal = config.delete(:marshal)
-	
-	options = config
-	
-	@cache = Memcached.new(servers, options)
+    
+    servers = config.delete(:servers) 
+    @marshal = config.delete(:marshal)
+    
+    options = config
+    
+    @cache = Memcached.new(servers, options)
   end
   
   def add(key, val, marshal = @marshal)

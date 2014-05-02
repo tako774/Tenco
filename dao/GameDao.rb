@@ -1,5 +1,6 @@
 require 'DaoBase'
 require 'Game'
+require 'time'
 
 class GameDao < DaoBase
 	
@@ -23,6 +24,8 @@ class GameDao < DaoBase
 			res.fields.length.times do |i|
 				g.instance_variable_set("@#{res.fields[i]}", r[i])
 			end
+      g.match_start_at = Time.parse(g.match_start_at) if g.match_start_at
+      g.match_end_at = Time.parse(g.match_end_at) if g.match_end_at
 			games[g.id.to_i] = g
 		end
 		
@@ -31,7 +34,7 @@ class GameDao < DaoBase
 	
 	# ゲームIDを引数として、ゲーム情報を取得
 	def get_game_by_id(game_id)
-		game = Game.new
+		game = nil
 		
 		res = @db.exec(<<-"SQL")
 			SELECT
@@ -42,21 +45,19 @@ class GameDao < DaoBase
 				id = #{game_id.to_i}
 		SQL
 		
-		if res.num_tuples != 1 then
-			res.clear
-			res_status = "Status: 400 Bad Request\n"
-			res_body = "ゲーム情報が登録されていません\n"
-			raise "ゲーム情報が登録されていません"
-		else
+		if res.num_tuples == 1 then
 			game = Game.new
 			res.num_fields.times do |i|
 				game.instance_variable_set("@#{res.fields[i]}", res[0][i])
 			end
+      game.match_start_at = Time.parse(game.match_start_at) if game.match_start_at
+      game.match_end_at = Time.parse(game.match_end_at) if game.match_end_at
 			res.clear
 		end
 		
 		return game
 	end
+  
 	# バッチ処理対象のゲーム情報を取得
 	def get_batch_target_games
 		games = {}
@@ -75,6 +76,8 @@ class GameDao < DaoBase
 			res.fields.length.times do |i|
 				g.instance_variable_set("@#{res.fields[i]}", r[i])
 			end
+      g.match_start_at = Time.parse(g.match_start_at) if g.match_start_at
+      g.match_end_at = Time.parse(g.match_end_at) if g.match_end_at
 			games[g.id.to_i] = g
 		end
 		
@@ -101,29 +104,5 @@ class GameDao < DaoBase
 		
 		return ids
 	end
-	
-	# レート計算対象のゲームIDを取得
-	def get_rating_targets
-		games = []
-		
-		res = @db.exec(<<-"SQL")
-			SELECT
-			  id, match_end_at
-			FROM
-			  games
-			WHERE
-			  is_batch_target = 1
-		SQL
-
-		res.each do |r|
-			g = Game.new
-			res.num_fields.times do |i|
-				g.instance_variable_set("@#{res.fields[i]}", r[i])
-			end
-			games << g
-		end
-		res.clear	
-		
-		return games
-	end
+  
 end

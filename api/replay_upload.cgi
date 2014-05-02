@@ -5,8 +5,8 @@ begin
   now = Time.now
 
   ### リプレイアップロード API ###
-  REVISION = 'R0.01'
-  DEBUG = true
+  REVISION = 'R0.03'
+  DEBUG = false
 
   $LOAD_PATH.unshift '../common'
   $LOAD_PATH.unshift '../entity'
@@ -36,6 +36,9 @@ begin
   
   # リプレイディレクトリパス
   REPLAY_DAT_DIR = "../replay"
+  
+  # 1ディレクトリあたりの最大ファイル数
+  MAX_FILE_NUM_PER_DIR = 10 ** 5
 
   # 受け入れ最大受信バイト数
   MAX_CONTENT_LENGTH = 256 * 1024
@@ -165,14 +168,16 @@ if ENV['REQUEST_METHOD'] == 'POST' then
       
       ## リプレイファイルデータのDB登録
  
+       # リプレイファイルDB登録
+      replay = Replay.new
+      replay.game_id = trackrecord.game_id
+      replay.track_record_id = trackrecord.id
+      replay.player1_account_id = trackrecord.player1_account_id
+      replay.player1_type1_id = trackrecord.player1_type1_id
+      replay = ReplayDao.new.insert(replay)
+      
       # リプレイファイル保存パスの取得
-      def generate_replay_relative_path(trackrecord)
-        dir_name = "#{trackrecord.game_id}/#{trackrecord.player1_account_id}"
-        file_name = "#{trackrecord.id}.rep"
-        "#{dir_name}/#{file_name}"
-      end
-      replay_relative_path = generate_replay_relative_path(trackrecord)
-      replay_path = "#{REPLAY_DAT_DIR}/#{replay_relative_path}"
+      replay_path = "#{REPLAY_DAT_DIR}/#{replay.relative_file_path}"
       replay_dir_path = File.dirname(replay_path)
       
       # リプレイファイル保存
@@ -181,14 +186,7 @@ if ENV['REQUEST_METHOD'] == 'POST' then
         io.write replay_content
       end
       
-      # リプレイファイルDB登録
-      replay = Replay.new
-      replay.game_id = trackrecord.game_id
-      replay.track_record_id = trackrecord.id
-      replay.player1_account_id = trackrecord.player1_account_id
-      replay.player1_type1_id = trackrecord.player1_type1_id
-      replay.relative_file_path = replay_relative_path
-      replay = ReplayDao.new.insert(replay)
+
       
     rescue => ex
       res_status = "Status: 400 Bad Request\n"

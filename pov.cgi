@@ -95,7 +95,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 			
 			header_erb_path = "./pov_header.erb" # ヘッダーERBパス
 			main_erb_path   = "./pov_#{pov_id}_main_#{query['pov_eval_unit'].to_s}.erb" # メインERBパス
-			related_game_pov_erb_path = "./pov_related_game_pov.erb" # 関連POVリンクERBパス
+			link_internal_erb_path = "./link_internal.erb" # 関連POVリンクERBパス
 			link_erb_path   = "./link.erb"       # リンクERBパス
 			footer_erb_path = "./footer.erb"     # フッターERBパス
 		
@@ -294,7 +294,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 								  pa.game_pov_class_id,
 								  a.name AS account_name,
 								  a.show_ratings_flag AS show_ratings_flag,
-								  gc.cluster_id,
+								  ga.cluster_id,
 								  gc.name2 AS cluster_name
 								FROM
 								  accounts a,
@@ -337,7 +337,7 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 								res.fields.length.times do |i|
 									rating.instance_variable_set("@#{res.fields[i]}", r[i])
 								end
-								rating.cluster_name ||= "（新参加）"
+								rating.cluster_name ||= rating.cluster_id ? "第#{rating.cluster_id}" : "（新参加）"
 								ratings[rating.game_pov_class_id.to_i] ||= []
 								ratings[rating.game_pov_class_id.to_i] << rating
 								ratings_each_type1[rating.type1_id.to_i] ||= {}
@@ -387,8 +387,8 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 						header_html = Erubis::Eruby.new(File.read(header_erb_path)).result(binding)
 						# main 部生成
 						main_html = Erubis::Eruby.new(File.read(main_erb_path)).result(binding)
-						# 関連ゲームPOV 部生成
-						related_game_pov_html = Erubis::Eruby.new(File.read(related_game_pov_erb_path)).result(binding)
+						# 内部リンク 部生成
+						link_internal_html = Erubis::Eruby.new(File.read(link_internal_erb_path)).result(binding)
 						# リンク 部生成
 						link_html = Erubis::Eruby.new(File.read(link_erb_path)).result(binding)
 						# footer 部生成

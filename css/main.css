@@ -50,6 +50,7 @@ button {
   border-bottom-color: #999999;
 }
 select { color: #666666; }
+del { color: #999999; }
 hr {
   border-top: solid 1px #746710;
   border-right: none;
@@ -109,6 +110,7 @@ table.account { font-size: 95%; }
   line-height: 18px;
   font-family: 'MS PGothic', 'ＭＳ Ｐゴシック', Mona, IPAMonaPGothic, 'IPA モナー Pゴシック', 'MS PGothic AA', sans-serif;
 }
+.nowrap { white-space: nowrap; }
 .enc { display: none; }
 .enc_alt { display: inline; }
 .enc_alt_decoded { display: none; }

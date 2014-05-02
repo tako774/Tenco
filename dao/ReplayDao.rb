@@ -20,7 +20,7 @@ class ReplayDao < DaoBase
       VALUES (
         #{replay.game_id.to_i}
       , #{replay.track_record_id.to_i}
-      , #{s replay.relative_file_path}
+      , #{replay.game_id.to_i} || '/' || (currval('replays_id_seq') / 100000)::TEXT || '/' || currval('replays_id_seq') || '.rep'
       , #{replay.player1_account_id.to_i}
       , #{replay.player1_type1_id.to_i}
       )

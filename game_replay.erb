@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns='http://www.w3.org/1999/xhtml' xml:lang='ja' lang='ja'>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="content-style-type" content="text/css" />
+  <meta http-equiv="content-script-type" content="text/javascript" />
+  <link rel="shortcut icon" type="image/x-icon" href="<%= CFG[:static_url] %>favicon.ico" />
+  <link rel="stylesheet" type="text/css" href="<%= CFG[:static_url] %>css/main.css" />
+  <link rel="stylesheet" type="text/css" href="<%= CFG[:static_url] %>css/3cols_sides-width-fixed.css" />
+  <script type="text/javascript" charset="utf-8" src="<%= CFG[:static_url] %>js/jquery.js"></script>
+  <script type="text/javascript" charset="utf-8" src="<%= CFG[:static_url] %>js/jsdeferred.jquery.js"></script>
+  <script type="text/javascript" charset="utf-8" src="<%= CFG[:static_url] %>js/jquery.tablesorter.js"></script>
+  <script type="text/javascript" charset="utf-8" src="<%= CFG[:static_url] %>js/utils.js"></script>
+  <script type="text/javascript" charset="utf-8" src="<%= CFG[:static_url] %>js/search.js"></script>
+  <title>リプレイファイル一覧 / <%= h game.name -%>  - Tenco!</title>
+  <script type="text/javascript">
+//<![CDATA[ 
+  
+// ロード時実行
+$(document).ready(
+  function(){
+    // リプレイテーブルソート機能追加
+    $("#replays").addClass("tablesorter");
+    $("#replays").tablesorter({
+      textExtraction: function(node) {
+        return node.getAttribute('title') || node.innerHTML;
+      }
+    });
+  
+    // javascript 利用部 HTML
+    // IEだとEnterキーでなぜかボタンをクリックするので
+    // formタグで抑制する
+    var search_tool_html = "";
+    
+    search_tool_html += "<span class='input_set'>\n";
+    search_tool_html += "<span id='search_tool_msg' class='suppli msg'>search:</span>\n";
+    search_tool_html += "<form action='' method='post' onSubmit='return false;' style='display:inline'>\n";
+    search_tool_html += "<input id='search_str' name='search_str' tabindex='1' type='text' size='16' />&nbsp;<button id='search_button' tabindex='2'>検索</button>\n";
+    search_tool_html += "</form>\n";
+    search_tool_html += "</span>\n";
+    
+    $("#search_tool").html(search_tool_html);
+  
+    // 検索ボタンに実行関数を紐付け
+    $("#search_button").click(
+      function() {
+        (function() {search("#replays > tbody > tr", "table-row", "#search_str")})();
+      }
+    );
+    // 検索語入力欄でエンターでも実行
+    $("#search_str").keyup(
+      function(evt) {
+        if (evt.which == 13) {
+          $("#search_button").click();
+        }
+      }
+    );
+  }
+);
+
+// ]]>
+  </script>
+</head>
+<body>
+
+<div id="container">
+
+<div id="header">
+<h1><a href="<%= CFG[:top_url] %>"><img alt="Tenco!" src='<%= CFG[:static_url] %>images/Tenco.gif' width='<%= 366/3 %>' height='<%= 126/3 %>' /></a></h1>
+リプレイファイル一覧ページ α2（2013/06/15）
+<p id="meta_info">
+<%= now.strftime('%m/%d %H:%M') %> に作成（毎時0分以降に再生成）<br />
+</p>
+</div>
+
+<%#
+<div class="menu">
+<ul>
+  <li><a href=""></a></li>
+</ul>
+</div>
+-%>
+
+<hr />
+
+<div id="wrapper">
+  <div id="main_wrapper">
+  <div id="main">
+  
+  <div class="section">
+    <h2 class="game_title" style="background: url(<%= CFG[:static_url] %>client/images/game_<%= game.id.to_i %>_32x32.ico) no-repeat scroll 0 0 transparent; padding-left: 38px">最新リプレイファイル - <%= h game.name %></h2>
+    
+      <noscript class="suppli msg">
+        javascript を ON にすると、検索・復号ができます 
+      </noscript>
+      <div id="search_tool" style="text-align:left">
+      </div>
+      
+      <table id="replays" style="font-size:80%">
+      <thead>
+        <tr>
+          <th>キャラ１</th>
+          <th>キャラ２</th>
+          <th>リプレイファイル</th>
+        </tr>
+      </thead>
+      <tbody>
+    <%- gts = game_type1s[game_id.to_i] -%>
+    <%- replays.each do |replay| -%>
+      <%- g = games[replay.game_id.to_i] -%>
+      <tr>
+        <td title="<%= replay.player1_type1_id.to_i %>"><%= h gts[replay.player1_type1_id.to_i].name %></td>
+        <td title="<%= replay.player2_type1_id.to_i %>"><%= h gts[replay.player2_type1_id.to_i].name %></td>
+        <td>
+          <%- if data = account_twitter_data[replay.player1_account_id.to_i] -%>
+            <%# icon_image_html(data.first) -%>
+          <%- end -%>
+          <a href="<%= CFG[:replay_url] %><%= u_except_slash "#{File.dirname(replay.relative_file_path)}/#{replay.play_timestamp.strftime("%Y%m%d")}_#{replay.id.to_i}_#{gts[replay.player1_type1_id.to_i].name}_#{gts[replay.player2_type1_id.to_i].name}.rep" %>">
+         <%= h("#{replay.play_timestamp.strftime("%Y%m%d")}_#{replay.id.to_i}_#{gts[replay.player1_type1_id.to_i].name}_#{gts[replay.player2_type1_id.to_i].name}.rep")  %>
+          </a>
+        </td>
+      </tr>
+    <%- end -%>
+      </tbody>
+      </table>
+  </div>
+  
+  
+  </div><%# main %>
+  </div><%# main_wrapper %>
+  
+  <div id="profile">
+    <h3>説明</h3>
+    <p>
+      まずは、最新のリプレイファイル1000件を垂れ流しています。キャラ別に表示とか、上位のみ表示とか、表示の仕方を検討中です。（2013/6/15）
+    </p>
+  </div>
+  
+</div><%# wrapper %>
+
+<div id="side" class="tools tools_right">
+  <%= link_internal_html %>
+  <h2>リンク</h2>
+  <%= link_html %>
+</div>
+
+
+<hr />
+<div id="footer">
+<%= footer_html %>
+</div>
+
+</div>
+
+</body>
+</html>
+

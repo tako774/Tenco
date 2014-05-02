@@ -5,7 +5,7 @@ begin
 now = Time.now
 
 ### レートランキングデータ作成処理 ###
-REVISION = '0.05'
+REVISION = '0.07'
 DEBUG = 1
 
 # アプリケーションのトップディレクトリ
@@ -19,6 +19,7 @@ require 'time'
 require 'logger'
 require 'utils'
 require 'db'
+require 'segment_const'
 
 source = ""
 
@@ -79,12 +80,16 @@ begin
 			  AND r.game_id = g.id
 			  AND a.del_flag = 0
 			  AND a.show_ratings_flag != 0
-			  AND r.ratings_deviation < g.ranking_limit_ratings_deviation
+			  AND r.ratings_deviation < 
+          CASE
+            WHEN r.type1_id = #{SEG_V[:virtual_type1][:random][:value].to_i} THEN g.ranking_limit_ratings_deviation * 1.5
+            ELSE g.ranking_limit_ratings_deviation
+          END
 			  AND r.matched_accounts >= g.ranking_min_matched_accounts
 			ORDER BY
-			  r.rating DESC
+			  (r.rating - r.ratings_deviation) DESC
 		SQL
-		
+    
 		res_body << "#{res.num_tuples} 件のレート情報を取得。\n"
 		res_body << "game account rating info selected...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
 		
@@ -157,16 +162,22 @@ begin
 							gar.id
 						FROM
 							accounts a,
-							game_account_ratings gar
+							game_account_ratings gar,
+              games g
 						WHERE
 							gar.account_id = a.id
-							AND gar.game_id = #{game_id.to_i}
+              AND g.id = #{game_id.to_i}
+							AND gar.game_id = g.id
 							AND (
 								NOT (
 									a.del_flag = 0
 									AND a.show_ratings_flag != 0
-									AND gar.ratings_deviation < #{LIMIT_MAX_RD.to_i}
-									AND gar.matched_accounts >= #{LIMIT_MIN_MATCHED_ACCOUNTS.to_i}
+									AND gar.ratings_deviation  < 
+                    CASE
+                      WHEN gar.type1_id = #{SEG_V[:virtual_type1][:random][:value].to_i} THEN  g.ranking_limit_ratings_deviation * 1.5
+                      ELSE g.ranking_limit_ratings_deviation
+                    END
+									AND gar.matched_accounts >= g.ranking_min_matched_accounts
 								)
 							)
 							AND (
