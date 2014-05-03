@@ -67,17 +67,15 @@ class ExServiceAccountDao < DaoBase
     
     res = @db.exec(<<-"SQL")
       SELECT
-        a.id,
+        aesa.account_id,
         esa.account_key,
         esa.profile_image_url
       FROM
-        accounts a,
         account_ex_service_accounts aesa,
         ex_service_accounts esa,
         ex_services es
       WHERE
-            a.id IN (#{(account_ids.map { |i| "'#{i.to_i}'" } ).join(", ")})
-        AND aesa.account_id = a.id
+            aesa.account_id IN (#{(account_ids.map { |i| "'#{i.to_i}'" } ).join(", ")})
         AND aesa.ex_service_account_id = esa.id
         AND esa.ex_service_id = es.id
         AND es.name = #{s EX_SERVICE_NAME_TWITTER}
