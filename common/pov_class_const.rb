@@ -64,3 +64,49 @@ GAME_POV_CLASS = {
 	}
 }
 
+POV_CLASS = {
+	# レートランキング上位者（キャラ別）(1)
+	:high_game_each_type1_ratings_ranker => {
+		:primary => {
+			:value => 1,
+			:name => '１位'
+		},
+		:secondary => {
+			:value => 2,
+			:name => '５位以内'
+		},
+		:tertiary => {
+			:value => 3,
+			:name => '上位5%以内'
+		}
+	},	# レートランキング上位者（ゲーム全体）(3)
+	:high_game_type1_ratings_ranker => {
+		:primary => {
+			:value => 1,
+			:name => '１位'
+		},
+		:secondary => {
+			:value => 2,
+			:name => '20位以内'
+		},
+		:tertiary => {
+			:value => 3,
+			:name => '上位5%以内'
+		}
+	},	# マッチング数上位者（ゲーム全体）(4)
+	:high_game_type1_matching_accounts_ranker => {
+		:primary => {
+			:value => 1,
+			:name => '200人以上'
+		},
+		:secondary => {
+			:value => 2,
+			:name => '100人以上'
+		},
+		:tertiary => {
+			:value => 3,
+			:name => '50人以上'
+		}
+	}
+}
+
