@@ -1,6 +1,0 @@
-	<ul>
-<%- related_game_povs.each do |rgp| -%>
-		<li><a href="<%= "#{CFG[:top_url]}game/#{game_id.to_i}/pov/#{rgp.pov_id.to_i}/#{"type1/" if rgp.pov_eval_unit_seg.to_i == SEG_V[:pov_eval_unit][:game_type1][:value].to_i}" %>"><%= h rgp.name %></a></li>
-<%- end -%>
-	</ul>
-
