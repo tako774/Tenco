@@ -170,7 +170,6 @@ begin
             UPDATE
               prize_accounts
             SET
-              game_pov_class_id = $1,
               pov_class_value = $1,
               date_time =
                 CASE pov_class_value
@@ -222,7 +221,6 @@ begin
                 account_id,
                 type1_id,
                 date_time,
-                game_pov_class_id,
                 pov_class_value
               )
             SELECT
@@ -230,7 +228,6 @@ begin
               #{gar.account_id.to_i},
               #{gar.type1_id.to_i},
               CURRENT_TIMESTAMP,
-              #{pov_class_value.to_i},
               #{pov_class_value.to_i}
             WHERE
               NOT EXISTS (

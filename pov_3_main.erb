@@ -1,8 +1,8 @@
 
-	<h2 class="game_title" style="background: url(<%= CFG[:static_url] %>client/images/game_<%= game.id.to_i %>_32x32.ico) no-repeat scroll 0 0 transparent; padding-left: 38px"><%= h game_pov.name %> - <%= h game.name %> </h2>
-	<%- game_pov_classes.each do |gpc| -%>
-	<%- if ratings[gpc.value.to_i] -%>
-	<h3><%= h gpc.name %></h3>
+	<h2 class="game_title" style="background: url(<%= CFG[:static_url] %>client/images/game_<%= game.id.to_i %>_32x32.ico) no-repeat scroll 0 0 transparent; padding-left: 38px"><%= h pov.name %> - <%= h game.name %> </h2>
+	<%- pov_classes.each do |pc| -%>
+	<%- if ratings[pc.value.to_i] -%>
+	<h3><%= h pc.name %></h3>
 	<table class="account">
 		<thead>
 			<tr>
@@ -14,7 +14,7 @@
 			</tr>
 		</thead>
 		<tbody>
-			<%- ratings[gpc.value.to_i].each do |r| -%>
+			<%- ratings[pc.value.to_i].each do |r| -%>
 			<tr>
 				<td class="num"><%= h r.matched_accounts %>名</td>
 				<td>

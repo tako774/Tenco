@@ -1,4 +1,4 @@
-	<h2 class="game_title" style="background: url(<%= CFG[:static_url] %>client/images/game_<%= game.id.to_i %>_32x32.ico) no-repeat scroll 0 0 transparent; padding-left: 38px"><%= h game_pov.name %> - <%= h game.name %></h2>
+	<h2 class="game_title" style="background: url(<%= CFG[:static_url] %>client/images/game_<%= game.id.to_i %>_32x32.ico) no-repeat scroll 0 0 transparent; padding-left: 38px"><%= h pov.name %> - <%= h game.name %></h2>
 	<div class="section">
 		<div class="menu">
 			<ul id="type1_list">
@@ -22,9 +22,9 @@
 				</tr>
 			</thead>
 			<tbody>
-				<%- game_pov_classes.each do |gpc| -%>
-					<%- if ratings_each_type1[p.type1_id.to_i][gpc.value.to_i] -%>
-						<%- ratings_each_type1[p.type1_id.to_i][gpc.value.to_i].each do |r| -%>
+				<%- pov_classes.each do |pc| -%>
+					<%- if ratings_each_type1[p.type1_id.to_i][pc.value.to_i] -%>
+						<%- ratings_each_type1[p.type1_id.to_i][pc.value.to_i].each do |r| -%>
 							<%- if r.show_ratings_flag.to_i != 0 -%>
 				<tr>
 					<td><%= h r.game_each_type1_ratings_rank %></td>
