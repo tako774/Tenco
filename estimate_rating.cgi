@@ -263,7 +263,8 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 	</p>
 	<form method="get" action="#{TOP_URL}estimate_rating.cgi" accept-charset="UTF-8">
 		<label><input type="radio" name="game_id" value="1" #{"checked=\"checked\" " if game_id.to_i == 1}/>東方緋想天</label>
-		<label><input type="radio" name="game_id" value="2" #{"checked=\"checked\" " if game_id.to_i != 1}/>東方非想天則</label><br />
+		<label><input type="radio" name="game_id" value="2" #{"checked=\"checked\" " if game_id.to_i == 2}/>東方非想天則</label>
+		<label><input type="radio" name="game_id" value="4" #{"checked=\"checked\" " if game_id.to_i == 4}/>東方心綺楼</label><br />
 		<input type="text" name="name" size="40" value="#{ h(names.join("<>")) if names }" />
 		<input type="submit" value="推定" />
 	</form>
