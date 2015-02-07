@@ -370,8 +370,10 @@ if ENV['REQUEST_METHOD'] == 'GET' then
 							require 'GameAccountDao'
 							gad = GameAccountDao.new
 							
-							# 対戦相手のアカウントID一覧取得
-							player2_account_ids = gad.get_matched_account_ids(game_id, account.id)
+							# 対戦相手のアカウント一覧取得
+							player2_accounts_array = gad.get_matched_accounts(game_id, account.id)
+              player2_account_ids = player2_accounts_array.map { |p2aa| p2aa.matched_account_id }
+              player2_accounts = player2_accounts_array.inject({}) { |j,k| j[k.matched_account_id] = k; j}
 							
 							# 対戦相手一覧の情報取得
 							matched_game_accounts = gad.get_game_accounts(game_id, player2_account_ids)

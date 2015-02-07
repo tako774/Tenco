@@ -420,22 +420,24 @@ $(document).ready(
 						<%= "#{z2h_long_str(xhtml_sp2nbsp(h(t.player1_name)))} (#{type1_h[t.player1_type1_id.to_i]})" %></td>
 					<td class="vs"><%= "#{t.player1_points.to_i} - #{t.player2_points.to_i}" %></td>
 						<%- unless t.player2_account_name.nil? -%>
+						<%- account_vs_account_data = player2_accounts[t.player2_account_id.to_i] -%>
 					<td>
 							<%- if data = account_twitter_data[t.player2_account_id.to_i] -%>
 								<%= icon_image_html(data.first) -%>
 							<%- end -%>
-						<a href="<%= "#{CFG[:top_url]}game/#{game_id.to_i}/account/#{u t.player2_account_name.to_s}/" %>"><%= z2h_long_str(xhtml_sp2nbsp(h(t.player2_name))) %></a><%= " (#{type1_h[t.player2_type1_id.to_i]})" %></td>
+						<a href="<%= "#{CFG[:top_url]}game/#{game_id.to_i}/account/#{u t.player2_account_name.to_s}/" %>" title="<%= "#{account_vs_account_data.wins} wins / #{account_vs_account_data.loses} loses" %>"><%= z2h_long_str(xhtml_sp2nbsp(h(t.player2_name))) %></a><%= " (#{type1_h[t.player2_type1_id.to_i]})" %></td>
 						<%- else -%>
 					<td><span class="enc_alt"><%= "◇#{t.player2_name[11..14]}" %></span><span class="enc"><%= u(h(t.player2_name)) %></span><%= "(#{type1_h[t.player2_type1_id.to_i]})" %></td>
 						<%- end -%>
 					<%- else -%>
 					<td class="time suppli"><%= t.play_timestamp.strftime("%y/%m/%d %H:%M")  %></td>
 						<%- unless t.player2_account_name.nil? -%>
+						<%- account_vs_account_data = player2_accounts[t.player2_account_id.to_i] -%>
 					<td>
 							<%- if data = account_twitter_data[t.player2_account_id.to_i] -%>
 								<%= icon_image_html(data.first) -%>
 							<%- end -%>
-						<a href="<%= "#{CFG[:top_url]}game/#{game_id.to_i}/account/#{u t.player2_account_name.to_s}/" %>"><%= z2h_long_str(xhtml_sp2nbsp(h(t.player2_name))) %></a><%= " (#{type1_h[t.player2_type1_id.to_i]})" %></td>
+						<a href="<%= "#{CFG[:top_url]}game/#{game_id.to_i}/account/#{u t.player2_account_name.to_s}/" %>" title="<%= "#{account_vs_account_data.wins} wins / #{account_vs_account_data.loses} loses" %>"><%= z2h_long_str(xhtml_sp2nbsp(h(t.player2_name))) %></a><%= " (#{type1_h[t.player2_type1_id.to_i]})" %></td>
 						<%- else -%>
 					<td><span class="enc_alt"><%= "◇#{t.player2_name[11..14]}" %></span><span class="enc"><%= u(h(t.player2_name)) %></span> <%= "(#{type1_h[t.player2_type1_id.to_i]})" %></td>
 						<%- end -%>
@@ -555,14 +557,11 @@ $(document).ready(
 </div>
 
 <div id="side" class="tools tools_right">
-	<p>
-		<a href="http://info.tenco.info/info/20110320.html"><img src="<%= CFG[:static_url] %>images/tenco_nanashi_message_mini.jpg" alt="Tenco! 創設者 nanashi からのメッセージをお読みください" width="159" height="34" /></a>
-	</p>
 	<h2>プライズページ</h2>
 	<ul>
 		<li><a href="<%= "#{CFG[:top_url]}game/#{game_id.to_i}/pov/1/" %>">レートランキング</a></li>
-		<li><a href="<%= "#{CFG[:top_url]}game/#{game_id.to_i}/pov/1/type1/" %>">レートランキング（キャラ別）</a></li>
-		<li><a href="<%= "#{CFG[:top_url]}game/#{game_id.to_i}/pov/2/" %>">マッチ数ランキング</a></li>
+		<li><a href="<%= "#{CFG[:top_url]}game/#{game_id.to_i}/pov/2/" %>">レートランキング（キャラ別）</a></li>
+		<li><a href="<%= "#{CFG[:top_url]}game/#{game_id.to_i}/pov/3/" %>">マッチ数ランキング</a></li>
 	</ul>
 	<h2>統計</h2>
 	<ul>
@@ -580,11 +579,12 @@ $(document).ready(
 	<h2>過去の対戦相手</h2>
 	<ul>
 		<%- matched_game_accounts.each do |a| -%>
+		<%- account_vs_account_data = player2_accounts[a.account_id.to_i] -%>
 		<li>
 			<%- if data = account_twitter_data[a.account_id.to_i] -%>
 				<%= icon_image_html(data.first) -%>
 			<%- end -%>
-			<a href="<%= "#{CFG[:top_url]}game/#{game_id.to_i}/account/#{u a.account_name}/" %>"><%= xhtml_sp2nbsp(h(a.rep_name)) %></a>
+			<a href="<%= "#{CFG[:top_url]}game/#{game_id.to_i}/account/#{u a.account_name}/" %>" title="<%= "#{account_vs_account_data.wins} wins / #{account_vs_account_data.loses} loses" %>"><%= xhtml_sp2nbsp(h(a.rep_name)) %></a>
 		</li>
 		<%- end -%>
 	</ul>

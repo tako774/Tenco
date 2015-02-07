@@ -1,17 +1,20 @@
 require 'DaoBase'
 require 'GameAccount'
+require 'GameAccountVsAccount'
 
 class GameAccountDao < DaoBase
 	@@version = 0.01
 	
 	# 指定されたゲームID・アカウントIDの、マッチ済みアカウントIDリストを返す
 	# 最終対戦時刻の降順で返す
-	def get_matched_account_ids(game_id, account_id)
-		matched_account_ids = []
+	def get_matched_accounts(game_id, account_id)
+		matched_accounts = []
 		
 		res = @db.exec(<<-"SQL")
 			SELECT
-			  gava.matched_account_id
+			  gava.matched_account_id,
+			  gava.wins,
+			  gava.loses
 			FROM
 			  game_account_vs_accounts gava,
 			  accounts a
@@ -25,11 +28,15 @@ class GameAccountDao < DaoBase
 		SQL
 
 		res.each do |r|
-			matched_account_ids << r[0].to_i
+      ac = GameAccountVsAccount.new
+      ac.matched_account_id = r[0].to_i
+      ac.wins  = r[1].to_i
+      ac.loses = r[2].to_i
+			matched_accounts << ac
 		end
 		res.clear
 		
-		return matched_account_ids
+		return matched_accounts
 	end
 	
 	def key_to_account_id(key)
