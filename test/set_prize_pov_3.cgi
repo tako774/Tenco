@@ -206,6 +206,7 @@ begin
         # まだプライズアカウント情報レコードがなければ作成
         if !(prize_accounts[gar.account_id] &&
              prize_accounts[gar.account_id][gar.type1_id]) then
+            
           db.exec(<<-"SQL")
             INSERT INTO
             prize_accounts
@@ -217,7 +218,7 @@ begin
               pov_class_value
             )
             SELECT
-            #{prizes[0].id.to_i},
+            #{prize_id.to_i},
             #{gar.account_id.to_i},
             #{gar.type1_id.to_i},
             CURRENT_TIMESTAMP,
