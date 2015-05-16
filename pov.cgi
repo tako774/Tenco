@@ -102,9 +102,9 @@ if ENV['REQUEST_METHOD'] == 'GET' then
       Dir.mkdir(CACHE_LOCK_DIR, 0700) unless File.exist?(CACHE_LOCK_DIR)
 
       # キャッシュパス設定・プロセスロックファイルパス設定
-      cache_html_path = "#{CACHE_DIR}/#{File::basename(__FILE__)}_#{game_id}_#{pov_id}.to_s}.html"
+      cache_html_path = "#{CACHE_DIR}/#{File::basename(__FILE__)}_#{game_id}_#{pov_id}.html"
       cache_html_header_path  = "#{cache_html_path}.h"
-      cache_lock_path = "#{CACHE_LOCK_DIR}/#{File::basename(__FILE__)}_#{game_id}_#{pov_id}.to_s}.lock"
+      cache_lock_path = "#{CACHE_LOCK_DIR}/#{File::basename(__FILE__)}_#{game_id}_#{pov_id}.lock"
       
       # キャッシュパスのバリデーション
       if cache_html_path =~ /\.{2}/ or cache_lock_path =~ /\.{2}/ then
