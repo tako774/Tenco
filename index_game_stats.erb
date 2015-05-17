@@ -30,7 +30,7 @@
 	</tr>
 	<%- game_type1_stats[game_id].each do |gts| -%>
 	<tr>
-		<td><%= h game_type1s[game_id][gts.type1_id.to_i] %></td>
+		<td><img src="<%= "#{CFG[:static_url]}images/game/#{game_id.to_i}/game_#{game_id.to_i}_type1_#{gts.type1_id.to_i}_icon01.png" %>" alt="" width="24px" height="24px" /> <%= h game_type1s[game_id][gts.type1_id.to_i] %></td>
 		<td class="num"><%= h gts.accounts_count %></td>
 		<td class="num"><%= h gts.track_records_count %></td>
 		<%- if gts.track_records_count.to_f != 0 -%>
@@ -45,5 +45,5 @@
 <%- end -%>
 <p class="suppli">
 ※ 報告マッチ済分のみ集計<br />
-毎時53分頃集計
+毎日14時30分すぎに更新
 </p>

@@ -101,6 +101,7 @@ $(document).ready(
       <table id="replays" style="font-size:80%">
 			<thead>
 				<tr>
+					<th>ゲーム</th>
 					<th>キャラ１</th>
 					<th>キャラ２</th>
 					<th>リプレイファイル</th>
@@ -110,10 +111,11 @@ $(document).ready(
 		<%- replays.each do |replay| -%>
       <%- tr = track_records[replay.track_record_id.to_i] -%>
       <%- gts = game_type1s[replay.game_id.to_i] -%>
-      <%- g = games[replay.game_id.to_i] -%>
+      <%- game = games[replay.game_id.to_i] -%>
 			<tr>
-				<td title="<%= tr.player1_type1_id.to_i %>"><%= h gts[tr.player1_type1_id.to_i].name %></td>
-				<td title="<%= tr.player2_type1_id.to_i %>"><%= h gts[tr.player2_type1_id.to_i].name %></td>
+        <td title="<%= game.id.to_i %>"><%= h game.name %></td>
+				<td title="<%= tr.player1_type1_id.to_i %>"><img src="<%= "#{CFG[:static_url]}images/game/#{game.id.to_i}/game_#{game.id.to_i}_type1_#{tr.player1_type1_id.to_i}_icon01.png" %>" alt="" width="24px" height="24px" /> <%= h gts[tr.player1_type1_id.to_i].name %></td>
+				<td title="<%= tr.player2_type1_id.to_i %>"><img src="<%= "#{CFG[:static_url]}images/game/#{game.id.to_i}/game_#{game.id.to_i}_type1_#{tr.player2_type1_id.to_i}_icon01.png" %>" alt="" width="24px" height="24px" /> <%= h gts[tr.player2_type1_id.to_i].name %></td>
 				<td>
           <%- if data = account_twitter_data[replay.player1_account_id.to_i] -%>
             <%# icon_image_html(data.first) -%>

@@ -27,7 +27,7 @@
 					<%- end -%>
 					<a href="<%= "#{CFG[:top_url]}game/#{r.game_id.to_i}/account/#{u r.account_name}/" %>"><%= z2h_long_str(xhtml_sp2nbsp(h(hide_ng_words(r.rep_name)))) %></a>
 				</td>
-				<td><%= "#{h type1[r.type1_id.to_i]}" %></td>
+				<td><img src="<%= "#{CFG[:static_url]}images/game/#{r.game_id.to_i}/game_#{r.game_id.to_i}_type1_#{r.type1_id.to_i}_icon01.png" %>" alt="" width="20" height="20" /> <%= "#{h type1[r.type1_id.to_i]}" %></td>
 				<td><span class="nowrap"><%= "#{h r.rating.to_f.round}<sub>±#{h r.ratings_deviation.to_f.floor}</sub></span> <span class=\"nowrap suppli\">(#{h r.matched_accounts}人/#{h r.match_counts}戦)" %></span></td>
 				<td class="suppli"><%= h((r.rating.to_f - r.ratings_deviation.to_f).round) %></td>
 				<td class="suppli"><%= h r.cluster_name %></td>

@@ -8,7 +8,7 @@
 		</div>
 	
 		<%- prizes.each do |p| -%>
-		<h3 id="<%= h "type1_#{p.type1_id.to_i}" %>"><%= h type1[p.type1_id.to_i] %></h3>
+		<h3 id="<%= h "type1_#{p.type1_id.to_i}" %>"><img src="<%= "#{CFG[:static_url]}images/game/#{game_id.to_i}/game_#{game_id.to_i}_type1_#{p.type1_id.to_i}_icon01.png" %>" alt="" width="30" height="30" /> <%= h type1[p.type1_id.to_i] %></h3>
 			<%- if ratings_each_type1[p.type1_id.to_i] -%>
 		<table class="account <%= h "type1_#{p.type1_id.to_i}"%>">
 			<thead>

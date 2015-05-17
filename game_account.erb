@@ -333,7 +333,7 @@ $(document).ready(
         <%- else -%>
         <tr class="recently_unused">
         <%- end -%>
-					<td title="<%= r.type1_id.to_i %>"><%= "#{type1_h[r.type1_id.to_i]}" %></td>
+					<td title="<%= r.type1_id.to_i %>"><img src="<%= "#{CFG[:static_url]}images/game/#{game.id.to_i}/game_#{game.id.to_i}_type1_#{r.type1_id.to_i}_icon01.png" %>" alt="" width="30px" height="30px" /> <%= "#{type1_h[r.type1_id.to_i]}" %></td>
 					<td title="<%= "#{sprintf('%05d', r.matched_accounts.to_i)}" %>"><%= "#{r.matched_accounts.to_i}人/#{r.match_counts.to_i}戦" %></td>
 					<%- if account.show_ratings_flag.to_i != 0 then -%>
 					<td title="<%= "#{sprintf('%04d', r.rating.to_f.round)}" %>"><%= "#{r.rating.to_f.round}<sub>±#{r.ratings_deviation.to_f.floor}</sub>" %><span class="suppli"> (<%= "#{sprintf('%d', 10 ** (((r.rating.to_i - 3000) / 400.0) + 6))}" %>)</span></td>

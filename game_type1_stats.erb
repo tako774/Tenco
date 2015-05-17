@@ -91,7 +91,7 @@ $(document).ready(
 </tr>
 <%- type1.keys.sort.each do |type1_id| -%>
 <tr>
-	<th><%= "#{h type1[type1_id].split(//u)[0]}" %></th>
+  <th><img src="<%= "#{CFG[:static_url]}images/game/#{game.id.to_i}/game_#{game.id.to_i}_type1_#{type1_id.to_i}_icon01.png" %>" alt="" width="24px" height="24px" /> <%= "#{h type1[type1_id].split(//u)[0]}" %></th>
 	<%- rank_ranges.keys.sort.reverse.each do |r| -%>
 	<%- game_type1_range_stats[type1_id] ||= {} -%>
 	<%- gtrs = game_type1_range_stats[type1_id][r] -%>

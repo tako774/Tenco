@@ -110,8 +110,8 @@ $(document).ready(
     <%- replays.each do |replay| -%>
       <%- g = games[replay.game_id.to_i] -%>
       <tr>
-        <td title="<%= replay.player1_type1_id.to_i %>"><%= h gts[replay.player1_type1_id.to_i].name %></td>
-        <td title="<%= replay.player2_type1_id.to_i %>"><%= h gts[replay.player2_type1_id.to_i].name %></td>
+        <td title="<%= replay.player1_type1_id.to_i %>"><img src="<%= "#{CFG[:static_url]}images/game/#{game.id.to_i}/game_#{game.id.to_i}_type1_#{replay.player1_type1_id.to_i}_icon01.png" %>" alt="" width="24px" height="24px" /> <%= h gts[replay.player1_type1_id.to_i].name %></td>
+        <td title="<%= replay.player2_type1_id.to_i %>"><img src="<%= "#{CFG[:static_url]}images/game/#{game.id.to_i}/game_#{game.id.to_i}_type1_#{replay.player2_type1_id.to_i}_icon01.png" %>" alt="" width="24px" height="24px" /> <%= h gts[replay.player2_type1_id.to_i].name %></td>
         <td>
           <%- if data = account_twitter_data[replay.player1_account_id.to_i] -%>
             <%# icon_image_html(data.first) -%>

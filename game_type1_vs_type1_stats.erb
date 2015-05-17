@@ -114,12 +114,12 @@ $(document).ready(
 <tr>
 	<th></th>
 <%- type1.keys.sort.each do |type1_id| -%>
-	<th><%= "#{h type1[type1_id].split(//u)[0]}" %></th>
+	<th><img src="<%= "#{CFG[:static_url]}images/game/#{game.id.to_i}/game_#{game.id.to_i}_type1_#{type1_id.to_i}_icon01.png" %>" alt="" width="24px" height="24px" /> <%= "#{h type1[type1_id].split(//u)[0]}" %></th>
 <%- end -%>
 </tr>
 <%- type1.keys.sort.each do |type1_id| -%>
 <tr>
-	<th><%= "#{h type1[type1_id].split(//u)[0]}" %></th>
+	<th><img src="<%= "#{CFG[:static_url]}images/game/#{game.id.to_i}/game_#{game.id.to_i}_type1_#{type1_id.to_i}_icon01.png" %>" alt="" width="24px" height="24px" /> <%= "#{h type1[type1_id].split(//u)[0]}" %></th>
 	<%- type1.keys.sort.each do |matched_type1_id| -%>
 	<td class="num"><%= "#{game_type1_vs_type1_stats[type1_id][matched_type1_id].track_records_count.to_i}" %></td>
 	<%- end -%>
@@ -135,12 +135,12 @@ $(document).ready(
 <tr>
 	<th></th>
 <%- type1.keys.sort.each do |type1_id| -%>
-	<th><%= "#{h type1[type1_id].split(//u)[0]}" %></th>
+	<th><img src="<%= "#{CFG[:static_url]}images/game/#{game.id.to_i}/game_#{game.id.to_i}_type1_#{type1_id.to_i}_icon01.png" %>" alt="" width="24px" height="24px" /> <%= "#{h type1[type1_id].split(//u)[0]}" %></th>
 <%- end -%>
 </tr>
 <%- type1.keys.sort.each do |type1_id| -%>
 <tr>
-	<th><%= "#{h type1[type1_id].split(//u)[0]}" %></th>
+	<th><img src="<%= "#{CFG[:static_url]}images/game/#{game.id.to_i}/game_#{game.id.to_i}_type1_#{type1_id.to_i}_icon01.png" %>" alt="" width="24px" height="24px" /> <%= "#{h type1[type1_id].split(//u)[0]}" %></th>
 	<%- type1.keys.sort.each do |matched_type1_id| -%>
 	<%- gtvts = game_type1_vs_type1_stats[type1_id][matched_type1_id] -%>
 		<%- if gtvts.track_records_count.to_i != 0 -%>
@@ -162,12 +162,12 @@ $(document).ready(
 <tr>
 	<th></th>
 <%- type1.keys.sort.each do |type1_id| -%>
-	<th><%= "#{h type1[type1_id].split(//u)[0]}" %></th>
+	<th><img src="<%= "#{CFG[:static_url]}images/game/#{game.id.to_i}/game_#{game.id.to_i}_type1_#{type1_id.to_i}_icon01.png" %>" alt="" width="24px" height="24px" /> <%= "#{h type1[type1_id].split(//u)[0]}" %></th>
 <%- end -%>
 </tr>
 <%- type1.keys.sort.each do |type1_id| -%>
 <tr>
-	<th><%= "#{h type1[type1_id].split(//u)[0]}" %></th>
+	<th><img src="<%= "#{CFG[:static_url]}images/game/#{game.id.to_i}/game_#{game.id.to_i}_type1_#{type1_id.to_i}_icon01.png" %>" alt="" width="24px" height="24px" /> <%= "#{h type1[type1_id].split(//u)[0]}" %></th>
 	<%- type1.keys.sort.each do |matched_type1_id| -%>
 	<%- gtvts = game_type1_vs_type1_stats[type1_id][matched_type1_id] -%>
 		<%- if gtvts.track_records_count.to_i != 0 && gtvts.ideal_rating_diff then -%>
