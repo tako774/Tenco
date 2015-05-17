@@ -8,19 +8,62 @@
 	<link rel="shortcut icon" type="image/x-icon" href="<%= CFG[:static_url] %>favicon.ico" />
 	<link rel="stylesheet" type="text/css" href="<%= CFG[:static_url] %>css/main.css" />
 	<link rel="stylesheet" type="text/css" href="<%= CFG[:static_url] %>css/2cols_side-width-fixed.css" />
-	<title>Tenco! 東方心綺楼／東方非想天則プレイヤー情報共有サービス</title>
+	<title>Tenco! 東方深秘録／東方非想天則プレイヤー情報共有サービス</title>
 </head>
 <body>
 <div id="container">
 
 <div id="header">
 	<a href="<%= CFG[:top_url] %>"><img alt="Tenco!" src='<%= CFG[:static_url] %>images/Tenco.gif' width='366' height='126' /></a>
-	<h1>Tenco! 東方心綺楼／東方非想天則プレイヤー情報共有サービス</h1>
+	<h1>Tenco! 東方深秘録／東方非想天則プレイヤー情報共有サービス</h1>
 </div>
 
 <div id="main_wrapper">
 <div id="main">
 <p>→<strong><a href="#project_info">Tenco! とは</a></strong></p>
+
+
+<div class="section">
+	<h2>辺獄録報告ツール（東方深秘録 対戦結果報告ツール）</h2>
+  
+  <p>
+    <img alt="" src="<%= CFG[:static_url] %>client/images/game_6_32x32.ico" width="32" height="32" />
+    <a href="<%= CFG[:static_url] %>client/spr_report_v000.zip" style="font-weight:bold;font-size:110%;">辺獄録報告ツール Ver.0.00</a>
+    （2015/05/16 <a href="<%= CFG[:static_url] %>client/spr_report_readme.txt">Readme.txt</a> <a href="<%= CFG[:static_url] %>client/spr_report_history.txt">更新履歴</a>）
+  </p>
+  <p>
+  <a href="http://mint.s150.xrea.com/?%E8%BE%BA%E7%8D%84%E9%8C%B2" target="_blank" style="font-weight:bold">辺獄録</a>の対戦結果を、Tenco! サーバーに報告するアプリです。<br />
+  対戦結果を報告すると、深秘録の<a href="<%= CFG[:top_url] %>game/6/account/nanashi/" style="font-weight:bold">マイページ</a>（<a href="#spr_mypage_suppli">※</a>）が見られるようになります。
+  </p>
+  <p>
+  すでに他ゲームの報告ツールを使っている方は、一度でもマッチングすれば、<br />
+  そのあと既存のマイページからリンクが貼られます。<br />
+  </p>
+  <p>
+  <span class="suppli" id="spr_mypage_suppli">※上記のマイページのリンク先は、nanashi@Tenco!企画・制作・運用担当のマイページです。<br />
+  URL の nanashi の部分はご自分の Tenco! アカウント名に置き換えてください。</span>
+  </p>
+  
+	<h2>インストール方法・使い方 - 辺獄録報告ツール</h2>
+	<ol>
+  <li>先に、<a href="http://mint.s150.xrea.com/?%E8%BE%BA%E7%8D%84%E9%8C%B2" target="_blank">辺獄録</a>をインストールします。</li>
+	<li>辺獄録のフォルダに、解凍してできたフォルダを<strong>フォルダごと</strong>移動します。<br />
+		エクスプローラーで、下記画像のように見えていればOK<br />
+		<a href="<%= CFG[:static_url] %>images/spr_report_install_01.png"><img alt="hengokuroku.exe や Default.db と、辺獄録報告ツールフォルダは同じ階層におきます" src="<%= CFG[:static_url] %>images/spr_report_install_01.png"/></a></li>
+	<li>あとは、spr_report.exe を実行するだけです。黒窓が立ち上がります。<br />
+	初回起動時のみ、サーバーへのアカウント登録または、アカウント設定が必要です。</li>
+	</ol>
+	<p>
+	アップデートは、圧縮ファイルの中身をそのまま上書きしてしまえば完了です。<br />
+	より詳しい情報は、<a href="<%= CFG[:static_url] %>client/skr_report_readme.txt">Readme.txt</a> <%# や東方 Tools Wiki の <a href="http://mint.s150.xrea.com/?%E7%B7%8B%E8%A1%8C%E8%B7%A1%E5%A0%B1%E5%91%8A%E3%83%84%E3%83%BC%E3%83%AB%20Tenco!" target="_blank">緋行跡報告ツールのページ</a> %>に書いてありますので、ご一読願います。
+	</p>
+  <p>
+  （既存の Tenco! アカウントをお持ちの方へ）<br />
+  辺獄録報告ツールでは、設定ファイル（config.yaml）を開いて直接パスワードを記入すると、<br />
+  アカウント認証エラーになります（パスワードは暗号化して保存されるようになったため）。<br />
+  必ず報告ツール exe を実行してパスワードを設定するようお願い致します。 <br />
+  </p>
+</div>
 
 <div class="section">
 	<h2>綺録帖報告ツール（東方心綺楼 対戦結果報告ツール）</h2>
@@ -171,16 +214,6 @@ Tenco! を使って、自分のレートを知り、他のプレイヤーと比�
 みなさまの対戦結果の報告をお待ちしております。 
 </p>
 
-</div>
-
-<div class="section">
-<h2>プロジェクトの状況</h2>
-<ul>
-<li>報告：<strong>東方心綺楼＜体験版＞について対応済み！</strong></li>
-<li>計算：<strong>'08/12/16レーティング計算Rev.3リリース！「グリコレーティング」になり、レート信頼度・適正レートへの収束速度が大幅改善！</strong>毎時0分ちょっと前に更新。</li>
-<li>表示：プレイヤー間でのリプレイファイルの共有を企画中です。(2013/5/25)</li>
-<li>ドキュメント作成・QA：<a href="http://mint.s150.xrea.com/?%E7%B7%8B%E8%A1%8C%E8%B7%A1%E5%A0%B1%E5%91%8A%E3%83%84%E3%83%BC%E3%83%AB%20Tenco%21" target="_blank">東方 Tools Wiki</a> や <a href="http://jbbs.livedoor.jp/game/48698/">萃磨選堆の東方非想天則掲示板</a> のツールスレに多少の説明書きがあります</li>
-</ul>
 </div>
 
 <div class="section">
