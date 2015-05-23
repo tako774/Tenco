@@ -122,20 +122,20 @@ begin
 				) gads2
 			  ) AS gads,
 			  (
-				SELECT
-				  count(*) AS matched_accounts_type1s_count
-				FROM (
-				  SELECT
-					1
-				  FROM
-					game_account_type1_daily_stats 
-				  WHERE 
-					game_id = #{game_id.to_i}
-				  GROUP BY
-					game_id,
-					account_id,
-					type1_id
-				) gatds2
+          SELECT
+            count(*) AS matched_accounts_type1s_count
+          FROM
+            game_account_ratings gar
+          WHERE
+            gar.game_id = #{game_id.to_i}
+            AND gar.type1_id IN (
+              SELECT
+                type1_id
+              FROM
+                game_type1s
+              WHERE
+                game_id = #{game_id.to_i}
+            )
 			  ) AS gatds
 		  RETURNING *
 		SQL
@@ -148,6 +148,8 @@ begin
 		
 		res_body << "総対戦結果数 #{game_stat.track_records_count} 件\n"
 		res_body << "マッチ済み対戦結果数 #{game_stat.matched_track_records_count} 件\n"
+		res_body << "マッチ済みアカウント数 #{game_stat.matched_accounts_count} 件\n"
+		res_body << "マッチ済みアカウント・キャラ数 #{game_stat.matched_accounts_type1s_count} 件\n"
 		res_body << "game_stat inserted ...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
 	
 		# キャラ別対戦結果情報取得・保存
@@ -159,52 +161,48 @@ begin
 		  ;
 		SQL
 		
-		res = db.exec(<<-"SQL")		  
-		  INSERT INTO
-			game_type1_stats (game_id, type1_id, date_time, track_records_count, accounts_count, wins, loses)
-		  SELECT
-			#{game_id.to_i} AS game_id,
-			gtds.type1_id AS type1_id,
-			LOCALTIMESTAMP AS date_time,
-			gtds.track_records_count AS track_records_count,
-			gatds.accounts_count AS accounts_count,
-			gtds.wins AS wins,
-			gtds.loses AS loses
-		  FROM
-			(
-			  SELECT
-		        type1_id,
-		        SUM(track_records_count) AS track_records_count,
-		        SUM(wins) AS wins,
-		        SUM(loses) AS loses
-		      FROM
-		        game_type1_daily_stats
-		      WHERE
-		        game_id = #{game_id.to_i}
-		      GROUP BY
-		        type1_id
-		    ) AS gtds,
-		    (
-		      SELECT
-			    type1_id, count(account_id) AS accounts_count
-		      FROM
-			  (
-			    SELECT
-			      type1_id, account_id
-		        FROM
-		          game_account_type1_daily_stats
-		        WHERE
-		          game_id = #{game_id.to_i}
-		        GROUP BY
-		          type1_id, account_id
-			  ) AS gatds2
-		      GROUP BY
-		        type1_id
-		    ) AS gatds
-		  WHERE
-		    gtds.type1_id = gatds.type1_id
-		  RETURNING *
-		SQL
+    res = db.exec(<<-"SQL")
+      INSERT INTO
+        game_type1_stats (game_id, type1_id, date_time, track_records_count, accounts_count, wins, loses)
+      SELECT
+        #{game_id.to_i} AS game_id,
+        gtds.type1_id   AS type1_id,
+        LOCALTIMESTAMP  AS date_time,
+        gtds.track_records_count AS track_records_count,
+        gatds.accounts_count     AS accounts_count,
+        gtds.wins   AS wins,
+        gtds.loses  AS loses
+      FROM
+      (
+        SELECT
+          type1_id,
+          SUM(track_records_count) AS track_records_count,
+          SUM(wins) AS wins,
+          SUM(loses) AS loses
+        FROM
+          game_type1_daily_stats
+        WHERE
+          game_id = #{game_id.to_i}
+        GROUP BY
+          type1_id
+      ) AS gtds,
+      (
+        SELECT
+          type1_id, count(account_id) AS accounts_count
+        FROM
+          game_account_ratings
+        WHERE
+          game_id = #{game_id.to_i}
+          AND type1_id IN (SELECT type1_id FROM game_type1s WHERE game_id = #{game_id.to_i})
+        GROUP BY
+          type1_id
+        ORDER BY
+          type1_id
+      ) AS gatds
+      WHERE
+        gtds.type1_id = gatds.type1_id
+      RETURNING *
+    SQL
 		
 		require 'GameType1Stat'
 		res.each do |r|
