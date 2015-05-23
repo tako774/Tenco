@@ -43,7 +43,6 @@ logger.level = Logger::DEBUG
 begin
 	db = nil   # DB接続
 	gad = GameAccountDao.new
-	updated_account_ids = [] # UPDATEされたアカウントID
 
 	# DB接続
 	db = DB.getInstance
@@ -63,131 +62,124 @@ begin
 		res_body << "★GAME_ID:#{game_id} の処理\n"
 		
 		game_accounts = []  # ゲームごとアカウント情報
+    updated_account_ids = [] # UPDATEされたアカウントID
+    total_rep_names_counts = 0
+    inserted_counts = 0
+    updated_counts  = 0
 		
 		### ゲーム・アカウントごとの画面表示名を決定
 		# マッチ済み対戦結果から、もっともよく使っている名称を取得する
 		
 		# ゲーム・アカウント・使用名称ごとに、使用回数の降順で取得
 		res = db.exec(<<-"SQL")
-			SELECT
-			  game_id,
-			  account_id,
-			  rep_name
-			FROM
-			  (
-			    SELECT
-			      game_id AS game_id,
-			      account_id AS account_id,
-			      player_name AS rep_name,
-			      rank() OVER (PARTITION BY game_id, account_id ORDER BY matched_track_records_count DESC) AS count_rank
-			    FROM
-			      game_account_player_name_stats
-			    WHERE
-			      game_id = #{game_id.to_i}
-			  ) AS gapns_rank
-			WHERE
-			  count_rank = 1
-		SQL
-		
-		res_body << "#{res.num_tuples} 件のゲーム・アカウント・使用名称のデータをDBから取得しました\n"
-		
-		res_body << "game-account-name counts selected...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
+      WITH gapns AS (
+        SELECT
+            game_id
+          , account_id
+          , rep_name
+        FROM
+          (
+            SELECT
+                game_id AS game_id
+              , account_id AS account_id
+              , player_name AS rep_name
+              , row_number() OVER (PARTITION BY game_id, account_id ORDER BY matched_track_records_count DESC) AS count_rank
+            FROM
+              game_account_player_name_stats
+            WHERE
+              game_id = #{game_id.to_i}
+          ) AS gapns_rank
+        WHERE
+          count_rank = 1
+      ),
+      updated AS (
+          UPDATE
+            game_accounts g
+          SET
+            rep_name = gapns.rep_name
+            , updated_at = now()
+            , lock_version = g.lock_version + 1
+          FROM
+            gapns
+          WHERE
+                g.game_id = gapns.game_id
+            AND g.account_id = gapns.account_id
+            AND g.rep_name != gapns.rep_name
+          RETURNING gapns.game_id, gapns.account_id, true AS is_updated
+      ),
+      inserted AS (
+        INSERT INTO
+          game_accounts (
+            game_id
+            , account_id
+            , rep_name
+          )
+        SELECT
+          game_id,
+          account_id,
+          rep_name
+        FROM
+          gapns
+        WHERE
+          (gapns.game_id, gapns.account_id) NOT IN (SELECT game_id, account_id FROM updated)
+          AND NOT EXISTS (
+            SELECT
+              1
+            FROM
+              gapns,
+              game_accounts
+            WHERE
+                  game_accounts.game_id = gapns.game_id
+              AND game_accounts.account_id = gapns.account_id
+          )
+        RETURNING game_id, account_id, true AS is_inserted
+      )
+      SELECT
+        gapns.game_id,
+        gapns.account_id,
+        inserted.is_inserted,
+        updated.is_updated
+      FROM
+        gapns
+          LEFT OUTER JOIN
+            inserted
+          ON
+            inserted.game_id = gapns.game_id AND inserted.account_id = gapns.account_id
+          LEFT OUTER JOIN
+            updated
+          ON
+            updated.game_id  = gapns.game_id AND updated.account_id  = gapns.account_id
+          
+          
+    SQL
 
-		# 初出のゲームID・アカウントIDのみ取得
-		require 'GameAccount'
-		game_accounts_hash = {} # 出現済みのゲームID・アカウントID記録用
-		res.each do |r|
-			unless game_accounts_hash[r[0]] and game_accounts_hash[r[0]].key?(r[1]) then
-				game_account = GameAccount.new
-				res.num_fields.times do |i|
-					game_account.instance_variable_set("@#{res.fields[i]}", r[i])
-				end
-				game_accounts << game_account
-				game_accounts_hash[r[0]] ||= {}
-				game_accounts_hash[r[0]][r[1]] = 1
-			end
-		end
-		game_accounts_hash = nil
-		res.clear
+    res.each do |r|
+      account_id  = r[1]
+      is_inserted = r[2]
+      is_updated  = r[3]
+      
+      total_rep_names_counts += 1
+      
+      if is_inserted
+        inserted_counts += 1
+      end
+      
+      if is_updated
+        updated_counts += 1
+        updated_account_ids << account_id.to_i
+      end
+    end
+    res.clear
 		
-		res_body << "#{game_accounts.length} 件のゲーム・アカウントごとの情報を取得しました。\n"
-		
-		res_body << "game_accounts created...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
-		
-		updated_counts = 0
-		inserted_counts = 0
-		game_accounts.each do |a|
-			# GameAccounts テーブルに Update or Insert
-			res_select = db.exec(<<-"SQL")
-			  SELECT
-			    id
-			  FROM
-				game_accounts g
-			  WHERE
-				g.account_id = #{a.account_id.to_i}
-				AND g.game_id = #{a.game_id.to_i}
-			  ;
-			SQL
-			
-			# すでにデータがあれば update
-			if res_select.num_tuples == 1 then
-			
-				res_update = db.exec(<<-"SQL")
-				  UPDATE
-					game_accounts g
-				  SET
-					rep_name = #{s a.rep_name},
-					updated_at = now(),
-					lock_version = g.lock_version + 1
-				  WHERE
-					g.account_id = #{a.account_id.to_i}
-					AND g.game_id = #{a.game_id.to_i}
-					AND g.rep_name != #{s a.rep_name}
-				  RETURNING *;
-				SQL
-			
-				if res_update.num_tuples != 0 then
-					updated_counts += 1
-					updated_account_ids << a.account_id
-				end
-				
-				res_update.clear
-			
-			# データがまだないときは INSERT
-			elsif res_select.num_tuples == 0 then
-				res_insert = db.exec(<<-"SQL")
-				  INSERT INTO
-					game_accounts
-					(
-					  account_id,
-					  game_id,
-					  rep_name
-					)
-				  VALUES
-					(
-					  #{a.account_id.to_i},
-					  #{a.game_id.to_i},
-					  #{s a.rep_name}
-					)
-				  RETURNING *;
-				SQL
-				
-				if res_insert.num_tuples != 1 then
-					raise "INSERT に失敗しました。"
-				else
-					inserted_counts += 1
-				end
-				res_insert.clear
-				
-			end
-		end
-		
-		# キャッシュ削除
-		gad.delete_by_ids(game_id, updated_account_ids)
-					
+		res_body << "#{total_rep_names_counts} 件のプレイヤー代表名を取得\n"
 		res_body << "#{inserted_counts} 件のデータを登録、#{updated_counts} 件のデータを更新しました\n"
-		
 		res_body << "game_accounts updated or inserted...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
+		
+    # キャッシュ削除    
+		gad.delete_by_ids(game_id, updated_account_ids)
+    res_body << "#{updated_account_ids.length} 件のキャッシュを削除しました\n"
+
+		res_body << "game_accounts updated cache deleted...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
 	
 	end
 	
