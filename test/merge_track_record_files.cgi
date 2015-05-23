@@ -8,7 +8,7 @@ now = Time.now
 # 他方は未ソートの複数ファイルとし、
 # ソート済みの本体ファイルに未ソートのファイルデータをマージする
 
-REVISION = '0.07'
+REVISION = '0.08'
 DEBUG = 1
 
 $LOAD_PATH.unshift '../common'
@@ -44,6 +44,7 @@ begin
 	# 設定
 	CSV_SEPARATOR = ','
 	CSV_SEPARATOR_REGEX = /,/o
+  BULK_READ_LINE_NUMS = 10000
 	
 	# DB接続
 	db = DB.getInstance()
@@ -105,22 +106,33 @@ begin
 		File.open(data_temp_file, 'wb') do |w|
 			File.open(data_file, 'rb') do |r|
 				# 既存データと新規データを比較し、古い方から出力していく
-				while (line = r.gets) do
-					while (trn_data.length != 0) do
-						if (trn_data[0] < line) then
-							w.puts trn_data.shift
-							merged_data_counts += 1
-							next
-						elsif (trn_data[0] == line) then
-							trn_data.shift
-							not_merged_data_counts += 1
-							next
-						else
-							break
-						end
-					end
-					w.puts line
-					existing_data_counts += 1
+				while (!r.eof?) do
+          lines = []
+          BULK_READ_LINE_NUMS.times do
+            if (line = r.gets) then
+              lines << line
+            end
+          end
+          existing_data_counts += lines.length
+          if (trn_data.length != 0 && trn_data[0] <= lines.last) then
+            while (trn_data.length != 0 and lines.length != 0) do
+              if (trn_data[0] < lines.first) then
+                w.puts trn_data.shift
+                merged_data_counts += 1
+                break if (trn_data.length == 0 || trn_data[0] > lines.last)
+                next
+              elsif (trn_data[0] == lines.first) then
+                trn_data.shift
+                not_merged_data_counts += 1
+                break if (trn_data.length == 0 || trn_data[0] > lines.last)
+                next
+              else
+                w.puts lines.shift
+                next
+              end
+            end
+          end
+					w.puts lines.join()
 				end
 			end
 			
@@ -143,11 +155,11 @@ begin
 		res_body << "file output...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
 		
 		# トランデータ削除
-		trn_files.each do |trn_file|
-			File.unlink trn_file
-		end
-		
-		res_body << "transaction data files deleted...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
+		#trn_files.each do |trn_file|
+		#	File.unlink trn_file
+		#end
+		#
+		#res_body << "transaction data files deleted...(#{Time.now - now}/#{Process.times.utime}/#{Process.times.stime})\n" if DEBUG
 		
 	end
 	
