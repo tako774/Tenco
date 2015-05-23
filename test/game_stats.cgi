@@ -196,8 +196,6 @@ begin
           AND type1_id IN (SELECT type1_id FROM game_type1s WHERE game_id = #{game_id.to_i})
         GROUP BY
           type1_id
-        ORDER BY
-          type1_id
       ) AS gatds
       WHERE
         gtds.type1_id = gatds.type1_id
