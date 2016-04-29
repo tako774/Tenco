@@ -33,9 +33,9 @@ begin
 	ACCOUNT_NAME_REGEX = /\A[a-zA-Z0-9_]+\z/
 	ACCOUNT_PASSWORD_BYTE_MIN = 8
 	ACCOUNT_PASSWORD_BYTE_MAX = 255
-	ACCOUNT_PASSWORD_REGEX = /\A[\x01-\x7F]+\z/
+	ACCOUNT_PASSWORD_REGEX = /\A[\x21-\x7F]+\z/
 	ACCOUNT_MAIL_ADDRESS_BYTE_MAX = 256
-	ACCOUNT_MAIL_ADDRESS_REGEX = /\A[\x01-\x7F]+@(([-a-z0-9]+\.)*[a-z]+|\[\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\])\z/
+	ACCOUNT_MAIL_ADDRESS_REGEX = /\A[\x21-\x7F]+@(([-a-z0-9]+\.)*[a-z]+|\[\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\])\z/
 
 	# HTTP/HTTPSレスポンス文字列
 	res_status = nil
@@ -137,6 +137,7 @@ if ENV['REQUEST_METHOD'] == 'POST' then
 		
 		res_body = "#{account_name}さんのアカウントを登録しました！\n"
 		res_body << "※※※　ご利用URL　※※※\n"
+		res_body << "☆マイページ（深秘録）　：#{TOP_URL}game/6/account/#{account_name}/\n"
 		res_body << "☆マイページ（心綺楼）　：#{TOP_URL}game/4/account/#{account_name}/\n"
 		res_body << "☆マイページ（非想天則）：#{TOP_URL}game/2/account/#{account_name}/\n"
 		res_body << "☆アカウント設定用ページ：#{TOP_URL}account/#{account_name}/manage/\n"
